@@ -1,0 +1,32 @@
+{
+    "ts-node": {
+        "compilerOptions": {
+            "module": "CommonJS"
+        }
+    },
+    "compilerOptions": {
+        "target": "ESNext",
+        "rootDir": "./src",
+        "lib": ["ESNext", "DOM"],
+        "types": [],
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "resolveJsonModule": true,
+        "esModuleInterop": true,
+        "sourceMap": true,
+        "removeComments": true,
+        "strict": true,
+        "noImplicitReturns": true,
+        "noImplicitAny": false,
+        "skipLibCheck": true,
+        "typeRoots": ["types", "./node_modules/@types"],
+        "paths": {
+            "@/*": ["./src/*"]
+        }
+    },
+    "include": [
+        "types/**/*",
+        "src/**/*",
+        "node_modules/bc-stubs/bc/**/*.d.ts"
+    ]
+}

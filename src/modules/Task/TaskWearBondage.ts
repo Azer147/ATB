@@ -1,0 +1,264 @@
+import { TaskData } from "@/models/TaskManagerSettings";
+import { TaskBase } from "./TaskBase";
+import { ChatColor, getCharacterFreeSlots, sendLocalMessage } from "@/utility/utility";
+import { addRandomRestrain } from "@/utility/ItemUtility";
+import { WearBondageType } from "@/models/TasksSettings";
+
+
+export class TaskWearBondage extends TaskBase {
+    TICK_PERIOD_MS: number = 5000; // 5sec
+    DEFAULT_GRACE_PERIOD_MS: number = 60000; // 60sec
+
+    lastChecked: number = 0;
+    isWearingItem: boolean = false;
+    lastTimeWearingItem: number = 0;
+
+    constructor(data: TaskData) {
+        super(data);
+        this.lastTimeWearingItem = Date.now();
+        this.updateProgress();
+
+        if (this.isExpired()) {
+            // End the task (success)
+            this.triggerTaskCompletion(true, false);
+            return;
+        }
+
+        // TODO: move in triggerTask fct ? (so it dont trigger on restore)
+        sendLocalMessage("New Rule: " + this.getDescription(), ChatColor.Purple);
+
+        // If player cannot equip it themselve, we handle it at the start of the task
+        // TODO: For charUnableToEquipItem, maybe put a chat message with button to ask Player if we should to equip random item
+        if (this.data.enforce || this.charUnableToEquipItem(this.data.itemToWear)) {
+            let itemToWear = this.data.itemToWear;
+            if (!itemToWear) {
+                // End the task (error)
+                console.warn("TaskWearBondage: Error: itemToWear is undefined.");
+                this.triggerTaskCompletion(false, true);
+                return;
+            }
+            this.enforceWear(itemToWear);
+        }
+    }
+
+    public getDescription(): string {
+        return this.data.description;
+    }
+
+    protected updateProgress() {
+        let progress = Math.floor((this.data.elapsedtimeMs / this.data.totalDurationMs) * 100);
+        if (progress > 100) {
+            progress = 100;
+        }
+        else if (progress < 0) {
+            progress = 0;
+        }
+        this.data.progress = progress;
+
+        let enforcedStr = this.data.enforce ? " (enforced)" : "";
+        this.data.description = `Wear ${this.data.itemToWear} for ${Math.round((this.data.totalDurationMs) / 1000)} seconds.` + enforcedStr;
+    }
+
+
+    // Main task stuff
+    public onTick(currentTime: number): void {
+        super.onTick(currentTime);
+        if (this.isFinished()) {
+            return;
+        }
+        // Check if the player is wearing the item (this.data.itemToWear) and update progress accordingly
+        // If enforce is true and the player is not wearing the item, consider failing the task or applying a penalty
+        if (currentTime - this.lastChecked >= this.TICK_PERIOD_MS) { // Check every 5 seconds
+            this.updateProgress();
+            // Re-validate data just in case
+            let itemToWear = this.data.itemToWear;
+            let gracePeriodMs = this.data.gracePeriodMs ?? this.DEFAULT_GRACE_PERIOD_MS; // TODO: change for default value (from settings?)
+            if (!itemToWear) {
+                // End the task (error)
+                console.warn("TaskWearBondage: Error: itemToWear is undefined.");
+                this.triggerTaskCompletion(false, true);
+                return;
+            }
+
+            // Update internal variable
+            let isWearingBefore = this.isWearingItem;
+            this.isWearingItem = TaskWearBondage.checkIfWearingItem(itemToWear);
+            this.lastChecked = currentTime;
+
+            // Check if task is finished
+            if (this.isExpired()) {
+                // End the task (success)
+                this.triggerTaskCompletion(true, false);
+                return;
+            }
+
+            if (this.isWearingItem) {
+                this.transgessionOccuring = false;
+                this.lastTimeWearingItem = currentTime;
+            }
+            else {
+                // Warning on transgression
+                this.transgessionOccuring = true;
+                if (this.isWearingItem != isWearingBefore) {
+                    sendLocalMessage("You need to wear "+ this.data.itemToWear + " or be punished!", ChatColor.Red);
+                }
+
+                // Handle transgression after grace period
+                if (currentTime - this.lastTimeWearingItem >= gracePeriodMs) {
+                    sendLocalMessage("You need to wear " + this.data.itemToWear + ", you received  " + this.data.badPtsOnFailure + " for transgression.", ChatColor.Red);
+                    // Add badPts
+                    this.notifyBadPtsChange(this.data.badPtsOnFailure);
+                    // Re-start grace period
+                    this.lastTimeWearingItem = currentTime;
+
+                    // If player cannot equip it themselve, we handle it after getting badPts
+                    if (this.data.enforce || this.charUnableToEquipItem(this.data.itemToWear)) {
+                        this.enforceWear(itemToWear);
+                    }
+                }
+            }
+        }
+    }
+
+    // Note: Since we want to count only items that add effect,
+    //      we check if Player have effect and not item slot when possible
+    private static checkIfWearingItem(itemToWear: WearBondageType): boolean {
+        // TODO: Because other addon like BCX can add effect to player without any item
+        // For example Player can have Effect "Slow" without wearing any item with the rule "Always leave room slowly"
+        // Then we should to check individual item effects
+
+        switch (itemToWear) {
+            case "hand":
+                return Player.HasEffect("Block");
+            case "leg":
+                // TODO: Check for Effect "Slow"
+                let firstCheck: boolean = Player.HasEffect("CuffedFeet") || Player.HasEffect("Freeze");
+                if (!firstCheck) {
+                    let slot = TaskWearBondage.getSlotPerBondageType("leg");
+                    return getCharacterFreeSlots(Player, slot).length != slot.length;
+                }
+                return firstCheck;
+            case "gag":
+                return Player.IsGagged();
+            case "chastity":
+                return Player.IsChaste();
+            case "toy":
+                let slot = TaskWearBondage.getSlotPerBondageType("toy");
+                return getCharacterFreeSlots(Player, slot).length != slot.length;
+        }
+
+        return false; // Placeholder
+    }
+
+    // Force Equip a Random items if checkIfWearingItem() return false
+    // return true if an item was equiped
+    private enforceWear(itemToWear: WearBondageType): boolean {
+        if (TaskWearBondage.checkIfWearingItem(itemToWear)) {
+            return false;
+        }
+        let slotFilter: AssetGroupItemName[] = TaskWearBondage.getSlotPerBondageType(itemToWear);
+        let effectFilter: EffectName[] = [];
+
+        // Depending of the item, we want it to have at least one of these effects
+        switch (itemToWear) {
+            case "hand":
+                effectFilter.push("Block");
+                break;
+            case "leg":
+                //effectFilter.push("CuffedFeet");
+                //effectFilter.push("Freeze");
+                effectFilter.push("Slow");
+                break;
+            case "gag":
+                // List from SpeechGagLevelLookup
+                //effectFilter.push("GagTotal4");
+	            //effectFilter.push("GagTotal3");
+	            //effectFilter.push("GagTotal2");
+	            effectFilter.push("GagTotal");
+	            effectFilter.push("GagVeryHeavy");
+	            effectFilter.push("GagHeavy");
+	            effectFilter.push("GagMedium");
+	            effectFilter.push("GagNormal");
+	            effectFilter.push("GagEasy");
+	            effectFilter.push("GagLight");
+	            effectFilter.push("GagVeryLight");
+                break;
+            case "chastity":
+                effectFilter.push("Chaste");
+                break;
+            case "toy":
+                // Note: No native item has effect "Vibrating",
+                // it's only in AllowEffect, and can be applied as Extended options
+                effectFilter.push("Vibrating");
+
+                // Vibe item usually have either "UseRemote" or "Egged"
+                effectFilter.push("UseRemote");
+                effectFilter.push("Egged");
+                break;
+        }
+
+        // Add 1 item that fit the effect
+        let itemAdded = addRandomRestrain(Player, 1, slotFilter, true, effectFilter);
+
+        // Then we can fill randomly some other aplicable slot for more fun
+        let nbToAdd = Math.floor(Math.random() * slotFilter.length);
+        if (nbToAdd > 0) {
+            itemAdded = itemAdded.concat(addRandomRestrain(Player, nbToAdd, slotFilter, true));
+        }
+
+        return itemAdded.length > 0;
+    }
+
+    public charUnableToEquipItem(itemToWear: WearBondageType | undefined): boolean {
+        // TODO: improve it
+        return Player.HasEffect("Block")
+    }
+
+    // Check What wear item is available (also used for taskCanStart check)
+    public static getItemAvailibility(): WearBondageType[] {
+        let itemAvail: WearBondageType[] = [];
+
+        if (TaskWearBondage.checkIfWearingItem("hand") || getCharacterFreeSlots(Player, TaskWearBondage.getSlotPerBondageType("hand")).length > 0) {
+            itemAvail.push("hand");
+        }
+        if (TaskWearBondage.checkIfWearingItem("leg") || getCharacterFreeSlots(Player, TaskWearBondage.getSlotPerBondageType("leg")).length > 0) {
+            itemAvail.push("leg");
+        }
+        if (TaskWearBondage.checkIfWearingItem("gag") || getCharacterFreeSlots(Player, TaskWearBondage.getSlotPerBondageType("gag")).length > 0) {
+            itemAvail.push("gag");
+        }
+        if (TaskWearBondage.checkIfWearingItem("chastity") || getCharacterFreeSlots(Player, TaskWearBondage.getSlotPerBondageType("chastity")).length > 0) {
+            itemAvail.push("chastity");
+        }
+        if (TaskWearBondage.checkIfWearingItem("toy") || getCharacterFreeSlots(Player, TaskWearBondage.getSlotPerBondageType("toy")).length > 0) {
+            itemAvail.push("toy");
+        }
+
+        return itemAvail;
+    }
+
+    public static getSlotPerBondageType(itemToWear: WearBondageType): AssetGroupItemName[] {
+        // All slot:
+        //'ItemHands', 'ItemArms','ItemBoots','ItemBreast','ItemButt','ItemFeet','ItemHead','ItemHood',
+		//'ItemLegs','ItemMouth','ItemMouth2','ItemMouth3','ItemNeck','ItemNeckAccessories','ItemNeckRestraints',
+		//'ItemNipples','ItemNipplesPiercings','ItemNose','ItemPelvis','ItemTorso','ItemTorso2','ItemVulva','ItemVulvaPiercings'
+        switch (itemToWear) {
+            case "hand":
+                return ["ItemHands", "ItemArms", "ItemTorso", "ItemTorso2"];
+            case "leg":
+                return ["ItemLegs", "ItemBoots", "ItemFeet"];
+            case "gag":
+                return ["ItemMouth", "ItemMouth2", "ItemMouth3"];
+            case "chastity":
+                // TODO: add slot for male
+                // Excluded "ItemVulvaPiercings" cuz it's boring
+                return ["ItemPelvis"];
+            case "toy":
+                return ["ItemVulva", "ItemVulvaPiercings", "ItemButt"];
+        }
+    }
+
+
+    public onChatEvent(chatData: any): void {}
+    public onOrgasmEvent(character: any): void {}
+}
