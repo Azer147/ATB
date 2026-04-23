@@ -118,23 +118,24 @@ export function lockAllItems(C: Character, lockType: AssetLockType = "ExclusiveP
 		}
 	}
 	if (changed) {
-		CharacterRefresh(C);
+		CharacterRefresh(C, false);
 		ChatRoomCharacterUpdate(C);
 	}
 }
 
-export function lockAllItemsWithRandomCombination(C: Character, difficulty: "easy" | "medium" | "hard" | "veryHard"): void {
+export function lockAllItemsWithRandomPassword(C: Character): void {
 	if (C.Appearance == undefined) return;
+
+	const randomLock = getRandomPasswordPadlock(C);
 	let changed: boolean = false;
 	for (let i = 0; i < C.Appearance.length; i++) {
 		const appearanceItem = C.Appearance[i];
 		if (appearanceItem.Asset.AllowLock == true) {
 			let isAlreadyLocked: boolean = (appearanceItem.Property?.LockedBy != undefined);
 			if (!isAlreadyLocked) {
-				let randomLock = getRandomCombinationPadlock(C, difficulty);
-				console.log("Locking item: ", appearanceItem.Asset.Name, " with random combination padlock: ", randomLock);
+				console.log("Locking item: ", appearanceItem.Asset.Name, " with random Password padlock: ", randomLock);
 				if (randomLock) {
-					InventoryLock(C, appearanceItem, randomLock, C.MemberNumber, false);
+					InventoryLock(C, appearanceItem, randomLock, null, false);
 
 					if (appearanceItem != undefined && appearanceItem.Property != undefined) {
 						appearanceItem.Property.Password = randomLock.Property?.Password;
@@ -148,35 +149,24 @@ export function lockAllItemsWithRandomCombination(C: Character, difficulty: "eas
 		}
 	}
 	if (changed) {
-		CharacterRefresh(C);
+		CharacterRefresh(C, false);
 		ChatRoomCharacterUpdate(C);
 	}
 }
 
-// Randomly change the lock password with number and put a hint (ex: 13XX)
-// TODO: not working, need to find another concept for this
-// Issues is:
-// - CombinationPadlock use number but don't show hint
-// - And PasswordPadlock have hint but it cannot have number (somehow)
-export function getRandomCombinationPadlock(C: Character, difficulty: "easy" | "medium" | "hard" | "veryHard"): Item | undefined {
+// Randomly change the lock password with 1 random letter
+export function getRandomPasswordPadlock(C: Character): Item | undefined {
 	let item: Item | undefined = getPadlockItem(C, "PasswordPadlock");
 	if (item) {
 		if (item.Property == null) item.Property = {};
 		item.Property.LockedBy = "PasswordPadlock";
 
-		let upperBound: number = 10; // easy by default
-		//if (difficulty == "easy") upperBound = 10;
-		if (difficulty == "medium") upperBound = 20;
-		if (difficulty == "hard") upperBound = 50;
-		if (difficulty == "veryHard") upperBound = 100;
-		let password: number = Math.floor(Math.random() * upperBound) + 100; // generates a random number between 100 and (upperBound+99)
-
-		// Specific for "CombinationPadlock" (looks like hint cannot be used with this one)
-		//item.Property.CombinationNumber = password.toString();
+		// Gen random letter (uppercase)
+		const randomLetter: string = String.fromCharCode(65 + Math.floor(Math.random() * 26));
 
 		// Specific for "PasswordPadlock" | "SafewordPadlock" | "TimerPasswordPadlock"
-		item.Property.Password = password.toString();
-		item.Property.Hint = "Password is a number between: 100 and " + (upperBound + 99).toString();
+		item.Property.Password = randomLetter;
+		item.Property.Hint = "Password is 1 random letter (uppercase)";
 		item.Property.LockSet = true;
 
 		// Specific for "PasswordPadlock" only

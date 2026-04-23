@@ -1,6 +1,6 @@
 import { ModuleBase } from "./ModuleBase";
 import { BC_SDK } from "../index";
-import { ChatColor, CloneAndRandomizeList, getNbLockableItems, lockAllItems, lockAllItemsWithRandomCombination, sendActionMessage, sendLocalMessage } from "@/utility/utility";
+import { ChatColor, CloneAndRandomizeList, getNbLockableItems, lockAllItems, lockAllItemsWithRandomPassword, sendActionMessage, sendLocalMessage } from "@/utility/utility";
 import { addRandomRestrain } from "@/utility/ItemUtility";
 import { RandomEventsSettings } from "@/models/RandomEventsSettings";
 import StorageManager from "@/utility/StroageManager";
@@ -10,7 +10,7 @@ export class RandomEventsModule extends ModuleBase {
     events: (() => boolean)[] = [
         this.eventAddRestraint,
         this.eventAddLocks,
-        this.eventRandomCombinationLock
+        this.eventRandomPasswordLock
     ];
 
     // Chance (temp while no settings)
@@ -36,14 +36,14 @@ export class RandomEventsModule extends ModuleBase {
         // Trigger: Enter a new chat room
         this.hook.push(BC_SDK.hookFunction('ChatRoomSync', 0, (args, next) => {
             if (this.settings.enableTriggerOnRoomEntry) {
-                this.triggerRandomEvent();
+                this.checkIfTriggerRandomEvent();
             }
             next(args);
         }));
         // Trigger: Leaving a chat room
         this.hook.push(BC_SDK.hookFunction('ChatRoomAttemptLeave', 0, (args, next) => {
             if (this.settings.enableTriggerOnRoomExit) {
-                if (this.triggerRandomEvent()) {
+                if (this.checkIfTriggerRandomEvent()) {
                     // Cancel leaving the chat room if an event was triggered
                     return;
                 }
@@ -56,21 +56,26 @@ export class RandomEventsModule extends ModuleBase {
         super.unload();
     }
 
-    triggerRandomEvent(): boolean {
+    checkIfTriggerRandomEvent() {
         if (!this.isEnabled()) return false;
 
         if (Math.floor(Math.random() * 100) < this.CHANCE_EVENT) {
-            console.log("RandomEventsModule: A random event has been triggered!");
-            sendLocalMessage("You triggered a trap!", ChatColor.Red);
-            sendActionMessage(Player.Name + " has triggered a trap!");
+            return this.triggerRandomEvent();
+        }
+        return false;
+    }
 
-            // Randomly select an event to trigger
-            let randEventList = CloneAndRandomizeList(this.events);
-            for (let eventFunc of randEventList) {
-                if (eventFunc.call(this)) {
-                    // If the event was successfully triggered, break out of the loop
-                    return true;
-                }
+    triggerRandomEvent(): boolean {
+        console.log("RandomEventsModule: A random event has been triggered!");
+        sendLocalMessage("You triggered a trap!", ChatColor.Red);
+        sendActionMessage(Player.Name + " has triggered a trap!");
+
+        // Randomly select an event to trigger
+        let randEventList = CloneAndRandomizeList(this.events);
+        for (let eventFunc of randEventList) {
+            if (eventFunc.call(this)) {
+                // If the event was successfully triggered, break out of the loop
+                return true;
             }
         }
         return false;
@@ -98,19 +103,14 @@ export class RandomEventsModule extends ModuleBase {
         return true;
     }
 
-    // TODO: lockAllItemsWithRandomCombination() not working ATM
-    eventRandomCombinationLock(): boolean {
-        if (!this.settings.enableRandomCombinationLockEvent) return false;
+    eventRandomPasswordLock(): boolean {
+        if (!this.settings.enableRandomPasswordLockEvent) return false;
 
         let nbLockableItems: number = getNbLockableItems(Player);
-        console.log("RandomEventsModule: Random Combination Lock event nbLockableItems: " + nbLockableItems);
+        console.log("RandomEventsModule: Random Password Lock event nbLockableItems: " + nbLockableItems);
 
         if (nbLockableItems > 0) {
-            if (nbLockableItems <= 3) {
-                lockAllItemsWithRandomCombination(Player, "medium");
-            } else {
-                lockAllItemsWithRandomCombination(Player, "easy");
-            }
+            lockAllItemsWithRandomPassword(Player);
             sendLocalMessage("Some of your restraints has been locked with a Password padlock!", ChatColor.Red);
             return true;
         }

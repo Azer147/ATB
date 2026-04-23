@@ -63,10 +63,10 @@ export default class RandomEventsSettingsPage extends SettingBase {
                 onChange: (new_val) => { this.settings.enableAddLocksEvent = new_val; }
             },
             {
-                title: 'Enable Event: Add locks with a random combination (guessable)',
+                title: 'Enable Event: Add locks with a random Password (guessable)',
                 type: 'checkbox',
-                value: this.settings.enableRandomCombinationLockEvent,
-                onChange: (new_val) => { this.settings.enableRandomCombinationLockEvent = new_val; }
+                value: this.settings.enableRandomPasswordLockEvent,
+                onChange: (new_val) => { this.settings.enableRandomPasswordLockEvent = new_val; }
             },
         ];
     }

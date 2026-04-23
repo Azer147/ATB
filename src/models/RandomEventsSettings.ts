@@ -13,7 +13,7 @@ export interface RandomEventsSettings {
     // Event settings
     enableAddRestraintEvent: boolean;
     enableAddLocksEvent: boolean;
-    enableRandomCombinationLockEvent: boolean;
+    enableRandomPasswordLockEvent: boolean;
 }
 
 export const DefaultRandomEventsSettings: RandomEventsSettings = {
@@ -27,5 +27,5 @@ export const DefaultRandomEventsSettings: RandomEventsSettings = {
 
     enableAddRestraintEvent: true,
     enableAddLocksEvent: true,
-    enableRandomCombinationLockEvent: true
+    enableRandomPasswordLockEvent: true
 }

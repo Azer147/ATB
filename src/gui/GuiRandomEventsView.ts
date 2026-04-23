@@ -16,7 +16,7 @@ export class GuiRandomEventsView {
 
     private static FIELD_ENABLE_EVENT_RESTRAINT: GuiFormField;
     private static FIELD_ENABLE_EVENT_LOCKS: GuiFormField;
-    private static FIELD_ENABLE_EVENT_RANDOM_COMBINATION_LOCK: GuiFormField;
+    private static FIELD_ENABLE_EVENT_RANDOM_PASSWORD_LOCK: GuiFormField;
 
 
     private static HELP_BASE_TASK_TEXT = `
@@ -96,12 +96,12 @@ export class GuiRandomEventsView {
             default_value: this.settings.enableAddLocksEvent,
             onChange: (value: boolean) => { this.settings.enableAddLocksEvent = value; }
         };
-        this.FIELD_ENABLE_EVENT_RANDOM_COMBINATION_LOCK = {
-            html_id: "atb-random-events-enable-event-random-combination-lock",
-            label: "Enable Event: Random Combination Lock",
+        this.FIELD_ENABLE_EVENT_RANDOM_PASSWORD_LOCK = {
+            html_id: "atb-random-events-enable-event-random-password-lock",
+            label: "Enable Event: Random Password Lock",
             type: "checkbox",
-            default_value: this.settings.enableRandomCombinationLockEvent,
-            onChange: (value: boolean) => { this.settings.enableRandomCombinationLockEvent = value; }
+            default_value: this.settings.enableRandomPasswordLockEvent,
+            onChange: (value: boolean) => { this.settings.enableRandomPasswordLockEvent = value; }
         };
     }
 
@@ -140,14 +140,14 @@ export class GuiRandomEventsView {
         // Events enable
         const eventAddRestraint = GuiHelper.createFormField(this.FIELD_ENABLE_EVENT_RESTRAINT);
         const eventAddLocks = GuiHelper.createFormField(this.FIELD_ENABLE_EVENT_LOCKS);
-        const eventRandomCombinationLock = GuiHelper.createFormField(this.FIELD_ENABLE_EVENT_RANDOM_COMBINATION_LOCK);
+        const eventRandomPasswordLock = GuiHelper.createFormField(this.FIELD_ENABLE_EVENT_RANDOM_PASSWORD_LOCK);
 
         // ROW: Chance Events + Chance Harsh Events
         const chanceRow = GuiHelper.createTwoElemRow(chanceEvent, chanceHarshEvent);
         // ROW: Trigger Rooms
         const triggerRow = GuiHelper.createTwoElemRow(triggerRoomEntry, triggerRoomExit);
         // ROW: Event lokcs
-        const eventLocksRow = GuiHelper.createTwoElemRow(eventAddLocks, eventRandomCombinationLock);
+        const eventLocksRow = GuiHelper.createTwoElemRow(eventAddLocks, eventRandomPasswordLock);
 
         // Final Assembly
         form.appendChild(mainEnable);
