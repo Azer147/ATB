@@ -75,7 +75,7 @@ export class GuiDebugView {
         addRandomBtn.className = "atb-main-btn";
         addRandomBtn.innerText = this.STRINGS.ADD_RANDOM_ITEM;
         addRandomBtn.onclick = () => {
-            addRandomRestrain(Player, 1, [], true);
+            addRandomRestrain(Player, 1, undefined, true);
         };
         //form.appendChild(addRandomBtn);
 

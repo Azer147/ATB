@@ -42,59 +42,76 @@ import { CloneAndRandomizeList } from "./utility";
 
 
 // Main function
+// Equip nbToAdd number of random item.
+// Deatils: because InventoryWearRandom() have too much restrictions, everything has been re-done.
+// It allow the following:
+//  - Enable item from others addons (ex: Echo's items)
+//  - Can equip item blocked by another item (ex: can equip vibe if a chastity belt is worn and closed)
+//  - Randomize extended items options
+//  - Effects filter: Allow to equip only items that add the specified effect like "Block" (bind arm) or "chaste", regardless of the slot
+//  - For effects filter, can detect if the effect desired is only available in an extended items options, and apply it.
+//  - Better random items selection
 // @param slotList: will only try to use these slot (default to restraintSlotList)
 // @param effects: will only use item that match this Effect list (empty => everything allowed)
 // @param fetish: will only use item that match this fetish list (empty => everything allowed)
 // @return list of added items
-// TODO: Should get all items for each slot first, then randomly select items directly.
-//    Because we select a random slot first, Issue is, if slot have very few items, these item have a much higher chance of being selected
-//    ex: if slot1 have 1 item eligible, and slot2 & slot3 have 50 items, then the 1 item from slot1 have 33% chance to be selected.
+// TODO: issue: 2 item that block each other can be applied, resulting in an item that cannot be removed
+//      ex: item1 on slot1 block access to slot2 and item2 on slot2 block access to slot1
 // TODO: Global settings to exclude ABDL fetish, cuz for chaste effect, almost half of the items eligible are diapers.
 export function addRandomRestrain(C: Character, nbToAdd: number, slotList: AssetGroupItemName[] = restraintSlotList, ignoreRequirement: boolean = false, effects: EffectName[] = [], fetish: FetishName[] = []): Item[] {
-    // InventoryWearRandom
-    // InventoryGetRandom
-    // Full list of item: Asset
-    //Asset[0]
-    //CharacterFullRandomRestrain(C, "ALL");
     console.log("ATB: addRandomRestrain: nbToAdd=" + nbToAdd + " slotList=", slotList, " effects=", effects, " fetish=", fetish)
     if (slotList.length <= 0) {
-        return [];
+        slotList = restraintSlotList;
     }
 
-    // IgnoreRequirements=false will add these checks (not sure the difference between these 2):
-    // (!Group || InventoryGroupIsBlocked(C, GroupName) // Check if slot is blocked
-    // InventoryAllow(C, AssetList[A], undefined, false) // Check if the item can be added
+    // Build available itemList for all slot
+    let itemList: Asset[] = [];
+    for (let i = 0; i < slotList.length; i++) {
+        let slot = slotList[i];
 
-    let addedItem: Item[] = []
-    let randSlotList = CloneAndRandomizeList(slotList);
-    for (let i = 0; i < randSlotList.length && addedItem.length < nbToAdd; i++) {
-        let slot = randSlotList[i];
-        if (!InventoryGet(C, slot)) {
-            let item: Item | null = null;
+        // Check no item on that slot already
+        if (InventoryGet(C, slot)) continue;
+        // Check if slot is not blocked by another item
+        if (!ignoreRequirement && InventoryGroupIsBlocked(C, slot)) continue;
+
+        let itemListForSlot = getItemListByGroup(C, slot, effects, fetish);
+        if (itemListForSlot.length > 0) {
+            itemList = itemList.concat(itemListForSlot);
+        }
+    }
+    //console.log("ATB: DEBUG: addRandomRestrain: itemList: ", itemList);
+
+
+    // Randomize item list and apply one by one until nbToAdd is reached
+    let addedItemList: Item[] = []
+    let randItemList = CloneAndRandomizeList(itemList);
+    for (let i = 0; i < randItemList.length && addedItemList.length < nbToAdd; i++) {
+        let selectedItem = randItemList[i];
+        let selectedSlot = selectedItem.Group.Name as AssetGroupItemName;
+        // Need to re-check everytime to take previous equiped item into account
+        if (!InventoryGet(C, selectedSlot)) {
+            let addedItem: Item | null = null;
 
             // Check if slot is blocked by another item
             // Note: ignored with IgnorePrerequisites in InventoryGetRandom()
-            // test without InventoryAllow: Can't add toy with chastity already there
-            // not blocked by clothes
-            if (!ignoreRequirement && InventoryGroupIsBlocked(C, slot)) {
+            // Note: not blocked by clothes
+            // Note: Need to re-check everytime to take previous equiped item into account
+            if (!ignoreRequirement && InventoryGroupIsBlocked(C, selectedSlot as AssetGroupItemName)) {
                 continue;
             }
 
-            // Get allow/filtered itemList
-            let itemList = getItemListByGroup(C, slot, effects, fetish);
-            if (itemList.length === 0) {
-                continue;
-            }
             // Equip an item from itemList
-            item = InventoryWearRandom(C, slot, undefined, undefined, false, false, itemList, true);
+            addedItem = CharacterAppearanceSetItem(C, selectedSlot, selectedItem, undefined, undefined);
 
             // Sometimes InventoryWearRandom() retrun null even if an item was equiped, so we do InventoryGet again
-            item = item ?? InventoryGet(C, slot);
-            if (item) {
+            // Update: changed InventoryWearRandom for CharacterAppearanceSetItem, not sure comment above is still true
+            addedItem = addedItem ?? InventoryGet(C, selectedSlot);
+            if (addedItem) {
                 // Randomize Extended item (InventoryWearRandom only support ExtendedArchetype.TYPED)
-                randomizeExtendedItem(C, item, effects);
-                console.log("Added restraint: " + item.Asset.Name + " in slot: " + slot);
-                addedItem.push(item);
+                // Note: Sometimes effects needed can be onlt applied as part of an option of the extended item
+                randomizeExtendedItem(C, addedItem, effects);
+                console.log("Added restraint: " + addedItem.Asset.Name + " in slot: " + selectedSlot);
+                addedItemList.push(addedItem);
             }
             /*else {
                 console.log("Failed to add restraint in slot: " + slot + " item: " + item + " character slot: " + C.Appearance.find(a => a.Asset.Group.Name == slot)?.Asset.Name);
@@ -106,21 +123,22 @@ export function addRandomRestrain(C: Character, nbToAdd: number, slotList: Asset
     }
 
     ChatRoomCharacterUpdate(C);
-    return addedItem;
+    return addedItemList;
 }
 
 // Main function (helper for addRandomRestrain())
+// Get a list of available and equipable for groupName (character slot)
 // @param effects: Filter only item that have one of the Effect
 // @param fetish:  Filter only item that have one of the Fetish
-export function getItemListByGroup(C: Character, groupName: AssetGroupName, effects: EffectName[] = [], fetish: FetishName[] = []): string[] {
-    let itemList: string[] = [];
+export function getItemListByGroup(C: Character, groupName: AssetGroupName, effects: EffectName[] = [], fetish: FetishName[] = []): Asset[] {
+    let itemList: Asset[] = [];
     for (let i = 0; i < Asset.length; i++) {
         let item: Asset = Asset[i];
         if (item.Group.Name == groupName) {
             // Check item is usable
             if (!item.Wear) continue;
             //if (!item.Random) continue;
-            //if (!item.Enable) continue;
+            if (!item.Enable) continue;
 
             // Check Player permission
             if (InventoryIsPermissionBlocked(C, item.Name, item.Group.Name) || InventoryIsPermissionLimited(C, item.Name, item.Group.Name)) {
@@ -128,12 +146,6 @@ export function getItemListByGroup(C: Character, groupName: AssetGroupName, effe
 			}
 
             // Check item prerequisites
-            // Note: ignored with IgnorePrerequisites in InventoryGetRandom()
-            // Test without InventoryGroupIsBlocked: Only allow not blocked item (may remove other item ??)
-            // Also seems to properly block gendered item
-            /*if (!InventoryAllow(C, item, undefined, false)) {
-                    continue;
-            }*/
            if (!checkItemAllow(C, item)) continue;
 
             let effectMatch: boolean = false;
@@ -159,12 +171,12 @@ export function getItemListByGroup(C: Character, groupName: AssetGroupName, effe
             }
 
             if (effectMatch && fetishMatch) {
-                itemList.push(item.Name);
+                itemList.push(item);
                 //console.log("ATB: DEBUG: getItemListByGroup: item.Name=" + item.Name + " item.Effect=", item.Effect, " item.AllowEffect=", item.AllowEffect)
             }
         }
     }
-    //console.log("ATB: DEBUG: getItemListByGroup: itemList=" + itemList);
+    //console.log("ATB: DEBUG: getItemListByGroup: itemList=", itemList);
     return itemList;
 }
 
