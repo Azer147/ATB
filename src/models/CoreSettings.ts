@@ -1,8 +1,8 @@
-import { ChaoticMistressSettings, DefaultChaoticMistressSettings } from "./ChaoticMistressSettings";
-import { DefaultGeneralSettings, GeneralSettings } from "./GeneralSettings";
+import { ChaoticMistressInternalfields, ChaoticMistressSettings, DefaultChaoticMistressSettings } from "./ChaoticMistressSettings";
+import { DefaultGeneralSettings, GeneralInternalfields, GeneralSettings } from "./GeneralSettings";
 import { DefaultRandomEventsSettings, RandomEventsSettings } from "./RandomEventsSettings";
 import { SleepControlSettings } from "./SleepControlSettings";
-import { DefaultTaskManagerSettings, TaskManagerSettings } from "./TaskManagerSettings";
+import { DefaultTaskManagerSettings, TaskManagerInternalfields, TaskManagerSettings } from "./TaskManagerSettings";
 import { DefaultTasksSettings, TasksSettings } from "./TasksSettings";
 
 export interface CoreSettings {
@@ -24,3 +24,7 @@ export const DefaultCoreSettings: CoreSettings = {
     TasksSettings: DefaultTasksSettings,
     //SleepControlModule: DefaultSleepControlSettings
 }
+
+// Internal fields that should not be externally modified
+// Needed mainly to prevent remote settings change (apply_settings) to change/apply these (which are likely outdated)
+export const allInternalfields = GeneralInternalfields.concat(ChaoticMistressInternalfields, TaskManagerInternalfields);

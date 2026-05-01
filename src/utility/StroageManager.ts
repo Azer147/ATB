@@ -1,5 +1,5 @@
 import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
-import { CoreSettings, DefaultCoreSettings } from "@/models/CoreSettings";
+import { allInternalfields, CoreSettings, DefaultCoreSettings } from "@/models/CoreSettings";
 import { GeneralSettings } from "@/models/GeneralSettings";
 import { RandomEventsSettings } from "@/models/RandomEventsSettings";
 import { TaskManagerSettings } from "@/models/TaskManagerSettings";
@@ -78,6 +78,12 @@ export default class StorageManager {
         return baseSettings;
     }
 
+    // Apply settings received, use mergeSettings
+    // Also prevent applying internal settings that shouldn't modified from an external source
+    public static applyExternalSettingsToPlayer(newSettings: CoreSettings) {
+        StorageManager.mergeSettings(StorageManager.globalSettings, newSettings, allInternalfields);
+    }
+
     // Apply newData to target, without changing any reference.
     public static mergeSettings<T extends Record<string, any>>(target: T, newData: any, ignoredKeys: string[] = []): void {
         if (!newData || typeof newData !== "object") {
@@ -112,12 +118,5 @@ export default class StorageManager {
                 }
             }
         }
-    }
-
-    // Apply settings received, use mergeSettings
-    // Also prevent applying internal settings that shouldn't modified from an external source
-    public static applyExternalSettingsToPlayer(newSettings: CoreSettings) {
-        const excludedKeys = ["addChatRoomBtn", "activeTasks", "goodPts", "badPts"];
-        StorageManager.mergeSettings(StorageManager.globalSettings, newSettings, excludedKeys);
     }
 }

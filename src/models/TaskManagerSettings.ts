@@ -31,3 +31,7 @@ export interface TaskManagerSettings {
 export const DefaultTaskManagerSettings: TaskManagerSettings = {
     activeTasks: [],
 }
+
+// Internal fields that should not be externally modified
+// Needed mainly to prevent remote settings change (apply_settings) to change/apply these (which are likely outdated)
+export const TaskManagerInternalfields = ["activeTasks"];
