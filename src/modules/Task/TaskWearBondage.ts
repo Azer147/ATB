@@ -53,7 +53,11 @@ export class TaskWearBondage extends TaskBase {
         else if (progress < 0) {
             progress = 0;
         }
-        this.data.progress = progress;
+        if (this.isFinished()) {
+            this.data.progress = 100;
+        } else {
+            this.data.progress = progress;
+        }
 
         let enforcedStr = this.data.enforce ? " (enforced)" : "";
         this.data.description = `Wear ${this.data.itemToWear} for ${Math.round((this.data.totalDurationMs) / 1000)} seconds.` + enforcedStr;
@@ -215,22 +219,22 @@ export class TaskWearBondage extends TaskBase {
     }
 
     // Check What wear item is available (also used for taskCanStart check)
-    public static getItemAvailibility(): WearBondageType[] {
+    public static getItemAvailibility(C: OtherCharacter | PlayerCharacter = Player): WearBondageType[] {
         let itemAvail: WearBondageType[] = [];
 
-        if (TaskWearBondage.checkIfWearingItem("hand") || getCharacterFreeSlots(Player, TaskWearBondage.getSlotPerBondageType("hand")).length > 0) {
+        if (TaskWearBondage.checkIfWearingItem("hand") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("hand")).length > 0) {
             itemAvail.push("hand");
         }
-        if (TaskWearBondage.checkIfWearingItem("leg") || getCharacterFreeSlots(Player, TaskWearBondage.getSlotPerBondageType("leg")).length > 0) {
+        if (TaskWearBondage.checkIfWearingItem("leg") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("leg")).length > 0) {
             itemAvail.push("leg");
         }
-        if (TaskWearBondage.checkIfWearingItem("gag") || getCharacterFreeSlots(Player, TaskWearBondage.getSlotPerBondageType("gag")).length > 0) {
+        if (TaskWearBondage.checkIfWearingItem("gag") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("gag")).length > 0) {
             itemAvail.push("gag");
         }
-        if (TaskWearBondage.checkIfWearingItem("chastity") || getCharacterFreeSlots(Player, TaskWearBondage.getSlotPerBondageType("chastity")).length > 0) {
+        if (TaskWearBondage.checkIfWearingItem("chastity") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("chastity")).length > 0) {
             itemAvail.push("chastity");
         }
-        if (TaskWearBondage.checkIfWearingItem("toy") || getCharacterFreeSlots(Player, TaskWearBondage.getSlotPerBondageType("toy")).length > 0) {
+        if (TaskWearBondage.checkIfWearingItem("toy") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("toy")).length > 0) {
             itemAvail.push("toy");
         }
 

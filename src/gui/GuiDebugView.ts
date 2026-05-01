@@ -1,12 +1,13 @@
 import { TaskManagerModule } from "@/modules/TaskManagerModule";
 import ModuleManager from "@/utility/ModuleManager";
 import { GuiHelper } from "./GuiHelper";
-import StorageManager from "@/utility/StroageManager";
 import { addRandomRestrain } from "@/utility/ItemUtility";
 import { RandomEventsModule } from "@/modules/RandomEventsModule";
+import GuiViewBase from "./GuiViewBase";
+import { getCharacterChaoticMistressSettings, saveSettings } from "@/utility/CharacterWrapper";
 
-export class GuiDebugView {
-    private static STRINGS = {
+export class GuiDebugView extends GuiViewBase {
+    private STRINGS = {
         PAGE_TITLE: "Debug Page",
         RESET_GOOD_PTS: "Reset Good Points",
         RESET_BAD_PTS: "Reset Bad Points",
@@ -17,23 +18,40 @@ export class GuiDebugView {
         PASSWORD_LOCK_EVENT: "Trigger Password Lock Event",
     };
 
-    private static resetGoodPts() {
-        StorageManager.getChaoticMistressSettings().goodPts = 0;
-        StorageManager.saveSettings();
+    constructor(parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter) {
+        super(parent, C);
+
+        this.buildDebugPage();
     }
 
-    private static resetBadPts() {
-        StorageManager.getChaoticMistressSettings().badPts = 0;
-        StorageManager.saveSettings();
+    public update() {}
+
+    public unload() {
     }
 
-    private static clearAllTasks() {
+    private resetGoodPts() {
+        const setting = getCharacterChaoticMistressSettings(this.character)
+        if (setting) {
+            setting.goodPts = 0;
+            saveSettings(this.character);
+        }
+    }
+
+    private resetBadPts() {
+        const setting = getCharacterChaoticMistressSettings(this.character)
+        if (setting) {
+            setting.badPts = 0;
+            saveSettings(this.character);
+        }
+    }
+
+    private clearAllTasks() {
         const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
         tm?.forceFinishAllTask();
     }
 
-    public static buildDebugPage(parent: HTMLElement) {
-        GuiHelper.createContentTitle(parent, this.STRINGS.PAGE_TITLE, true);
+    public buildDebugPage() {
+        GuiHelper.createContentTitle(this.parent, this.STRINGS.PAGE_TITLE, true);
 
         const form = document.createElement("div");
         form.style.display = "flex";
@@ -110,7 +128,7 @@ export class GuiDebugView {
         const randomEventRow = GuiHelper.createTwoElemRow(randomEventBtn, randomPassBtn);
         form.appendChild(randomEventRow);
 
-        parent.appendChild(form);
+        this.parent.appendChild(form);
     }
 
 }

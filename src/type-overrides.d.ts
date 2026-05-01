@@ -1,15 +1,17 @@
 
+/*
+* This file has been copied from LSCG.
+*/
+
 interface PlayerCharacter extends Character {
-    ATB: import("Settings/Models/settings").SettingsModel;
+    ATB: import("./models/CoreSettings").CoreSettings;
+    //ATB: CoreSettings;
 }
 
-/*interface OtherCharacter extends Character {
-    ATB: import("Settings/Models/settings").IPublicSettingsModel;
-}*/
-
-/*interface PlayerOnlineSettings {
-	ATB: import("Settings/Models/settings").SettingsModel | string;
-}*/
+interface OtherCharacter extends Character {
+    ATB: import("./models/CoreSettings").CoreSettings;
+    //ATB: CoreSettings;
+}
 
 interface ExtensionSettings {
     ATB: string;

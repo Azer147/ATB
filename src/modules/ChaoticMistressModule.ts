@@ -103,7 +103,7 @@ export class ChaoticMistressModule extends ModuleBase {
     */
 
     triggerRandomTask(): void {
-        let availTask: FullTaskType[] = this.getAvailableTasks(false);
+        let availTask: FullTaskType[] = ChaoticMistressModule.getAvailableTasks(Player, false);
         if (availTask.length === 0) {
             return;
         }
@@ -131,16 +131,13 @@ export class ChaoticMistressModule extends ModuleBase {
     }
 
 
-    getAvailableTasks(allowOverwrite: boolean): FullTaskType[] {
+    // Reminder: static should not use StoarageManager, getModule to be compatible with OtherCharacter
+    public static getAvailableTasks(C: OtherCharacter | PlayerCharacter, allowOverwrite: boolean): FullTaskType[] {
         let availTask: FullTaskType[] = [];
-        const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
-        if (!tm) {
-            return [];
-        }
 
         for (let i = 0; i < FullTaskList.length; i++) {
             let taskType: FullTaskType = FullTaskList[i];
-            let reason: TaskCannotStartReason = tm.isTaskCanStart(taskType);
+            let reason: TaskCannotStartReason = TaskManagerModule.isTaskCanStart(C, taskType);
             if (reason == "can_start" || (allowOverwrite && reason == "overwrite_only")) {
                 availTask.push(taskType);
             }
@@ -154,28 +151,23 @@ export class ChaoticMistressModule extends ModuleBase {
     */
 
     triggerRandomPunishment(): void {
-        let availPunish: PunishementType[] = this.getAvailablePunishements();
+        let availPunish: PunishementType[] = ChaoticMistressModule.getAvailablePunishements(Player);
         if (availPunish.length === 0) {
             return;
         }
 
         const selectedPunish = this.selectRandomTaskByWeight(availPunish);
 
-        if (selectedPunish && selectedPunish === "full_bondage") {
-            //this.triggerRandomWearTask();
+        if (selectedPunish) {
             const duration = this.getRandomDuration(this.tasksSettings.fullBondagePunishmentSettings.baseDurationMs);
-            this.startFullBondagePunishment(duration);
+            ChaoticMistressModule.startPunishementByType(selectedPunish, duration);
         }
     }
 
-    getAvailablePunishements(): PunishementType[] {
+    public static getAvailablePunishements(C: OtherCharacter | PlayerCharacter = Player): PunishementType[] {
         let availPunish: PunishementType[] = [];
-        const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
-        if (!tm) {
-            return [];
-        }
 
-        const availTask: FullTaskType[] = this.getAvailableTasks(true);
+        const availTask: FullTaskType[] = this.getAvailableTasks(C, true);
 
         for (let i = 0; i < FullPunishementList.length; i++) {
             const punish: PunishementType = FullPunishementList[i];
@@ -202,6 +194,14 @@ export class ChaoticMistressModule extends ModuleBase {
         return availPunish;
     }
 
+    public static startPunishementByType(type: PunishementType, duration: number) {
+        const cm = ModuleManager.getModule("ChaoticMistressModule") as ChaoticMistressModule;
+        if (cm) {
+            if (type === "full_bondage") {
+                cm.startFullBondagePunishment(duration);
+            }
+        }
+    }
 
     startFullBondagePunishment(duration: number): boolean {
         const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
@@ -211,15 +211,16 @@ export class ChaoticMistressModule extends ModuleBase {
             const penalty = punishSetting.baseBadPointsPenalty;
             const reward = punishSetting.baseGoodPtsReward;
             //const grace = this.tasksSettings.wearBondageTaskSettings.baseGracePeriodMs;
+            const grace = 15000;
 
             console.log(`ATB: startFullBondagePunishment: Starting with duration: ${duration}`);
             sendLocalMessage("Starting Full Bondage Punishement", ChatColor.Purple);
 
-            tm.startWearBondageTask("hand", duration, true, reward, penalty, 15000, true);
-            tm.startWearBondageTask("leg", duration, true, reward, penalty, 15000, true);
-            tm.startWearBondageTask("gag", duration, true, reward, penalty, 15000, true);
-            tm.startWearBondageTask("chastity", duration, true, reward, penalty, 15000, true);
-            tm.startWearBondageTask("toy", duration, true, reward, penalty, 15000, true);
+            tm.startWearBondageTask("hand", duration, true, reward, penalty, grace, true);
+            tm.startWearBondageTask("leg", duration, true, reward, penalty, grace, true);
+            tm.startWearBondageTask("gag", duration, true, reward, penalty, grace, true);
+            tm.startWearBondageTask("chastity", duration, true, reward, penalty, grace, true);
+            tm.startWearBondageTask("toy", duration, true, reward, penalty, grace, true);
 
             // TODO: check retrun and return false if needed
             this.modifyBadPts(-badPtsReduction);

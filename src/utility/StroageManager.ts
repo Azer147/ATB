@@ -14,7 +14,7 @@ export default class StorageManager {
         StorageManager.globalSettings.Enable = value;
     }
     static getGeneralSettings(): GeneralSettings {
-        return StorageManager.globalSettings.General;
+        return StorageManager.globalSettings.GeneralModule;
     }
     static getRandomEventsSettings(): RandomEventsSettings {
         return StorageManager.globalSettings.RandomEventsModule;
@@ -27,6 +27,19 @@ export default class StorageManager {
     }
     static getTasksSettings(): TasksSettings {
         return StorageManager.globalSettings.TasksSettings;
+    }
+
+    static getPublicSettings(): CoreSettings {
+        // TODO: Select settings based on remote Access settings
+        const publicSettings: CoreSettings = {
+            Enable: this.getGlobalEnable(),
+            GeneralModule: this.getGeneralSettings(),
+            RandomEventsModule: this.getRandomEventsSettings(),
+            ChaoticMistressModule: this.getChaoticMistressSettings(),
+            TaskManagerModule: this.getTaskManagerSettings(),
+            TasksSettings: this.getTasksSettings(),
+        }
+        return publicSettings;
     }
 
     static saveSettings() {
@@ -43,47 +56,68 @@ export default class StorageManager {
             }
         }
 
-        const defaultSettings = this.buildDefaultSettings();
-        StorageManager.globalSettings = StorageManager.cleanSavedData(defaultSettings, parsedData);
+        StorageManager.globalSettings = StorageManager.cleanSavedData(parsedData);
 
         Player.ATB = StorageManager.globalSettings;
         StorageManager.saveSettings(); // Save immediately to clean up any old/corrupted data
     }
 
-    static buildDefaultSettings(): CoreSettings {
+    // return a Deep copy of the default settings
+    private static buildDefaultSettings(): CoreSettings {
         return JSON.parse(JSON.stringify(DefaultCoreSettings));
     }
 
-    // Makes parsed json conform to the structure of defaults, removing unknown properties and filling missing ones with default values
-    static cleanSavedData<T extends Record<string, any>>(defaults: T, savedData: any): T {
-        // If the saved data is not an object (could be null, string, number, etc), we return a clean copy of the defaults
-        if (!savedData || typeof savedData !== "object") {
-            return JSON.parse(JSON.stringify(defaults));
+    // Makes savedData (parsed json) conform to the structure of defaults, removing unknown properties and filling missing ones with default values
+    // Note: This will create a new CoreSettings object, not suitable for existing settings.
+    public static cleanSavedData(savedData: any): CoreSettings {
+        // buildDefaultSettings make a deep copy of default
+        const baseSettings = StorageManager.buildDefaultSettings();
+        // using baseSettings as a base object, we apply savedData to it without changing any reference.
+        StorageManager.mergeSettings(baseSettings, savedData);
+
+        return baseSettings;
+    }
+
+    // Apply newData to target, without changing any reference.
+    public static mergeSettings<T extends Record<string, any>>(target: T, newData: any, ignoredKeys: string[] = []): void {
+        if (!newData || typeof newData !== "object") {
+            return;
         }
 
-        const result: any = {};
+        for (const key in target) {
+            if (Object.prototype.hasOwnProperty.call(target, key)) {
+                const targetValue = target[key];
+                const newValue = newData[key];
 
-        for (const key in defaults) {
-            if (Object.prototype.hasOwnProperty.call(defaults, key)) {
-                const defaultValue = defaults[key];
-                const savedValue = savedData[key];
-
-                // If the default value is an object, we need to do a recursive clean
-                if (typeof defaultValue === "object" && defaultValue !== null && !Array.isArray(defaultValue)) {
-                    result[key] = StorageManager.cleanSavedData(defaultValue, savedValue);
+                // ignore empty property
+                if (newValue === null || newValue === undefined) {
+                    continue;
                 }
-                // Primitive value
+                // ignore ignoredKeys
+                if (ignoredKeys && ignoredKeys.length > 0 && ignoredKeys.includes(key)) {
+                    console.log("ATB: DEBUG: mergeSettings: ignoring key: ", key);
+                    continue;
+                }
+
+                // If the target property is a nested object, recursively mutate it
+                if (typeof targetValue === "object" && targetValue !== null && !Array.isArray(targetValue)) {
+                    StorageManager.mergeSettings(targetValue, newValue, ignoredKeys);
+                }
+                // Primitive value or Array
                 else {
-                    // Keep the saved value if it exists AND if its type matches the default
-                    if (savedValue !== undefined && typeof savedValue === typeof defaultValue) {
-                        result[key] = savedValue;
-                    } else {
-                        result[key] = defaultValue;
+                    // Only apply if the saved value exists and matches the expected type
+                    if (newValue !== undefined && typeof newValue === typeof targetValue) {
+                        target[key] = newValue;
                     }
                 }
             }
         }
+    }
 
-        return result as T;
+    // Apply settings received, use mergeSettings
+    // Also prevent applying internal settings that shouldn't modified from an external source
+    public static applyExternalSettingsToPlayer(newSettings: CoreSettings) {
+        const excludedKeys = ["addChatRoomBtn", "activeTasks", "goodPts", "badPts"];
+        StorageManager.mergeSettings(StorageManager.globalSettings, newSettings, excludedKeys);
     }
 }

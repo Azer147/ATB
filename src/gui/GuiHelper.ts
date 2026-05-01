@@ -388,4 +388,13 @@ export class GuiHelper {
 
         return { card, contentArea };
     }
+
+    public static buildErrorPage(parent: HTMLElement) {
+        parent.innerHTML = "";
+        GuiHelper.createContentTitle(parent, "Remote Access Denied", true);
+        const text = document.createElement("p");
+        text.style.color = "var(--atb-text-muted)";
+        text.innerText = "This user don't allow access to these settings.";
+        parent.appendChild(text);
+    }
 }

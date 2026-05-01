@@ -86,6 +86,7 @@ export abstract class TaskBase {
     public triggerTaskCompletion(succes: boolean, skipPts: boolean): void {
         this.isTaskFinished = true;
         this.transgessionOccuring = false;
+        this.data.progress = 100;
 
         console.log("ATB: Task is finished: " + this.getDescription());
         sendLocalMessage("Task is finished: " + this.getDescription(), ChatColor.Purple);

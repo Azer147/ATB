@@ -12,6 +12,7 @@ import { TaskManagerModule } from "./modules/TaskManagerModule";
 import { ChaoticMistressModule } from "./modules/ChaoticMistressModule";
 import { uiStyles } from "./gui/GuiStylesCss";
 import { GeneralModule } from "./modules/GeneralModule";
+import { RemoteModule } from "./modules/RemoteModule";
 
 
 export const BC_SDK: ModSDKModAPI = bcModSdk.registerMod({
@@ -48,6 +49,7 @@ function loadModules() {
     StorageManager.loadSettings();
     loadStyles();
     ModuleManager.registerModule(new GeneralModule());
+    ModuleManager.registerModule(new RemoteModule());
     ModuleManager.registerModule(new RandomEventsModule());
     ModuleManager.registerModule(new TaskManagerModule());
     ModuleManager.registerModule(new ChaoticMistressModule());

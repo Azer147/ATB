@@ -1,25 +1,27 @@
 import { GuiHelper, GuiFormField } from "./GuiHelper";
-import StorageManager from "@/utility/StroageManager";
 import { RandomEventsSettings } from "@/models/RandomEventsSettings";
+import GuiViewBase from "./GuiViewBase";
+import { getCharacterRandomEventsSettings, saveSettings } from "@/utility/CharacterWrapper";
 
-export class GuiRandomEventsView {
-    private static settings: RandomEventsSettings
+export class GuiRandomEventsView extends GuiViewBase {
+    private shouldSaveSetting: boolean = false;
+    private settings!: RandomEventsSettings;
 
     // RandomEventsSettings fields
-    private static FIELD_ENABLE: GuiFormField;
+    private FIELD_ENABLE!: GuiFormField;
 
-    private static FIELD_CHANCE_EVENT: GuiFormField;
-    private static FIELD_CHANCE_HARSH_EVENT: GuiFormField;
+    private FIELD_CHANCE_EVENT!: GuiFormField;
+    private FIELD_CHANCE_HARSH_EVENT!: GuiFormField;
 
-    private static FIELD_ENABLE_TRIGGER_ROOM_ENTRY: GuiFormField;
-    private static FIELD_ENABLE_TRIGGER_ROOM_EXIT: GuiFormField
+    private FIELD_ENABLE_TRIGGER_ROOM_ENTRY!: GuiFormField;
+    private FIELD_ENABLE_TRIGGER_ROOM_EXIT!: GuiFormField
 
-    private static FIELD_ENABLE_EVENT_RESTRAINT: GuiFormField;
-    private static FIELD_ENABLE_EVENT_LOCKS: GuiFormField;
-    private static FIELD_ENABLE_EVENT_RANDOM_PASSWORD_LOCK: GuiFormField;
+    private FIELD_ENABLE_EVENT_RESTRAINT!: GuiFormField;
+    private FIELD_ENABLE_EVENT_LOCKS!: GuiFormField;
+    private FIELD_ENABLE_EVENT_RANDOM_PASSWORD_LOCK!: GuiFormField;
 
 
-    private static HELP_BASE_TASK_TEXT = `
+    private HELP_BASE_TASK_TEXT = `
     Random Events are one time event that can trigger randomly depending of your settings.<br>
     - <strong>Chance of Events:</strong> the main chance of an events triggering, the chance is used on every trigger enabled.<br>
     - <strong>Chance of Harsh Events:</strong> Only when a random event is triggered, this is a chance that the events will be harsher (ex: more restraints added).<br>
@@ -27,7 +29,7 @@ export class GuiRandomEventsView {
     - <strong>Events:</strong> What Events can happen when a random event is triggered.<br>
     `;
 
-    private static STRINGS = {
+    private STRINGS = {
         PAGE_TITLE: "Random Events Settings",
 
         CATEGORY_CHANCE_TITLE: "Events Chance On Trigger",
@@ -37,15 +39,27 @@ export class GuiRandomEventsView {
         HELP_BASE_TASK_TITLE: "Random Events Informations",
     };
 
-    private static loadFieldsAndSettings() {
-        this.settings = StorageManager.getRandomEventsSettings();
+    constructor(parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter) {
+        super(parent, C);
+
+        // Check first if we have anything we need
+        const settings = getCharacterRandomEventsSettings(this.character)
+        if (!settings) {
+            // Build error page
+            GuiHelper.buildErrorPage(parent);
+            return;
+        }
+        this.settings = settings;
 
         this.FIELD_ENABLE = {
             html_id: "atb-random-events-enable",
             label: "Enable Random Events",
             type: "checkbox",
             default_value: this.settings.enable,
-            onChange: (value: boolean) => { this.settings.enable = value; }
+            onChange: (value: boolean) => {
+                this.settings.enable = value;
+                this.shouldSaveSetting = true;
+            }
         };
 
         this.FIELD_CHANCE_EVENT = {
@@ -55,7 +69,10 @@ export class GuiRandomEventsView {
             min_value: 0,
             max_value: 100,
             default_value: this.settings.chanceEvent,
-            onChange: (value: number) => { this.settings.chanceEvent = value; }
+            onChange: (value: number) => {
+                this.settings.chanceEvent = value;
+                this.shouldSaveSetting = true;
+            }
         };
         this.FIELD_CHANCE_HARSH_EVENT = {
             html_id: "atb-random-events-chance-harsh-event",
@@ -64,7 +81,10 @@ export class GuiRandomEventsView {
             min_value: 0,
             max_value: 100,
             default_value: this.settings.chanceHarshEvent,
-            onChange: (value: number) => { this.settings.chanceHarshEvent = value; }
+            onChange: (value: number) => {
+                this.settings.chanceHarshEvent = value;
+                this.shouldSaveSetting = true;
+            }
         };
 
         this.FIELD_ENABLE_TRIGGER_ROOM_ENTRY = {
@@ -72,14 +92,20 @@ export class GuiRandomEventsView {
             label: "Enable Trigger: On Room Entry",
             type: "checkbox",
             default_value: this.settings.enableTriggerOnRoomEntry,
-            onChange: (value: boolean) => { this.settings.enableTriggerOnRoomEntry = value; }
+            onChange: (value: boolean) => {
+                this.settings.enableTriggerOnRoomEntry = value;
+                this.shouldSaveSetting = true;
+            }
         };
         this.FIELD_ENABLE_TRIGGER_ROOM_EXIT = {
             html_id: "atb-random-events-enable-trigger-room-exit",
             label: "Enable Trigger: On Room Exit",
             type: "checkbox",
             default_value: this.settings.enableTriggerOnRoomExit,
-            onChange: (value: boolean) => { this.settings.enableTriggerOnRoomExit = value; }
+            onChange: (value: boolean) => {
+                this.settings.enableTriggerOnRoomExit = value;
+                this.shouldSaveSetting = true;
+            }
         };
 
         this.FIELD_ENABLE_EVENT_RESTRAINT = {
@@ -87,31 +113,45 @@ export class GuiRandomEventsView {
             label: "Enable Event: Add Restraint",
             type: "checkbox",
             default_value: this.settings.enableAddRestraintEvent,
-            onChange: (value: boolean) => { this.settings.enableAddRestraintEvent = value; }
+            onChange: (value: boolean) => {
+                this.settings.enableAddRestraintEvent = value;
+                this.shouldSaveSetting = true;
+            }
         };
         this.FIELD_ENABLE_EVENT_LOCKS = {
             html_id: "atb-random-events-enable-event-locks",
             label: "Enable Event: Add Locks",
             type: "checkbox",
             default_value: this.settings.enableAddLocksEvent,
-            onChange: (value: boolean) => { this.settings.enableAddLocksEvent = value; }
+            onChange: (value: boolean) => {
+                this.settings.enableAddLocksEvent = value;
+                this.shouldSaveSetting = true;
+            }
         };
         this.FIELD_ENABLE_EVENT_RANDOM_PASSWORD_LOCK = {
             html_id: "atb-random-events-enable-event-random-password-lock",
             label: "Enable Event: Random Password Lock",
             type: "checkbox",
             default_value: this.settings.enableRandomPasswordLockEvent,
-            onChange: (value: boolean) => { this.settings.enableRandomPasswordLockEvent = value; }
+            onChange: (value: boolean) => {
+                this.settings.enableRandomPasswordLockEvent = value;
+                this.shouldSaveSetting = true;
+            }
         };
+
+        this.buildRandomEventsPage();
     }
 
-    public static unload() {
-        StorageManager.saveSettings();
+    public update() {}
+
+    public unload() {
+        if (this.shouldSaveSetting) {
+            saveSettings(this.character);
+        }
     }
 
-    public static buildRandomEventsPage(parent: HTMLElement) {
-        this.loadFieldsAndSettings();
-        GuiHelper.createContentTitle(parent, this.STRINGS.PAGE_TITLE, true);
+    public buildRandomEventsPage() {
+        GuiHelper.createContentTitle(this.parent, this.STRINGS.PAGE_TITLE, true);
 
         const form = document.createElement("div");
         form.style.display = "flex";
@@ -159,7 +199,7 @@ export class GuiRandomEventsView {
         form.appendChild(eventAddRestraint);
         form.appendChild(eventLocksRow);
 
-        parent.appendChild(form);
+        this.parent.appendChild(form);
     }
 
 }

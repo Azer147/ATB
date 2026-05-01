@@ -7,7 +7,7 @@ import { DefaultTasksSettings, TasksSettings } from "./TasksSettings";
 
 export interface CoreSettings {
     Enable: boolean;
-    General: GeneralSettings;
+    GeneralModule: GeneralSettings;
     RandomEventsModule: RandomEventsSettings;
     ChaoticMistressModule: ChaoticMistressSettings;
     TaskManagerModule: TaskManagerSettings;
@@ -17,7 +17,7 @@ export interface CoreSettings {
 
 export const DefaultCoreSettings: CoreSettings = {
     Enable: true,
-    General: DefaultGeneralSettings,
+    GeneralModule: DefaultGeneralSettings,
     RandomEventsModule: DefaultRandomEventsSettings,
     ChaoticMistressModule: DefaultChaoticMistressSettings,
     TaskManagerModule: DefaultTaskManagerSettings,

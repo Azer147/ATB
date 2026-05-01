@@ -1,13 +1,12 @@
-import { TaskManagerModule } from "@/modules/TaskManagerModule";
 import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
 import { TaskData } from "@/models/TaskManagerSettings";
-import ModuleManager from "@/utility/ModuleManager";
-import StorageManager from "@/utility/StroageManager";
 import { GuiHelper } from "./GuiHelper";
 import { formatTimeMs } from "@/utility/utility";
+import GuiViewBase from "./GuiViewBase";
+import { getCharacterActiveTaskById, getCharacterChaoticMistressSettings, getCharacterTaskManagerSettings, skipTaskforCharacter } from "@/utility/CharacterWrapper";
 
-export default class GuiDashboardView {
-    private static STRINGS = {
+export default class GuiDashboardView extends GuiViewBase {
+    private STRINGS = {
         POINTS_TITLE: "Points Status",
         TASK_LIST_TITLE: "Active Tasks",
         GOOD_POINTS: "Good Points (GP)",
@@ -20,7 +19,11 @@ export default class GuiDashboardView {
     }
 
     // Updatable elem
-    private static taskElements: Map<number, {
+    private goodPtsElem: HTMLElement | undefined;
+    private badPtsElem: HTMLElement | undefined;
+    private badPtsBarElem: HTMLElement | undefined;
+
+    private taskElements: Map<number, {
         cardElement: HTMLDivElement,
         progressBar: HTMLElement,
         timeText: HTMLElement,
@@ -28,71 +31,94 @@ export default class GuiDashboardView {
         skipBtn: HTMLButtonElement
     }> = new Map();
 
-    public static buildDashboardPage(parent: HTMLDivElement) {
-        parent.appendChild(this.createPointsPanel(StorageManager.getChaoticMistressSettings()));
 
-        GuiHelper.createContentTitle(parent, this.STRINGS.TASK_LIST_TITLE);
+    constructor(parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter) {
+        super(parent, C);
 
-        let tmSettings = StorageManager.getTaskManagerSettings();
+        // Check first if we have anything we need
+        const settings = getCharacterChaoticMistressSettings(this.character);
+        const tmSettings = getCharacterTaskManagerSettings(this.character);
+        if (!settings || !tmSettings) {
+            GuiHelper.buildErrorPage(parent);
+        } else {
+            //this.settings = settings;
+            //this.tasksSettings = tasksSettings;
+            this.buildDashboardPage();
+        }
+
+    }
+
+    public unload() {}
+
+
+    public buildDashboardPage() {
+        this.parent.appendChild(this.createPointsPanel(getCharacterChaoticMistressSettings(this.character)));
+
+        GuiHelper.createContentTitle(this.parent, this.STRINGS.TASK_LIST_TITLE);
+
+        let tmSettings = getCharacterTaskManagerSettings(this.character);
         this.taskElements.clear();
-        for (let i = 0; i < tmSettings.activeTasks.length; i++) {
-            parent.appendChild(this.createTaskCard(tmSettings.activeTasks[i]));
+        if (tmSettings) {
+            for (let i = 0; i < tmSettings.activeTasks.length; i++) {
+                this.parent.appendChild(this.createTaskCard(tmSettings.activeTasks[i]));
+            }
         }
     }
 
-    public static update(content: HTMLElement) {
-        let cmSettings = StorageManager.getChaoticMistressSettings();
-        let pointsGoodPtsHtml = content.querySelector("#atb-points-good");
-        if (pointsGoodPtsHtml) pointsGoodPtsHtml.innerHTML = `${cmSettings.goodPts}`;
-        let pointsBadPtsHtml = content.querySelector("#atb-points-bad");
-        if (pointsBadPtsHtml) pointsBadPtsHtml.innerHTML = `${cmSettings.badPts} / ${cmSettings.forcedPunishementThreshold}`;
-        let pointsBadBarHtml: HTMLElement | null = content.querySelector("#atb-points-bar");
-        if (pointsBadBarHtml) {
-            const debtPercentage = Math.min(cmSettings.forcedPunishementThreshold, (cmSettings.badPts / cmSettings.forcedPunishementThreshold) * 100);
-            pointsBadBarHtml.style.width = `${debtPercentage}%`;
+    public update() {
+        const cmSettings = getCharacterChaoticMistressSettings(this.character);
+       if (cmSettings) {
+           if (this.goodPtsElem) this.goodPtsElem.innerHTML = `${cmSettings.goodPts}`;
+           if (this.badPtsElem) this.badPtsElem.innerHTML = `${cmSettings.badPts}`;
+           if (this.badPtsBarElem) {
+               const debtPercentage = Math.min(cmSettings.forcedPunishementThreshold, (cmSettings.badPts / cmSettings.forcedPunishementThreshold) * 100);
+               this.badPtsBarElem.style.width = `${debtPercentage}%`;
+            }
         }
 
-        let tmSettings = StorageManager.getTaskManagerSettings();
-
-        const currentTaskIds = new Set(tmSettings.activeTasks.map(t => t.id));
 
         // Update Active tasks
-        for (let task of tmSettings.activeTasks) {
-            let elements = this.taskElements.get(task.id);
+        const tmSettings = getCharacterTaskManagerSettings(this.character);
+        if (tmSettings) {
+            const currentTaskIds = new Set(tmSettings.activeTasks.map(t => t.id));
+            for (let task of tmSettings.activeTasks) {
+                let elements = this.taskElements.get(task.id);
 
-            // Handle new tasks
-            if (!elements) {
-                const newCard = this.createTaskCard(task);
-                content.appendChild(newCard);
-                elements = this.taskElements.get(task.id);
+                // Handle new tasks
+                if (!elements) {
+                    const newCard = this.createTaskCard(task);
+                    this.parent.appendChild(newCard);
+                    elements = this.taskElements.get(task.id);
+                }
+
+                // Update existing task
+                if (elements) {
+                    const progressPercentage = task.progress;
+                    const timeLeftMs = task.totalDurationMs - task.elapsedtimeMs;
+                    const timeLeftStr = formatTimeMs(timeLeftMs);
+
+                    elements.progressBar.style.width = `${progressPercentage}%`;
+                    elements.timeText.innerText = `${this.STRINGS.TIME_LEFT}: ${timeLeftStr}`;
+
+                    this.updateTaskPenaltyWarning(task, elements.warningText);
+                    this.updateSkipBtn(task, elements.skipBtn);
+                }
             }
 
-            // Update existing task
-            if (elements) {
-                const progressPercentage = task.progress;
-                const timeLeftMs = task.totalDurationMs - task.elapsedtimeMs;
-                const timeLeftStr = formatTimeMs(timeLeftMs);
-
-                elements.progressBar.style.width = `${progressPercentage}%`;
-                elements.timeText.innerText = `${this.STRINGS.TIME_LEFT}: ${timeLeftStr}`;
-
-                this.updateTaskPenaltyWarning(task, elements.warningText);
-                this.updateSkipBtn(task, elements.skipBtn);
-            }
-        }
-
-        // Delete removed tasks
-        for (let [taskId, elements] of this.taskElements.entries()) {
-            if (!currentTaskIds.has(taskId)) {
-                elements.cardElement.remove();
-                this.taskElements.delete(taskId);
+            // Delete removed tasks
+            for (let [taskId, elements] of this.taskElements.entries()) {
+                if (!currentTaskIds.has(taskId)) {
+                    elements.cardElement.remove();
+                    this.taskElements.delete(taskId);
+                }
             }
         }
     }
 
-    private static createPointsPanel(settings: ChaoticMistressSettings): HTMLDivElement {
+    private createPointsPanel(settings: ChaoticMistressSettings | undefined): HTMLDivElement {
         const panel = document.createElement("div");
         panel.className = "atb-panel";
+        if (!settings) return panel;
 
         const debtPercentage = Math.min(settings.forcedPunishementThreshold, (settings.badPts / settings.forcedPunishementThreshold) * 100);
 
@@ -109,7 +135,7 @@ export default class GuiDashboardView {
         return panel;
     }
 
-    private static createTaskCard(task: TaskData): HTMLDivElement {
+    private createTaskCard(task: TaskData): HTMLDivElement {
         const card = document.createElement("div");
         card.className = "atb-task-card";
         card.style.flexDirection = "column";
@@ -190,12 +216,11 @@ export default class GuiDashboardView {
         return card;
     }
 
-    private static updateSkipBtn(task: TaskData, skipBtn: HTMLButtonElement) {
-        const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
+    private updateSkipBtn(task: TaskData, skipBtn: HTMLButtonElement) {
         if (task.enforce) {
             skipBtn.disabled = true;
             skipBtn.innerText = `${this.STRINGS.LOCKED}`;
-        } else if (tm && tm.getActiveTaskById(task.id)?.isFinished()) {
+        } else if (task.progress >= 100) {
             skipBtn.disabled = true;
             skipBtn.innerText = `${this.STRINGS.FINISHED}`;
         } else {
@@ -206,16 +231,16 @@ export default class GuiDashboardView {
                 skipBtn.disabled = true;
 
                 console.log(`ATB: Skipping task ${task.id}`);
-                tm?.skipTask(task.id);
+                skipTaskforCharacter(this.character, task.id);
             };
         }
     }
 
-    private static updateTaskPenaltyWarning(task: TaskData, warningElem: HTMLElement) {
-        const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
+    private updateTaskPenaltyWarning(task: TaskData, warningElem: HTMLElement) {
+        const activeTask = getCharacterActiveTaskById(this.character, task.id);
 
         // Warning text
-        let isTaskTrangressing = tm?.getActiveTaskById(task.id)?.isTransgessionOccuring();
+        let isTaskTrangressing = activeTask?.isTransgessionOccuring() || false;
 
         warningElem.innerHTML = isTaskTrangressing
             ? `<span style="color: var(--atb-danger);">${this.STRINGS.PENALTY_WARNING}</span>`

@@ -1,17 +1,20 @@
 import { TaskManagerModule } from "@/modules/TaskManagerModule";
-import { TaskCannotStartReason } from "@/models/TaskManagerSettings";
-import ModuleManager from "@/utility/ModuleManager";
+import { TaskCannotStartReason, TaskData } from "@/models/TaskManagerSettings";
 import { GuiHelper, GuiFormField } from "./GuiHelper";
-import { getTaskTypeSetting, TaskType, WearBondageType } from "@/models/TasksSettings";
-import StorageManager from "@/utility/StroageManager";
+import { getTaskTypeSetting, TasksSettings, TaskType, WearBondageType } from "@/models/TasksSettings";
 import { ChaoticMistressModule } from "@/modules/ChaoticMistressModule";
+import GuiViewBase from "./GuiViewBase";
+import { getCharacterChaoticMistressSettings, getCharacterTasksSettings, saveSettings, startTaskforCharacter } from "@/utility/CharacterWrapper";
+import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
 
-export class GuiCreateTaskView {
-    private static form: HTMLElement;
+export class GuiCreateTaskView extends GuiViewBase {
+    //private form: HTMLElement;
+    private settings!: ChaoticMistressSettings;
+    private tasksSettings!: TasksSettings;
 
     // TODO: Use default value from task settings
     // Common fields
-    private static FIELD_TASK_TYPE: GuiFormField = {
+    private FIELD_TASK_TYPE: GuiFormField = {
         html_id: "atb-create-task-type",
         label: "Task Type",
         type: "select",
@@ -19,7 +22,7 @@ export class GuiCreateTaskView {
             { value: "wear_bondage", label: "Wear Restraint/Bondage" }
         ]
     };
-    private static FIELD_DURATION: GuiFormField = {
+    private FIELD_DURATION: GuiFormField = {
         html_id: "atb-create-task-duration",
         label: "Duration (Minutes)",
         type: "number",
@@ -27,14 +30,14 @@ export class GuiCreateTaskView {
         min_value: 1,
         max_value: 24 * 60
     };
-    private static FIELD_ENFORCE: GuiFormField = {
+    private FIELD_ENFORCE: GuiFormField = {
         html_id: "atb-create-task-enforce",
         label: "Enforce Task (Unskippable)",
         type: "checkbox",
         useInputPadding: true, // makes it align correctly with input fields on the same row
         default_value: false,
     };
-    private static FIELD_REWARD_INPUT: GuiFormField = {
+    private FIELD_REWARD_INPUT: GuiFormField = {
         html_id: "atb-create-task-reward",
         label: "Reward (Good Points)",
         type: "number",
@@ -42,13 +45,13 @@ export class GuiCreateTaskView {
         min_value: 0,
         max_value: 1000,
     };
-    private static FIELD_REWARD_DISPLAY: GuiFormField = {
+    private FIELD_REWARD_DISPLAY: GuiFormField = {
         html_id: "atb-create-task-reward-display",
         label: "Reward: 0 Good Points",
         type: "display-text",
         usePrimaryColor: true,
     };
-    private static FIELD_PENALTY: GuiFormField = {
+    private FIELD_PENALTY: GuiFormField = {
         html_id: "atb-create-task-penalty",
         label: "Penalty (Bad Points)",
         type: "number",
@@ -58,7 +61,7 @@ export class GuiCreateTaskView {
     };
 
     // Wear specific fields
-    private static FIELD_WEAR_TYPE: GuiFormField = {
+    private FIELD_WEAR_TYPE: GuiFormField = {
         html_id: "atb-create-task-wear-type",
         label: "Wear Type",
         type: "select",
@@ -70,7 +73,7 @@ export class GuiCreateTaskView {
             { value: "toy", label: "Toys / Vibrator" }
         ]
     };
-    private static FIELD_GRACE_PERIOD: GuiFormField = {
+    private FIELD_GRACE_PERIOD: GuiFormField = {
         html_id: "atb-create-task-grace-period",
         label: "Grace Period (Seconds)",
         type: "number",
@@ -80,7 +83,7 @@ export class GuiCreateTaskView {
     };
 
 
-    private static HELP_BASE_TASK_TEXT = `
+    private HELP_BASE_TASK_TEXT = `
     New Tasks can be created freely by the Player or Someone else (based on access settings).<br>
     - Tasks award <strong>Good Points (GP)</strong> on completion and <strong>Bad Points (BP)</strong> on failure or transgression.<br>
     - If the <strong>Point System</strong> is enabled, Points is calculated automatically from the base settings of the task.<br>
@@ -91,13 +94,13 @@ export class GuiCreateTaskView {
     Task <strong>Wear Bondage/Restraints:</strong> Player must wear specified restraints or get <strong>Bad Points penalty</strong>.
     `;
 
-    private static HELP_WEAR_TASK_TEXT = `
+    private HELP_WEAR_TASK_TEXT = `
     Task <strong>Wear Bondage/Restraints:</strong> Player must wear specified restraints or get <strong>Bad Points penalty</strong>.<br>
     - <strong>Enforce</strong> modifier will force equip random restraints when the Player is not wearing it.<br>
     - <strong>Grace Period:</strong> How long the Player have before getting <strong>Bad Points penalty</strong> for not wearing the restraints.<br>
     `;
 
-    private static STRINGS = {
+    private STRINGS = {
         PAGE_TITLE: "Assign a New Task",
         CREATE_TASK_BTN: "Create Task",
         CREATE_TASK_BTN_SUCCESS: "Task created!",
@@ -116,8 +119,31 @@ export class GuiCreateTaskView {
         ERROR_TASK_UNKNOWN: "An unknown error occurred!",
     };
 
-    public static buildCreateTaskPage(parent: HTMLElement) {
-        GuiHelper.createContentTitle(parent, this.STRINGS.PAGE_TITLE, true);
+
+    constructor(parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter) {
+        super(parent, C);
+
+        // Check first if we have anything we need
+        const settings = getCharacterChaoticMistressSettings(this.character);
+        const tasksSettings = getCharacterTasksSettings(this.character);
+        if (!settings || !tasksSettings) {
+            GuiHelper.buildErrorPage(parent);
+        } else {
+            this.settings = settings;
+            this.tasksSettings = tasksSettings;
+            this.buildCreateTaskPage();
+        }
+    }
+
+    public update() {}
+
+    public unload() {
+        //saveSettings(this.character);
+    }
+
+
+    public buildCreateTaskPage() {
+        GuiHelper.createContentTitle(this.parent, this.STRINGS.PAGE_TITLE, true);
 
         const form = document.createElement("div");
         form.style.display = "flex";
@@ -163,8 +189,7 @@ export class GuiCreateTaskView {
         const enforceCheckbox = GuiHelper.createFormField(this.FIELD_ENFORCE);
 
         let rewardDisplay;
-        let cmSettings = StorageManager.getChaoticMistressSettings();
-        if (cmSettings && cmSettings.enablePointsSystem) {
+        if (this.settings && this.settings.enablePointsSystem) {
             // Build Reward field when Points System enabled
             rewardDisplay = GuiHelper.createFormField(this.FIELD_REWARD_DISPLAY);
 
@@ -199,13 +224,13 @@ export class GuiCreateTaskView {
         form.appendChild(baseRow);
         form.appendChild(baseRow2);
         form.appendChild(createTaskBtn);
-        this.form = form;
+        //this.form = form;
 
         this.updateRewardPoints(form);
-        parent.appendChild(form);
+        this.parent.appendChild(form);
     }
 
-    private static createWearOptionsElem(): HTMLElement {
+    private createWearOptionsElem(): HTMLElement {
         // Select for bondage type
         const wearTypeSelect = GuiHelper.createFormField(this.FIELD_WEAR_TYPE);
 
@@ -216,7 +241,7 @@ export class GuiCreateTaskView {
         return GuiHelper.createTwoElemRow(wearTypeSelect, gracePeriodInput);
     }
 
-    private static onClickCreateTask(container: HTMLElement, createBtn: HTMLButtonElement) {
+    private onClickCreateTask(container: HTMLElement, createBtn: HTMLButtonElement) {
         // Get all common value
         const durationMinutes = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_DURATION) as number ?? -1);
         const totalDurationMs = durationMinutes * 60 * 1000;
@@ -225,24 +250,45 @@ export class GuiCreateTaskView {
         const goodPtsOnSucces = this.getRewardPoints(container);
         const badPtsOnFailure = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_PENALTY) as number ?? 0);
 
-        const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
+
+        // Start to Build TaskData
+        let taskData: TaskData = {
+            id: 0, // placeholder
+            type: "wear_bondage", // placeholder
+            description: "",
+            elapsedtimeMs: 0,
+            totalDurationMs: totalDurationMs, // in millisec
+            progress: 0,
+            enforce: enforce,
+            goodPtsOnSucces: goodPtsOnSucces,
+            badPtsOnFailure: badPtsOnFailure,
+        }
+
+        //const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
         let created = false;
         let cannotStartReason: TaskCannotStartReason = "unknown";
         let retryFunction;
-        if (tm && taskType === "wear_bondage") {
+        if (taskType === "wear_bondage") {
             // Get value specific for that task
             const itemToWear = GuiHelper.getFormFieldValue(container, this.FIELD_WEAR_TYPE) as WearBondageType;
             const graceSec = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_GRACE_PERIOD) as number || 5);
             const gracePeriodMs = graceSec * 1000;
 
-            cannotStartReason = tm.isTaskCanStart({taskType: taskType, taskSubType: itemToWear});
-            if (cannotStartReason === "can_start") {
-                created = tm.startWearBondageTask(itemToWear, totalDurationMs, enforce, goodPtsOnSucces, badPtsOnFailure, gracePeriodMs);
-            } else if (cannotStartReason === "overwrite_only") {
-                // retryFunction is set so it can be triggered in the dialog button click
-                retryFunction = () => {
-                    tm.startWearBondageTask(itemToWear, totalDurationMs, enforce, goodPtsOnSucces, badPtsOnFailure, gracePeriodMs);
-                }
+            // Complete taskData
+            taskData.itemToWear = itemToWear;
+            taskData.gracePeriodMs = gracePeriodMs;
+
+            // Pre-check
+            cannotStartReason = TaskManagerModule.isTaskCanStart(this.character, {taskType: taskType, taskSubType: itemToWear});
+        }
+
+        // Try to start task
+        if (cannotStartReason === "can_start") {
+            created = startTaskforCharacter(this.character, taskData, false);
+        } else if (cannotStartReason === "overwrite_only") {
+            // retryFunction is set so it can be triggered in the dialog button click
+            retryFunction = () => {
+                startTaskforCharacter(this.character, taskData, true);
             }
         }
 
@@ -270,20 +316,18 @@ export class GuiCreateTaskView {
         }, 2000);
     }
 
-    private static getRewardPoints(container: HTMLElement) {
-        const cmSettings = StorageManager.getChaoticMistressSettings();
-        if (cmSettings && cmSettings.enablePointsSystem) {
+    private getRewardPoints(container: HTMLElement) {
+        if (this.settings.enablePointsSystem) {
             return this.calculateRewardPoints(container);
         } else {
             return Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_REWARD_INPUT) as number ?? 0);
         }
     }
 
-    private static calculateRewardPoints(container: HTMLElement): number {
+    private calculateRewardPoints(container: HTMLElement): number {
         const taskType = GuiHelper.getFormFieldValue(container, this.FIELD_TASK_TYPE) as TaskType;
-        const ts = StorageManager.getTasksSettings();
-        if (!taskType || !ts) return 0;
-        const setting = getTaskTypeSetting(ts, taskType);
+        if (!taskType) return 0;
+        const setting = getTaskTypeSetting(this.tasksSettings, taskType);
         if (!setting) return 0;
 
         let durationMinutes = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_DURATION) as number);
@@ -303,7 +347,7 @@ export class GuiCreateTaskView {
 
     // Helper to update the text when the input changes
     // TODO: html id should be a class variable
-    private static updateRewardPoints(container: HTMLElement) {
+    private updateRewardPoints(container: HTMLElement) {
         const elem: HTMLElement | null = container.querySelector(`#atb-create-task-reward-display`);
         if (!elem) return;
 
@@ -312,7 +356,7 @@ export class GuiCreateTaskView {
     }
 
     // TODO: html id should be a static (const) variable
-    private static showErrorDialog(cannotStartReason: TaskCannotStartReason, onOverwrite: () => void) {
+    private showErrorDialog(cannotStartReason: TaskCannotStartReason, onOverwrite: () => void) {
         const mainContainer = document.getElementById("atb-overlay-container")!;
 
         let errorString = this.STRINGS.ERROR_TASK_UNKNOWN;

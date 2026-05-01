@@ -7,6 +7,7 @@ import { TaskWearBondage } from "./Task/TaskWearBondage";
 import { ChatColor, sendLocalMessage } from "@/utility/utility";
 import { GuiMainView } from "@/gui/GuiMainView";
 import { FullTaskType, WearBondageType } from "@/models/TasksSettings";
+import { getCharacterTaskManagerSettings, getCharacterTasksSettings } from "@/utility/CharacterWrapper";
 
 export class TaskManagerModule extends ModuleBase {
     TICK_PERIOD_MS: number = 800; // 0.8sec
@@ -104,6 +105,20 @@ export class TaskManagerModule extends ModuleBase {
 
     // --- TASK LIFECYCLE ---
 
+    public startTask(taskData: TaskData, overwrite?: boolean): boolean {
+        if (taskData.type == "wear_bondage" && taskData.itemToWear && taskData.gracePeriodMs) {
+            return this.startWearBondageTask(taskData.itemToWear,
+                taskData.totalDurationMs,
+                taskData.enforce,
+                taskData.goodPtsOnSucces,
+                taskData.badPtsOnFailure,
+                taskData.gracePeriodMs,
+                overwrite
+            );
+        }
+        return false;
+    }
+
     public skipTask(taskId: number): boolean {
         let task = this.getActiveTaskById(taskId);
         if (task) {
@@ -126,19 +141,26 @@ export class TaskManagerModule extends ModuleBase {
         for (let i = 0; i < this.activeTaskList.length; i++) {
             let task = this.activeTaskList[i];
 
-            if (task.getData().type == type.taskType) {
-                // Do case that have subType first
-                if (type.taskType == "wear_bondage") {
-                    if (task.getData().itemToWear == type.taskSubType) {
-                        return task;
-                    }
-                }
-                else {
-                    return task;
-                }
+            if (TaskManagerModule.isSameTaskType(task.getData(), type)) {
+                return task;
             }
         }
         return undefined;
+    }
+
+    public static isSameTaskType(taskData: TaskData, type: FullTaskType) {
+        if (taskData.type == type.taskType) {
+            // Do case that have subType first
+            if (type.taskType == "wear_bondage") {
+                if (taskData.itemToWear == type.taskSubType) {
+                    return true;
+                }
+            }
+            else {
+                return true;
+            }
+        }
+        return false;
     }
 
     public isAnyTaskTransgressionOccuring(): boolean {
@@ -151,24 +173,39 @@ export class TaskManagerModule extends ModuleBase {
         return false;
     }
 
-    public isTaskCanStart(type: FullTaskType): TaskCannotStartReason {
+    public static isTaskCanStart(C: OtherCharacter | PlayerCharacter, type: FullTaskType): TaskCannotStartReason {
         // If combo task/subType already active, it fall into "overwrite_only",
         // Except if active & enforced => "not_available"
-        let task = this.getActiveTaskByType(type);
+        const tms = getCharacterTaskManagerSettings(C);
+        if (tms && tms.activeTasks.length > 0) {
+            for (let i = 0; i < tms.activeTasks.length; i++) {
+                const taskData = tms.activeTasks[i];
+                if (TaskManagerModule.isSameTaskType(taskData, type)) {
+                    if (taskData.enforce) {
+                        return "not_available";
+                    } else {
+                        return "overwrite_only";
+                    }
+                }
+            }
+        }
+
+        // old non-static way
+        /*let task = this.getActiveTaskByType(type);
         if (task) {
             if (task.getData().enforce) {
                 return "not_available";
             } else {
                 return "overwrite_only";
             }
-        }
+        }*/
 
         //const taskSettings = StorageManager.getTasksSettings();
         // Other reason
         if (type.taskType == "wear_bondage" && type.taskSubType) {
-            if (!this.isWearBondageTypeEnabled(type.taskSubType)) {
+            if (!TaskManagerModule.isWearBondageTypeEnabled(C, type.taskSubType)) {
                 return "not_enabled";
-            } else if (!TaskWearBondage.getItemAvailibility().includes(type.taskSubType)) {
+            } else if (!TaskWearBondage.getItemAvailibility(C).includes(type.taskSubType)) {
                 return "not_available";
             } else {
                 return "can_start";
@@ -200,7 +237,7 @@ export class TaskManagerModule extends ModuleBase {
         }
     }
 
-    // If taskDate is not defined, only start task without updating settings
+    // If taskData is not defined, only start task without updating settings
     private startNewTask(task: TaskBase, taskData: TaskData | undefined) {
         this.activeTaskList.push(task);
         if (taskData) {
@@ -262,10 +299,11 @@ export class TaskManagerModule extends ModuleBase {
         this.startNewTask(task, taskData);
         return true;
     }
-    isWearBondageTypeEnabled(itemToWear: WearBondageType) {
-        const taskSettings = StorageManager.getTasksSettings();
+    public static isWearBondageTypeEnabled(C: OtherCharacter | PlayerCharacter, itemToWear: WearBondageType) {
+        //const taskSettings = StorageManager.getTasksSettings();
+        const taskSettings = getCharacterTasksSettings(C);
 
-        if (taskSettings.wearBondageTaskSettings.enable) {
+        if (taskSettings && taskSettings.wearBondageTaskSettings.enable) {
             if (itemToWear == "hand" && taskSettings.wearBondageTaskSettings.enableHand) {
                 return true;
             }

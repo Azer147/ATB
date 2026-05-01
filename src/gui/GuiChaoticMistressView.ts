@@ -1,9 +1,9 @@
-import ModuleManager from "@/utility/ModuleManager";
 import { GuiHelper, GuiFormField } from "./GuiHelper";
-import StorageManager from "@/utility/StroageManager";
 import { SinglePunishmentSettings, TasksSettings } from "@/models/TasksSettings";
 import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
 import { ChaoticMistressModule } from "@/modules/ChaoticMistressModule";
+import GuiViewBase from "./GuiViewBase";
+import { getCharacterChaoticMistressSettings, getCharacterTasksSettings, saveSettings, startPunishementforCharacter } from "@/utility/CharacterWrapper";
 
 
 export interface GuiPunishmentCardConfig {
@@ -14,20 +14,20 @@ export interface GuiPunishmentCardConfig {
 }
 
 
-export class GuiChaoticMistressView {
-    private static settings: ChaoticMistressSettings;
-    private static tasksSettings: TasksSettings;
-    //private static taskManager: TaskManagerModule;
+export class GuiChaoticMistressView extends GuiViewBase {
+    private shouldSaveSetting: boolean = false;
+    private settings!: ChaoticMistressSettings;
+    private tasksSettings!: TasksSettings;
 
-    private static punishementList: GuiPunishmentCardConfig[] = [];
+    private punishementList: GuiPunishmentCardConfig[] = [];
 
     // id for update points status
-    private static ID_STATUS_GOOD_PTS = "atb-status-good-pts";
-    private static ID_STATUS_BAD_PTS = "atb-status-bad-pts";
-    private static ID_STATUS_PROGRESS_BAR = "atb-status-progress-bar";
+    private ID_STATUS_GOOD_PTS = "atb-status-good-pts";
+    private ID_STATUS_BAD_PTS = "atb-status-bad-pts";
+    private ID_STATUS_PROGRESS_BAR = "atb-status-progress-bar";
 
 
-    private static BASE_HELP_TEXT = `
+    private BASE_HELP_TEXT = `
     Chaotic Mistress have 2 main feature:<br>
     <br>
     <strong>Points system:</strong> A Reward and Punishements game, be a good slave and everything will be alright!<br>
@@ -39,7 +39,7 @@ export class GuiChaoticMistressView {
     <strong>Random Task:</strong> Randomly start a task, for those who want to submit to the Chaos and surrender control.<br>
     `;
 
-    private static STRINGS = {
+    private STRINGS = {
         PAGE_TITLE: "Chaotic Mistress",
         CATEGORY_SELECT_PUNISHEMENT: "Select Punishement",
         BASE_HELP_TITLE: "Chaotic Mistress Overview",
@@ -52,32 +52,50 @@ export class GuiChaoticMistressView {
         NOT_AVAILABLE: "Not Available"
     };
 
-    private static loadSettings() {
-        this.settings = StorageManager.getChaoticMistressSettings();
-        this.tasksSettings = StorageManager.getTasksSettings();
-        //this.taskManager = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
-        const cm = ModuleManager.getModule("ChaoticMistressModule") as ChaoticMistressModule;
 
+    constructor(parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter) {
+        super(parent, C);
+
+        // Check first if we have anything we need
+        const settings = getCharacterChaoticMistressSettings(this.character);
+        const tasksSettings = getCharacterTasksSettings(this.character);
+        if (!settings || !tasksSettings) {
+            // Build error page
+            GuiHelper.buildErrorPage(parent);
+        } else {
+            this.settings = settings;
+            this.tasksSettings = tasksSettings;
+            this.buildChaoticMistressPage();
+        }
+    }
+
+    public update() {}
+
+    public unload() {
+        if (this.shouldSaveSetting) {
+            saveSettings(this.character);
+        }
+    }
+
+    private loadPunishementList() {
         this.punishementList = [];
-        this.punishementList.push({
-            name: "Full Bondage",
-            setting: this.tasksSettings.fullBondagePunishmentSettings,
-            checkAvailable: () => {
-                return cm.getAvailablePunishements().includes("full_bondage");
-             },
-            onStart: (duration: number) => {
-                cm.startFullBondagePunishment(duration);
-            }
-        });
+        if (this.tasksSettings) {
+            this.punishementList.push({
+                name: "Full Bondage",
+                setting: this.tasksSettings.fullBondagePunishmentSettings,
+                checkAvailable: () => {
+                    return ChaoticMistressModule.getAvailablePunishements().includes("full_bondage");
+                },
+                onStart: (duration: number) => {
+                    startPunishementforCharacter(this.character, "full_bondage", duration);
+                }
+            });
+        }
     }
 
-    public static unload() {
-        StorageManager.saveSettings();
-    }
-
-    public static buildChaoticMistressPage(parent: HTMLElement) {
-        this.loadSettings();
-        GuiHelper.createContentTitle(parent, this.STRINGS.PAGE_TITLE, true);
+    public buildChaoticMistressPage() {
+        this.loadPunishementList();
+        GuiHelper.createContentTitle(this.parent, this.STRINGS.PAGE_TITLE, true);
 
         const form = document.createElement("div");
         form.style.display = "flex";
@@ -90,7 +108,7 @@ export class GuiChaoticMistressView {
         const pointsSystemCard = this.buildPointsSystemCard(form);
         const randomTaskCard = this.buildRandomTaskCard();
 
-        const pointsPanel = this.createPointsPanel(this.settings);
+        const pointsPanel = this.createPointsPanel();
 
 
         // Final Assembly
@@ -102,17 +120,20 @@ export class GuiChaoticMistressView {
 
         this.createAllPunishementsCards(form);
 
-        parent.appendChild(form);
+        this.parent.appendChild(form);
     }
 
-    private static buildPointsSystemCard(parent: HTMLElement): HTMLElement {
+    private buildPointsSystemCard(container: HTMLElement): HTMLElement {
         // Fields
         const FIELD_ENABLE: GuiFormField = {
             html_id: "atb-chaotic-pts-system-enable",
             label: "Enable Points System (Recommended)",
             type: "checkbox",
             default_value: this.settings.enablePointsSystem,
-            onChange: (value: boolean) => { this.settings.enablePointsSystem = value; }
+            onChange: (value: boolean) => {
+                this.settings.enablePointsSystem = value;
+                this.shouldSaveSetting = true;
+            }
         };
         const FIELD_THRESHOLD: GuiFormField = {
             html_id: "atb-chaotic-pts-system-punish-threshold",
@@ -123,7 +144,8 @@ export class GuiChaoticMistressView {
             default_value: this.settings.forcedPunishementThreshold,
             onChange: (value: number) => {
                 this.settings.forcedPunishementThreshold = value;
-                this.updatePointsPanel(parent);
+                this.shouldSaveSetting = true;
+                this.updatePointsPanel(container);
             }
         };
 
@@ -138,14 +160,17 @@ export class GuiChaoticMistressView {
         return ptsSystemMainCard;
     }
 
-    private static buildRandomTaskCard(): HTMLElement {
+    private buildRandomTaskCard(): HTMLElement {
         // Fields
         const FIELD_ENABLE: GuiFormField = {
             html_id: "atb-chaotic-random-task-enable",
             label: "Enable Random Tasks",
             type: "checkbox",
             default_value: this.settings.enableRandomTasks,
-            onChange: (value: boolean) => { this.settings.enableRandomTasks = value; }
+            onChange: (value: boolean) => {
+                this.settings.enableRandomTasks = value;
+                this.shouldSaveSetting = true;
+            }
         };
         const FIELD_AVERAGE_TASKS: GuiFormField = {
             html_id: "atb-chaotic-random-task-average",
@@ -154,7 +179,10 @@ export class GuiChaoticMistressView {
             min_value: 0.1,
             max_value: 15.0,
             default_value: this.settings.averageNewTaskPerHour,
-            onChange: (value: number) => { this.settings.averageNewTaskPerHour = value; }
+            onChange: (value: number) => {
+                this.settings.averageNewTaskPerHour = value;
+                this.shouldSaveSetting = true;
+            }
         };
         const FIELD_MIN_DURATION: GuiFormField = {
             html_id: "atb-chaotic-min-duration",
@@ -163,7 +191,10 @@ export class GuiChaoticMistressView {
             min_value: 5,
             max_value: 1000,
             default_value: this.settings.minRandomDuration,
-            onChange: (value: number) => { this.settings.minRandomDuration = value; }
+            onChange: (value: number) => {
+                this.settings.minRandomDuration = value;
+                this.shouldSaveSetting = true;
+            }
         };
         const FIELD_MAX_DURATION: GuiFormField = {
             html_id: "atb-chaotic-max-duration",
@@ -172,7 +203,10 @@ export class GuiChaoticMistressView {
             min_value: 5,
             max_value: 1000,
             default_value: this.settings.maxRandomDuration,
-            onChange: (value: number) => { this.settings.maxRandomDuration = value; }
+            onChange: (value: number) => {
+                this.settings.maxRandomDuration = value;
+                this.shouldSaveSetting = true;
+            }
         };
         const FIELD_WEIGHT_USE_PUNISH: GuiFormField = {
             html_id: "atb-chaotic-weight-use-punish",
@@ -181,7 +215,10 @@ export class GuiChaoticMistressView {
             min_value: 0,
             max_value: 100,
             default_value: this.settings.weightUsePunishAsTask,
-            onChange: (value: number) => { this.settings.weightUsePunishAsTask = value; }
+            onChange: (value: number) => {
+                this.settings.weightUsePunishAsTask = value;
+                this.shouldSaveSetting = true;
+            }
         };
 
         // Build Main card
@@ -202,17 +239,17 @@ export class GuiChaoticMistressView {
         return randTaskMainCard;
     }
 
-    private static createPointsPanel(settings: ChaoticMistressSettings): HTMLDivElement {
+    private createPointsPanel(): HTMLDivElement {
         const panel = document.createElement("div");
         panel.className = "atb-panel";
 
-        const debtPercentage = Math.min(settings.forcedPunishementThreshold, (settings.badPts / settings.forcedPunishementThreshold) * 100);
+        const debtPercentage = Math.min(this.settings.forcedPunishementThreshold, (this.settings.badPts / this.settings.forcedPunishementThreshold) * 100);
 
         panel.innerHTML = `
             <h3 style="margin-bottom: 1rem;">${this.STRINGS.POINTS_STATUS_TITLE}</h3>
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span style="color: var(--atb-success);">${this.STRINGS.GOOD_POINTS}: <strong id="${this.ID_STATUS_GOOD_PTS}">${settings.goodPts}</strong></span>
-                <span style="color: var(--atb-danger);">${this.STRINGS.BAD_POINTS}: <strong id="${this.ID_STATUS_BAD_PTS}">${settings.badPts} / ${settings.forcedPunishementThreshold}</strong></span>
+                <span style="color: var(--atb-success);">${this.STRINGS.GOOD_POINTS}: <strong id="${this.ID_STATUS_GOOD_PTS}">${this.settings.goodPts}</strong></span>
+                <span style="color: var(--atb-danger);">${this.STRINGS.BAD_POINTS}: <strong id="${this.ID_STATUS_BAD_PTS}">${this.settings.badPts} / ${this.settings.forcedPunishementThreshold}</strong></span>
             </div>
             <div class="atb-progress-bg" style="width: 100%; height: 10px;">
                 <div id="${this.ID_STATUS_PROGRESS_BAR}" class="atb-progress-fill danger" style="width: ${debtPercentage}%;"></div> 
@@ -221,7 +258,7 @@ export class GuiChaoticMistressView {
         return panel;
     }
 
-    private static updatePointsPanel(content: HTMLElement) {
+    private updatePointsPanel(content: HTMLElement) {
         const goodPts = content.querySelector(`#${this.ID_STATUS_GOOD_PTS}`);
         const badPts = content.querySelector(`#${this.ID_STATUS_BAD_PTS}`);
         const progressBar: HTMLElement | null = content.querySelector(`#${this.ID_STATUS_PROGRESS_BAR}`);
@@ -238,7 +275,7 @@ export class GuiChaoticMistressView {
         }
     }
 
-    private static createAllPunishementsCards(container: HTMLElement) {
+    private createAllPunishementsCards(container: HTMLElement) {
         for (let i = 0; i < this.punishementList.length; i += 2) {
             const card1 = this.createPunishmentCard(this.punishementList[i]);
 
@@ -256,7 +293,7 @@ export class GuiChaoticMistressView {
         }
     }
 
-    public static createPunishmentCard(config: GuiPunishmentCardConfig): HTMLDivElement {
+    public createPunishmentCard(config: GuiPunishmentCardConfig): HTMLDivElement {
         // Main Card Container
         // TODO: Make generic function for cards
         const card = document.createElement("div");
