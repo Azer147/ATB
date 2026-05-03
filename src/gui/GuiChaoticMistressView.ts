@@ -184,27 +184,27 @@ export class GuiChaoticMistressView extends GuiViewBase {
                 this.shouldSaveSetting = true;
             }
         };
-        const FIELD_MIN_DURATION: GuiFormField = {
-            html_id: "atb-chaotic-min-duration",
-            label: "Minimum random task duration (% of the base duration) (5% - 1000%)",
+        const FIELD_MIN_FINISH_COUNT: GuiFormField = {
+            html_id: "atb-chaotic-min-finish-count",
+            label: "Minimum random task finish count (% of the base finish count) (5% - 1000%)",
             type: "number",
             min_value: 5,
             max_value: 1000,
-            default_value: this.settings.minRandomDuration,
+            default_value: this.settings.minRandomFinishNeeded,
             onChange: (value: number) => {
-                this.settings.minRandomDuration = value;
+                this.settings.minRandomFinishNeeded = value;
                 this.shouldSaveSetting = true;
             }
         };
-        const FIELD_MAX_DURATION: GuiFormField = {
-            html_id: "atb-chaotic-max-duration",
-            label: "Maximum random task duration (% of the base duration) (5% - 1000%)",
+        const FIELD_MAX_FINISH_COUNT: GuiFormField = {
+            html_id: "atb-chaotic-max-finish-count",
+            label: "Maximum random task finish count (% of the base finish count) (5% - 1000%)",
             type: "number",
             min_value: 5,
             max_value: 1000,
-            default_value: this.settings.maxRandomDuration,
+            default_value: this.settings.maxRandomFinishNeeded,
             onChange: (value: number) => {
-                this.settings.maxRandomDuration = value;
+                this.settings.maxRandomFinishNeeded = value;
                 this.shouldSaveSetting = true;
             }
         };
@@ -228,8 +228,8 @@ export class GuiChaoticMistressView extends GuiViewBase {
 
         const randTaskAverage = GuiHelper.createFormField(FIELD_AVERAGE_TASKS);
         const randTaskUsePunish = GuiHelper.createFormField(FIELD_WEIGHT_USE_PUNISH);
-        const randTaskMinDuration = GuiHelper.createFormField(FIELD_MIN_DURATION);
-        const randTaskMaxDuration = GuiHelper.createFormField(FIELD_MAX_DURATION);
+        const randTaskMinDuration = GuiHelper.createFormField(FIELD_MIN_FINISH_COUNT);
+        const randTaskMaxDuration = GuiHelper.createFormField(FIELD_MAX_FINISH_COUNT);
 
         const randTaskRow1 = GuiHelper.createTwoElemRow(randTaskAverage, randTaskUsePunish);
         const randTaskDurationRow = GuiHelper.createTwoElemRow(randTaskMinDuration, randTaskMaxDuration);
@@ -319,7 +319,7 @@ export class GuiChaoticMistressView extends GuiViewBase {
         // Helper to update the text when the input changes
         const updatePointsText = (durationMinutes: number) => {
             const durationMs = durationMinutes * 1000 * 60;
-            const pts = ChaoticMistressModule.calculatePointsFromDuration(
+            const pts = ChaoticMistressModule.calculatePointsFromFinishCount(
                 durationMs,
                 config.setting.baseDurationMs,
                 config.setting.baseBadPtsReduction,

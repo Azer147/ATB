@@ -1,4 +1,4 @@
-import { TaskType, WearBondageType } from "./TasksSettings";
+import { FinishType, TaskType, WearBondageType } from "./TasksSettings";
 
 export type TaskCannotStartReason = "unknown" | "not_enabled" | "not_available" | "overwrite_only" | "can_start";
 
@@ -6,11 +6,17 @@ export type TaskCannotStartReason = "unknown" | "not_enabled" | "not_available" 
 export interface TaskData {
     id: number;
     type: TaskType;
-    progress: number; // generic % progress
+    finishType: FinishType;
+    progressPerc: number; // generic % progress
     description: string;
 
-    elapsedtimeMs: number; // in millisec
-    totalDurationMs: number; // Serve as "endTime", task should finish when elapsedtimeMs reach this. (in millisec)
+    // For FinishType: "duration"
+    //elapsedtimeMs?: number; // in millisec
+    //totalDurationMs?: number; // Serve as "endTime", task should finish when elapsedtimeMs reach this. (in millisec)
+    // For FinishType: "orgasm" | "orgasm_ruined" | "orgasm_resisted" | "spank"
+    // Depending of FinishType this seve as a count or time in ms for "duration"
+    finishTotalNeeded: number; // total count needed (or total duration needed)
+    finishCurrentCount: number; // current count
 
     enforce: boolean; // Force the task / unskippable
 

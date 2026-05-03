@@ -11,7 +11,11 @@ export default class GuiDashboardView extends GuiViewBase {
         TASK_LIST_TITLE: "Active Tasks",
         GOOD_POINTS: "Good Points (GP)",
         BAD_POINTS: "Bad Points (BP)",
-        TIME_LEFT: "Time Left",
+        FINISH_TIME_LEFT: "Time Left",
+        FINISH_ORGASMED: "Orgasm Received",
+        FINISH_ORGASMED_RUINED: "Orgasm Ruined",
+        FINISH_ORGASMED_RESISTED: "Orgasm Resisted",
+        FINISH_SPANKED: "Spank Received",
         SKIP: "Skip",
         LOCKED: "LOCKED",
         FINISHED: "Finished",
@@ -67,9 +71,9 @@ export default class GuiDashboardView extends GuiViewBase {
 
     public update() {
         const cmSettings = getCharacterChaoticMistressSettings(this.character);
-       if (cmSettings) {
+        if (cmSettings) {
            if (this.goodPtsElem) this.goodPtsElem.innerHTML = `${cmSettings.goodPts}`;
-           if (this.badPtsElem) this.badPtsElem.innerHTML = `${cmSettings.badPts}`;
+           if (this.badPtsElem) this.badPtsElem.innerHTML = `${cmSettings.badPts} / ${cmSettings.forcedPunishementThreshold}`;
            if (this.badPtsBarElem) {
                const debtPercentage = Math.min(cmSettings.forcedPunishementThreshold, (cmSettings.badPts / cmSettings.forcedPunishementThreshold) * 100);
                this.badPtsBarElem.style.width = `${debtPercentage}%`;
@@ -93,12 +97,10 @@ export default class GuiDashboardView extends GuiViewBase {
 
                 // Update existing task
                 if (elements) {
-                    const progressPercentage = task.progress;
-                    const timeLeftMs = task.totalDurationMs - task.elapsedtimeMs;
-                    const timeLeftStr = formatTimeMs(timeLeftMs);
+                    const progressPercentage = task.progressPerc;
 
                     elements.progressBar.style.width = `${progressPercentage}%`;
-                    elements.timeText.innerText = `${this.STRINGS.TIME_LEFT}: ${timeLeftStr}`;
+                    elements.timeText.innerText = this.getFinishConditionString(task);
 
                     this.updateTaskPenaltyWarning(task, elements.warningText);
                     this.updateSkipBtn(task, elements.skipBtn);
@@ -132,6 +134,10 @@ export default class GuiDashboardView extends GuiViewBase {
                 <div id="atb-points-bar" class="atb-progress-fill danger" style="width: ${debtPercentage}%;"></div>
             </div>
         `;
+        // Save for update()
+        this.goodPtsElem = panel.querySelector("#atb-points-good") as HTMLElement;
+        this.badPtsElem = panel.querySelector("#atb-points-bad") as HTMLElement;
+        this.badPtsBarElem = panel.querySelector("#atb-points-bar") as HTMLElement;
         return panel;
     }
 
@@ -142,23 +148,23 @@ export default class GuiDashboardView extends GuiViewBase {
         card.style.alignItems = "stretch";
         card.style.gap = "10px";
 
-        const progressPercentage = task.progress;
-        const timeLeftMs = task.totalDurationMs - task.elapsedtimeMs;
-        const timeLeftStr = formatTimeMs(timeLeftMs);
+        const progressPercentage = task.progressPerc;
+        const finishConditionStr = this.getFinishConditionString(task);
 
         // Progress text (html)
-        const progressMessage = "1/15 spanks"; // TODO: remove Placeholder to test view
+        /*const progressMessage = "1/15 spanks"; // TODO: remove Placeholder to test view
         const progressHtml = progressMessage
             ? `<div class="task-progress-text" style="font-size: 0.85em; color: var(--atb-text-muted); margin-bottom: 8px;">
                     ${progressMessage}
                 </div>`
-            : ``;
+            : ``;*/
+        const progressHtml = ""; // Sub tittle placeholder
 
         // Description + progress (optional) + progress bar
         const infoDiv = document.createElement("div");
         infoDiv.style.flex = "1";
         infoDiv.innerHTML = `
-            <h4 style="margin: 0 0 2px 0;">${task.description}</h4>
+            <h4 style="margin: 0 0 8px 0;">${task.description}</h4>
             ${progressHtml}
             <div style="display: flex; flex-direction: column; gap: 6px;">
                 <div class="atb-progress-bg">
@@ -191,7 +197,7 @@ export default class GuiDashboardView extends GuiViewBase {
                 <div class="task-warning">
                 </div>
                 <div class="task-time-text" style="color: var(--atb-text-muted); white-space: nowrap; text-align: right;">
-                    ${this.STRINGS.TIME_LEFT}: ${timeLeftStr}
+                    ${finishConditionStr}
                 </div>
             </div>
         `;
@@ -216,11 +222,28 @@ export default class GuiDashboardView extends GuiViewBase {
         return card;
     }
 
+    private getFinishConditionString(task: TaskData) {
+        if (task.finishType == "duration") {
+            const timeLeftMs = task.finishTotalNeeded - task.finishCurrentCount;
+            const timeLeftStr = formatTimeMs(timeLeftMs);
+            return `${this.STRINGS.FINISH_TIME_LEFT}: ${timeLeftStr}`;
+        } else if (task.finishType == "orgasm") {
+            return `${this.STRINGS.FINISH_ORGASMED}: ${task.finishCurrentCount} / ${task.finishTotalNeeded}`;
+        } else if (task.finishType == "orgasm_ruined") {
+            return `${this.STRINGS.FINISH_ORGASMED_RUINED}: ${task.finishCurrentCount} / ${task.finishTotalNeeded}`;
+        } else if (task.finishType == "orgasm_resisted") {
+            return `${this.STRINGS.FINISH_ORGASMED_RESISTED}: ${task.finishCurrentCount} / ${task.finishTotalNeeded}`;
+        } else if (task.finishType == "spank") {
+            return `${this.STRINGS.FINISH_SPANKED}: ${task.finishCurrentCount} / ${task.finishTotalNeeded}`;
+        }
+        return "Unkown";
+    }
+
     private updateSkipBtn(task: TaskData, skipBtn: HTMLButtonElement) {
         if (task.enforce) {
             skipBtn.disabled = true;
             skipBtn.innerText = `${this.STRINGS.LOCKED}`;
-        } else if (task.progress >= 100) {
+        } else if (task.progressPerc >= 100) {
             skipBtn.disabled = true;
             skipBtn.innerText = `${this.STRINGS.FINISHED}`;
         } else {

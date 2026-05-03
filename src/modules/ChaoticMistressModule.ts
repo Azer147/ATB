@@ -4,7 +4,7 @@ import StorageManager from "@/utility/StroageManager";
 import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
 import ModuleManager from "@/utility/ModuleManager";
 import { TaskManagerModule } from "./TaskManagerModule";
-import { FullPunishementList, FullTaskList, FullTaskType, getTaskTypeConstant, getTaskTypeSetting, PunishementType, SingleTaskSettings, TasksSettings, TaskType } from "@/models/TasksSettings";
+import { FinishType, FullFinishList, FullPunishementList, FullTaskList, FullTaskType, getFinishTypeSetting, getTaskTypeConstant, getTaskTypeSetting, PunishementType, SingleTaskSettings, TasksSettings, TaskType } from "@/models/TasksSettings";
 import { ChatColor, sendLocalMessage } from "@/utility/utility";
 import { TaskCannotStartReason } from "@/models/TaskManagerSettings";
 
@@ -110,21 +110,25 @@ export class ChaoticMistressModule extends ModuleBase {
 
         // TODO: Special case (chance use punishment instead of task)
 
-        const selectedTask = this.selectRandomTaskByWeight(availTask);
-
+        const selectedTask = this.selectRandomByWeight("task", availTask);
         if (selectedTask) {
+            const selectedFinish = this.selectRandomByWeight("finish", FullFinishList, selectedTask.taskType);
+
             const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
             let taskSetting = getTaskTypeSetting(this.tasksSettings, selectedTask.taskType);
 
-            if (tm && taskSetting) {
-                const duration = this.getRandomDuration(taskSetting.baseDurationMs);
+            if (tm && selectedFinish && taskSetting) {
+                const finishSetting = getFinishTypeSetting(this.tasksSettings, selectedFinish, selectedTask.taskType);
+
+                const baseFinishNeeded = finishSetting.baseCount;
+                const randFinishNeeded = this.getRandomFinishCountOrDuration(baseFinishNeeded);
                 const failure = taskSetting.baseBadPointsPenalty;
-                const reward = ChaoticMistressModule.calculatePointsFromDuration(duration, taskSetting.baseDurationMs, taskSetting.baseGoodPtsReward, false);
+                const reward = ChaoticMistressModule.calculatePointsFromFinishCount(randFinishNeeded, baseFinishNeeded, taskSetting.baseGoodPtsReward, false);
 
                 if (selectedTask.taskType === "wear_bondage" && selectedTask.taskSubType) {
                         const gracePeriod = this.tasksSettings.wearBondageTaskSettings.baseGracePeriodMs;
-                        console.log(`ATB: triggerRandomTask: Selected ${selectedTask.taskType} wearType: ${selectedTask.taskSubType} duration: ${duration}`);
-                        tm.startWearBondageTask(selectedTask.taskSubType, duration, false, reward, failure, gracePeriod);
+                        console.log(`ATB: triggerRandomTask: Selected ${selectedTask.taskType} wearType: ${selectedTask.taskSubType} finish type: ${selectedFinish} count: ${randFinishNeeded}`);
+                        tm.startWearBondageTask(selectedTask.taskSubType, selectedFinish, randFinishNeeded, false, reward, failure, gracePeriod);
                 }
             }
         }
@@ -156,10 +160,10 @@ export class ChaoticMistressModule extends ModuleBase {
             return;
         }
 
-        const selectedPunish = this.selectRandomTaskByWeight(availPunish);
+        const selectedPunish = this.selectRandomByWeight("punish", availPunish);
 
         if (selectedPunish) {
-            const duration = this.getRandomDuration(this.tasksSettings.fullBondagePunishmentSettings.baseDurationMs);
+            const duration = this.getRandomFinishCountOrDuration(this.tasksSettings.fullBondagePunishmentSettings.baseDurationMs);
             ChaoticMistressModule.startPunishementByType(selectedPunish, duration);
         }
     }
@@ -207,7 +211,7 @@ export class ChaoticMistressModule extends ModuleBase {
         const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
         if (tm) {
             const punishSetting = this.tasksSettings.fullBondagePunishmentSettings;
-            const badPtsReduction = ChaoticMistressModule.calculatePointsFromDuration(duration, punishSetting.baseDurationMs, punishSetting.baseBadPtsReduction, true);
+            const badPtsReduction = ChaoticMistressModule.calculatePointsFromFinishCount(duration, punishSetting.baseDurationMs, punishSetting.baseBadPtsReduction, true);
             const penalty = punishSetting.baseBadPointsPenalty;
             const reward = punishSetting.baseGoodPtsReward;
             //const grace = this.tasksSettings.wearBondageTaskSettings.baseGracePeriodMs;
@@ -216,11 +220,11 @@ export class ChaoticMistressModule extends ModuleBase {
             console.log(`ATB: startFullBondagePunishment: Starting with duration: ${duration}`);
             sendLocalMessage("Starting Full Bondage Punishement", ChatColor.Purple);
 
-            tm.startWearBondageTask("hand", duration, true, reward, penalty, grace, true);
-            tm.startWearBondageTask("leg", duration, true, reward, penalty, grace, true);
-            tm.startWearBondageTask("gag", duration, true, reward, penalty, grace, true);
-            tm.startWearBondageTask("chastity", duration, true, reward, penalty, grace, true);
-            tm.startWearBondageTask("toy", duration, true, reward, penalty, grace, true);
+            tm.startWearBondageTask("hand", "duration", duration, true, reward, penalty, grace, true);
+            tm.startWearBondageTask("leg", "duration", duration, true, reward, penalty, grace, true);
+            tm.startWearBondageTask("gag", "duration", duration, true, reward, penalty, grace, true);
+            tm.startWearBondageTask("chastity", "duration", duration, true, reward, penalty, grace, true);
+            tm.startWearBondageTask("toy", "duration", duration, true, reward, penalty, grace, true);
 
             // TODO: check retrun and return false if needed
             this.modifyBadPts(-badPtsReduction);
@@ -235,41 +239,45 @@ export class ChaoticMistressModule extends ModuleBase {
     ********** Helper Functions **********
     */
 
-    getRandomDuration(baseDuration: number): number {
+    getRandomFinishCountOrDuration(baseCount: number): number {
         // Duration will multiplied be between Min and Max
-        const baseRandMultMin = (this.settings.minRandomDuration / 100);
-        const baseRandMultMax = (this.settings.maxRandomDuration / 100);
+        const baseRandMultMin = (this.settings.minRandomFinishNeeded / 100);
+        const baseRandMultMax = (this.settings.maxRandomFinishNeeded / 100);
 
         let randMult = (Math.random() * baseRandMultMax) + baseRandMultMin;
-        return (baseDuration * randMult);
+        return Math.floor(baseCount * randMult);
     }
 
     // increase / decrease basePts from the difference between duration and baseDuration
-    public static calculatePointsFromDuration(durationMs: number, baseDurationMs: number, basePts: number, enforced: boolean): number {
-        if (durationMs == 0) return 0;
-        let durDiffPerc = durationMs / baseDurationMs;
+    public static calculatePointsFromFinishCount(selectedFinishCount: number, baseFinishCount: number, basePts: number, enforced: boolean): number {
+        if (selectedFinishCount == 0) return 0;
+        let durDiffPerc = selectedFinishCount / baseFinishCount;
         let bonusMult = 1;
         if (enforced) bonusMult = 1.2; // 20% bonus if enforced
         return Math.floor(basePts * durDiffPerc * bonusMult);
     }
 
-    // Work for FullTaskType and PunishementType
-    private selectRandomTaskByWeight<T extends FullTaskType | PunishementType>(availList: T[]): T | undefined {
+    // Work for FullTaskType, PunishementType and FinishType
+    private selectRandomByWeight<T extends FullTaskType | PunishementType | FinishType>(type: "task" | "punish" | "finish", availList: T[], taskType: TaskType | undefined = undefined): T | undefined {
         // build task+weight list
         let totalWeight = 0;
         const weightedTasks = availList.map(task => {
             let weight = 0;
             let mainType;
 
-            if (typeof task === "string") {
-                // Can bo only PunishementType
-                mainType = task;
-            } else {
-                // can bo only FullTaskType
+            // FullTaskType is object, others are string
+            if (type == "task" && typeof task != "string") {
                 mainType = task.taskType;
+            } else {
+                mainType = task;
             }
 
-            let typeSetting = getTaskTypeSetting(this.tasksSettings, mainType);
+            let typeSetting;
+            if (type == "finish") {
+                typeSetting = getFinishTypeSetting(this.tasksSettings, mainType, taskType);
+            } else {
+                typeSetting = getTaskTypeSetting(this.tasksSettings, mainType);
+            }
             if (typeSetting) {
                 weight = typeSetting.randomWeight;
             }
@@ -295,4 +303,5 @@ export class ChaoticMistressModule extends ModuleBase {
         }
         return selectedTask;
     }
+
 }

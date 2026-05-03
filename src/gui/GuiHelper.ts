@@ -299,8 +299,8 @@ export class GuiHelper {
     }
 
     public static createFeatureToggleCard(field: GuiFormField, useContentArea: boolean): { card: HTMLDivElement, contentArea: HTMLDivElement } {
-        if (field.type !== "checkbox") {
-            console.warn("ATB: createFeatureToggleCard requires a checkbox GuiFormField.");
+        if (field.type !== "checkbox" && field.type !== "display-text") {
+            console.warn("ATB: createFeatureToggleCard requires a checkbox or display-text GuiFormField.");
         }
         const isEnabled = !!field.default_value;
         let isExpanded = false;
@@ -329,8 +329,16 @@ export class GuiHelper {
         expandIcon.innerText = isExpanded ? "-" : "+";
 
         // The Main Checkbox
-        const checkboxWrapper = this.createCheckbox(field.html_id, field.label, isEnabled, false);
-        const checkboxInput = checkboxWrapper.querySelector("input") as HTMLInputElement;
+        let checkboxInput;
+        let checkboxWrapper: HTMLElement;
+        if (field.type == "checkbox") {
+            checkboxWrapper = this.createCheckbox(field.html_id, field.label, isEnabled, false);
+            checkboxInput = checkboxWrapper.querySelector("input") as HTMLInputElement;
+        } else { // display-text
+            checkboxWrapper = document.createElement("div");
+            checkboxWrapper.className = "atb-checkbox-label";
+            checkboxWrapper.innerText = field.label;
+        }
         checkboxWrapper.style.fontSize = "1.1em";
         checkboxWrapper.style.fontWeight = "bold";
 
@@ -364,23 +372,25 @@ export class GuiHelper {
         });
 
         // Update style & auto-expand/collapse on Checkbox toggle
-        checkboxInput.addEventListener("change", () => {
-            const checked = checkboxInput.checked;
+        if (checkboxInput) {
+            checkboxInput.addEventListener("change", () => {
+                const checked = checkboxInput.checked;
 
-            if (checked) {
-                card.classList.add("is-enabled");
-                statusText.innerText = "Enabled";
-                updateExpandedState(true); // Auto-expand when enabled
-            } else {
-                card.classList.remove("is-enabled");
-                statusText.innerText = "Disabled";
-                updateExpandedState(false); // Auto-collapse when disabled
-            }
+                if (checked) {
+                    card.classList.add("is-enabled");
+                    statusText.innerText = "Enabled";
+                    updateExpandedState(true); // Auto-expand when enabled
+                } else {
+                    card.classList.remove("is-enabled");
+                    statusText.innerText = "Disabled";
+                    updateExpandedState(false); // Auto-collapse when disabled
+                }
 
-            if (field.onChange) {
-                field.onChange(checked);
-            }
-        });
+                if (field.onChange) {
+                    field.onChange(checked);
+                }
+            });
+        }
 
         // Final Assembly
         card.appendChild(header);

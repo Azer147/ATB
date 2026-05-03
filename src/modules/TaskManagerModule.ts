@@ -6,7 +6,7 @@ import { TaskBase } from "./Task/TaskBase";
 import { TaskWearBondage } from "./Task/TaskWearBondage";
 import { ChatColor, sendLocalMessage } from "@/utility/utility";
 import { GuiMainView } from "@/gui/GuiMainView";
-import { FullTaskType, WearBondageType } from "@/models/TasksSettings";
+import { FinishType, FullTaskType, WearBondageType } from "@/models/TasksSettings";
 import { getCharacterTaskManagerSettings, getCharacterTasksSettings } from "@/utility/CharacterWrapper";
 
 export class TaskManagerModule extends ModuleBase {
@@ -42,26 +42,76 @@ export class TaskManagerModule extends ModuleBase {
                 }
             }
         }));
-        /*
-        this.hook.push(BC_SDK.hookFunction('ChatRoomMessage', 0, (args, next) => {
-            next(args);
-            this.handleIncomingChatEvent(args[0]);
-        }));
-
+        // Orgasm Event / Orgasm Ruined Event
         this.hook.push(BC_SDK.hookFunction('ActivityOrgasmStart', 0, (args, next) => {
             next(args);
-            this.handleOrgasmEvent(args[0]);
-        }));
 
-        this.hook.push(BC_SDK.hookFunction('ChatRoomClick', 0, (args, next) => {
-            if (this.handleUIClick()) return;
+            // Check Orgasm or Ruined (copied from BC)
+            if (!ActivityOrgasmRuined) {
+                this.dispatchOrgasmEvent();
+            } else {
+                this.dispatchOrgasmRuinedEvent();
+            }
+        }));
+        // Orgasm Ruined Event (passive)
+        this.hook.push(BC_SDK.hookFunction('ActivityOrgasmControl', 0, (args, next) => {
+            if (Player.ArousalSettings.OrgasmTimer) {
+                // Check copied from BC: function ActivityOrgasmControl()
+                if ((ActivityOrgasmGameTimer != null) && (ActivityOrgasmGameTimer > 0) && (CurrentTime < Player.ArousalSettings.OrgasmTimer)) {
+                    if (ActivityOrgasmGameProgress >= ActivityOrgasmGameDifficulty - 1 || CurrentTime > Player.ArousalSettings.OrgasmTimer - 500) {
+                        // Only for passive denied orgasm
+                        this.dispatchOrgasmRuinedEvent();
+                    }
+                }
+            }
             next(args);
         }));
-        */
+        // Orgasm Resisted Event
+        this.hook.push(BC_SDK.hookFunction('ActivityOrgasmGameGenerate', 0, (args, next) => {
+            let progress = args[0];
+            next(args);
+            if (progress >= ActivityOrgasmGameDifficulty) {
+                // Note: work, but not triggered with force deny (ruined instead)
+                this.dispatchOrgasmResistedEvent();
+            }
+        }));
+        // Generic Activity Event
+        this.hook.push(BC_SDK.hookFunction('ActivityRun', 0, (args, next) => {
+            next(args);
+            //let initiator: Character = args[0];
+            let target: Character = args[1];
+            //let targetGroup: AssetItemGroup = args[2];
+            let ItemActivity: ItemActivity = args[3];
+
+            if (target.IsPlayer() && ItemActivity.Activity.Name === "Spank") {
+                this.dispatchSpankedEvent();
+            }
+        }));
     }
 
     unload(): void {
         super.unload();
+    }
+
+    private dispatchOrgasmEvent() {
+        this.activeTaskList.forEach((task) => {
+            task.onPlayerOrgasm();
+        });
+    }
+    private dispatchOrgasmRuinedEvent() {
+        this.activeTaskList.forEach((task) => {
+            task.onPlayerOrgasmRuined();
+        });
+    }
+    private dispatchOrgasmResistedEvent() {
+        this.activeTaskList.forEach((task) => {
+            task.onPlayerOrgasmResisted();
+        });
+    }
+    private dispatchSpankedEvent() {
+        this.activeTaskList.forEach((task) => {
+            task.onPlayerSpanked();
+        });
     }
 
     // Return the first unused id number
@@ -108,7 +158,8 @@ export class TaskManagerModule extends ModuleBase {
     public startTask(taskData: TaskData, overwrite?: boolean): boolean {
         if (taskData.type == "wear_bondage" && taskData.itemToWear && taskData.gracePeriodMs) {
             return this.startWearBondageTask(taskData.itemToWear,
-                taskData.totalDurationMs,
+                taskData.finishType,
+                taskData.finishTotalNeeded,
                 taskData.enforce,
                 taskData.goodPtsOnSucces,
                 taskData.badPtsOnFailure,
@@ -269,7 +320,9 @@ export class TaskManagerModule extends ModuleBase {
         }
     }
 
-    startWearBondageTask(item: WearBondageType, duration: number, enforce: boolean, successPts: number, failurePts: number, gracePeriod: number, overwrite: boolean = false): boolean {
+    startWearBondageTask(item: WearBondageType, finishType: FinishType, finishTotal: number,
+                        enforce: boolean, successPts: number, failurePts: number,
+                        gracePeriod: number, overwrite: boolean = false): boolean {
         // Case where the same task with same item already exist
         const sameTask = this.getActiveTaskByType({taskType: "wear_bondage", taskSubType: item});
         if (sameTask) {
@@ -286,9 +339,10 @@ export class TaskManagerModule extends ModuleBase {
             id: this.generateUniqueTaskId(),
             type: "wear_bondage",
             description: "", // Will be updated by TaskWearBondage
-            elapsedtimeMs: 0,
-            totalDurationMs: duration, // in millisec
-            progress: 0,
+            finishType: finishType,
+            finishCurrentCount: 0,
+            finishTotalNeeded: finishTotal,
+            progressPerc: 0,
             enforce: enforce,
             goodPtsOnSucces: successPts,
             badPtsOnFailure: failurePts,

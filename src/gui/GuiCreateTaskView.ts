@@ -1,7 +1,7 @@
 import { TaskManagerModule } from "@/modules/TaskManagerModule";
 import { TaskCannotStartReason, TaskData } from "@/models/TaskManagerSettings";
 import { GuiHelper, GuiFormField } from "./GuiHelper";
-import { getTaskTypeSetting, TasksSettings, TaskType, WearBondageType } from "@/models/TasksSettings";
+import { FinishType, getFinishTypeSetting, getTaskTypeSetting, TasksSettings, TaskType, WearBondageType } from "@/models/TasksSettings";
 import { ChaoticMistressModule } from "@/modules/ChaoticMistressModule";
 import GuiViewBase from "./GuiViewBase";
 import { getCharacterChaoticMistressSettings, getCharacterTasksSettings, saveSettings, startTaskforCharacter } from "@/utility/CharacterWrapper";
@@ -11,6 +11,12 @@ export class GuiCreateTaskView extends GuiViewBase {
     //private form: HTMLElement;
     private settings!: ChaoticMistressSettings;
     private tasksSettings!: TasksSettings;
+
+    // Containers for specifics fields ()
+    private taskTypeSelect: HTMLElement | undefined;
+    private finishCondSelect: HTMLElement | undefined;
+    private specificTaskTypeFields: HTMLDivElement | undefined;
+    private specificFinishCondFields: HTMLDivElement | undefined;
 
     // TODO: Use default value from task settings
     // Common fields
@@ -22,14 +28,20 @@ export class GuiCreateTaskView extends GuiViewBase {
             { value: "wear_bondage", label: "Wear Restraint/Bondage" }
         ]
     };
-    private FIELD_DURATION: GuiFormField = {
-        html_id: "atb-create-task-duration",
-        label: "Duration (Minutes)",
-        type: "number",
-        default_value: 3,
-        min_value: 1,
-        max_value: 24 * 60
+    private FIELD_FINISH_CONDITION: GuiFormField = {
+        html_id: "atb-finish-condition",
+        label: "Finish Condition",
+        type: "select",
+        options: [
+            { value: "duration", label: "Duration (connected time)" },
+            { value: "orgasm", label: "Orgasm Received" },
+            { value: "orgasm_ruined", label: "Orgasm Ruined" },
+            { value: "orgasm_resisted", label: "Orgasm Resisted" },
+            { value: "spank", label: "Spank Received" }
+        ]
     };
+
+    // Fields common to all task
     private FIELD_ENFORCE: GuiFormField = {
         html_id: "atb-create-task-enforce",
         label: "Enforce Task (Unskippable)",
@@ -60,7 +72,49 @@ export class GuiCreateTaskView extends GuiViewBase {
         max_value: 1000,
     };
 
-    // Wear specific fields
+    // End Condition specifcs fields
+    private FIELD_DURATION: GuiFormField = {
+        html_id: "atb-create-task-duration",
+        label: "Duration (Minutes)",
+        type: "number",
+        default_value: 3,
+        min_value: 1,
+        max_value: 24 * 60
+    };
+    private FIELD_ORGASM_COUNT: GuiFormField = {
+        html_id: "atb-create-task-orgasm-count",
+        label: "Orgasm needed",
+        type: "number",
+        default_value: 20,
+        min_value: 1,
+        max_value: 500
+    };
+    private FIELD_ORGASM_RUINED_COUNT: GuiFormField = {
+        html_id: "atb-create-task-orgasm-ruined-count",
+        label: "Orgasm Ruined needed",
+        type: "number",
+        default_value: 40,
+        min_value: 1,
+        max_value: 2000
+    };
+    private FIELD_ORGASM_RESISTED_COUNT: GuiFormField = {
+        html_id: "atb-create-task-orgasm-resisted-count",
+        label: "Orgasm Resisted needed",
+        type: "number",
+        default_value: 20,
+        min_value: 1,
+        max_value: 500
+    };
+    private FIELD_SPANK_COUNT: GuiFormField = {
+        html_id: "atb-create-task-spank-count",
+        label: "Spank needed",
+        type: "number",
+        default_value: 30,
+        min_value: 1,
+        max_value: 1000
+    };
+
+    // Wear bondage task specifics fields
     private FIELD_WEAR_TYPE: GuiFormField = {
         html_id: "atb-create-task-wear-type",
         label: "Wear Type",
@@ -153,52 +207,33 @@ export class GuiCreateTaskView extends GuiViewBase {
         const helpSection = GuiHelper.createHelpSection(this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
         form.appendChild(helpSection);
 
+
         // Task type select
-        const typeSelect = GuiHelper.createFormField(this.FIELD_TASK_TYPE);
-
-        // Container for specifics fields based on task type
-        const dynamicFieldsContainer = document.createElement("div");
-        dynamicFieldsContainer.className = "atb-dynamic-fields";
-
-        const updateDynamicFields = () => {
-            dynamicFieldsContainer.innerHTML = "";
-            const currentType = typeSelect.querySelector("select")!.value as TaskType;
-
-            if (currentType === "wear_bondage") {
-                // Sub-type options Title
-                const h4 = document.createElement("h4");
-                h4.innerText = this.STRINGS.TASK_TYPE_WEAR_OPTION_TITLE;
-                dynamicFieldsContainer.appendChild(h4);
-
-                // Specifics tasks help/info
-                const taskHelpSection = GuiHelper.createHelpSection(this.STRINGS.HELP_WEAR_TASK_TITLE, this.HELP_WEAR_TASK_TEXT);
-                dynamicFieldsContainer.appendChild(taskHelpSection);
-
-                const wearOptions = this.createWearOptionsElem();
-                dynamicFieldsContainer.appendChild(wearOptions);
-            }
-        };
-
+        this.taskTypeSelect = GuiHelper.createFormField(this.FIELD_TASK_TYPE);
+        // Task type: Container for specifics fields
+        this.specificTaskTypeFields = document.createElement("div");
+        this.specificTaskTypeFields.className = "atb-dynamic-fields";
         // Trigger change when changing the task type select
-        typeSelect.querySelector("select")!.addEventListener("change", updateDynamicFields);
-        updateDynamicFields();
+        this.taskTypeSelect.querySelector("select")!.addEventListener("change", () => { this.changeTaskTypeFields() });
+        this.changeTaskTypeFields();
+
+        // Finish condition select
+        this.finishCondSelect = GuiHelper.createFormField(this.FIELD_FINISH_CONDITION);
+        // End condition: Container for specifics fields
+        this.specificFinishCondFields = document.createElement("div");
+        //this.specificFinishCondFields.className = "atb-dynamic-fields";
+        // Trigger change when changing the End condition select
+        this.finishCondSelect.querySelector("select")!.addEventListener("change", () => { this.changeFinishCondFields() });
+        this.changeFinishCondFields();
+
 
         // Common fields
-        const durationInput = GuiHelper.createFormField(this.FIELD_DURATION);
         const badPtsInput = GuiHelper.createFormField(this.FIELD_PENALTY);
-        const enforceCheckbox = GuiHelper.createFormField(this.FIELD_ENFORCE);
 
         let rewardDisplay;
         if (this.settings && this.settings.enablePointsSystem) {
             // Build Reward field when Points System enabled
             rewardDisplay = GuiHelper.createFormField(this.FIELD_REWARD_DISPLAY);
-
-            durationInput.querySelector("input")!.addEventListener("change", () => {
-                this.updateRewardPoints(form);
-            });
-            enforceCheckbox.querySelector("input")!.addEventListener("change", () => {
-                this.updateRewardPoints(form);
-            });
         } else {
             // When Points System disabled, reward pts is selectable by user
             rewardDisplay = GuiHelper.createFormField(this.FIELD_REWARD_INPUT);
@@ -213,16 +248,15 @@ export class GuiCreateTaskView extends GuiViewBase {
             this.onClickCreateTask(form, createTaskBtn);
         };
 
-        // ROW: Duration + Enforce
-        const baseRow = GuiHelper.createTwoElemRow(durationInput, enforceCheckbox);
         // ROW: Reward + Penalty
-        const baseRow2 = GuiHelper.createTwoElemRow(rewardDisplay, badPtsInput);
+        const ptsRow = GuiHelper.createTwoElemRow(rewardDisplay, badPtsInput);
 
         // Final Assembly
-        form.appendChild(typeSelect);
-        form.appendChild(dynamicFieldsContainer);
-        form.appendChild(baseRow);
-        form.appendChild(baseRow2);
+        form.appendChild(this.taskTypeSelect);
+        form.appendChild(this.specificTaskTypeFields);
+        form.appendChild(this.finishCondSelect);
+        form.appendChild(this.specificFinishCondFields);
+        form.appendChild(ptsRow);
         form.appendChild(createTaskBtn);
         //this.form = form;
 
@@ -230,41 +264,134 @@ export class GuiCreateTaskView extends GuiViewBase {
         this.parent.appendChild(form);
     }
 
-    private createWearOptionsElem(): HTMLElement {
-        // Select for bondage type
-        const wearTypeSelect = GuiHelper.createFormField(this.FIELD_WEAR_TYPE);
 
-        // Grace period input
-        const gracePeriodInput = GuiHelper.createFormField(this.FIELD_GRACE_PERIOD);
+/**
+ * Dynamic fields for Task Type
+ */
+
+
+    private changeTaskTypeFields() {
+        if (this.specificTaskTypeFields && this.taskTypeSelect) {
+            this.specificTaskTypeFields.innerHTML = "";
+            const currentType = this.taskTypeSelect.querySelector("select")!.value as TaskType;
+
+            if (currentType === "wear_bondage") {
+                this.addWearBondageTypeElem(this.specificTaskTypeFields);
+            }
+        }
+    };
+
+    private addWearBondageTypeElem(container: HTMLElement) {
+        this.addGroupTitleAndHelp(container,
+            this.STRINGS.TASK_TYPE_WEAR_OPTION_TITLE,
+            this.STRINGS.HELP_WEAR_TASK_TITLE,
+            this.HELP_WEAR_TASK_TEXT
+        );
 
         // ROW: Wear type + Grace Period
-        return GuiHelper.createTwoElemRow(wearTypeSelect, gracePeriodInput);
+        const weartaskTypeSelect = GuiHelper.createFormField(this.FIELD_WEAR_TYPE);
+        const gracePeriodInput = GuiHelper.createFormField(this.FIELD_GRACE_PERIOD);
+        const row = GuiHelper.createTwoElemRow(weartaskTypeSelect, gracePeriodInput);
+        container.appendChild(row);
     }
+
+
+/**
+ * Dynamic fields for Finish Condition
+ */
+
+    private changeFinishCondFields() {
+        if (this.specificFinishCondFields && this.finishCondSelect) {
+            this.specificFinishCondFields.innerHTML = "";
+            const currentType = this.finishCondSelect.querySelector("select")!.value as FinishType;
+
+            // if there is only one specific field, we put it in row with enforce to save space
+            let inputForTwoElemRow;
+            if (currentType === "duration") {
+                inputForTwoElemRow = GuiHelper.createFormField(this.FIELD_DURATION);
+            }
+            else if (currentType === "orgasm") {
+                inputForTwoElemRow = GuiHelper.createFormField(this.FIELD_ORGASM_COUNT);
+            }
+            else if (currentType === "orgasm_ruined") {
+                inputForTwoElemRow = GuiHelper.createFormField(this.FIELD_ORGASM_RUINED_COUNT);
+            }
+            else if (currentType === "orgasm_resisted") {
+                inputForTwoElemRow = GuiHelper.createFormField(this.FIELD_ORGASM_RESISTED_COUNT);
+            }
+            else if (currentType === "spank") {
+                inputForTwoElemRow = GuiHelper.createFormField(this.FIELD_SPANK_COUNT);
+            }
+
+            if (inputForTwoElemRow) {
+                const enforce = GuiHelper.createFormField(this.FIELD_ENFORCE);
+                const row = GuiHelper.createTwoElemRow(inputForTwoElemRow, enforce);
+                this.specificFinishCondFields.appendChild(row);
+
+                // Elem that influence Reward pts if pts system enabled
+                inputForTwoElemRow.querySelector("input")!.addEventListener("change", () => {
+                    this.updateRewardPoints(this.parent);
+                });
+                enforce.querySelector("input")!.addEventListener("change", () => {
+                    this.updateRewardPoints(this.parent);
+                });
+            }
+
+            this.updateRewardPoints(this.parent);
+        }
+    };
+
+
+/**
+ * Create task click
+ */
+
 
     private onClickCreateTask(container: HTMLElement, createBtn: HTMLButtonElement) {
         // Get all common value
-        const durationMinutes = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_DURATION) as number ?? -1);
-        const totalDurationMs = durationMinutes * 60 * 1000;
         const taskType = GuiHelper.getFormFieldValue(container, this.FIELD_TASK_TYPE) as TaskType;
+        const finishCondType = GuiHelper.getFormFieldValue(container, this.FIELD_FINISH_CONDITION) as FinishType;
         const enforce = GuiHelper.getFormFieldValue(container, this.FIELD_ENFORCE) as boolean;
         const goodPtsOnSucces = this.getRewardPoints(container);
         const badPtsOnFailure = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_PENALTY) as number ?? 0);
 
+        // Finish Condition
+        let finishTotalNeeded = 0;
+        if (finishCondType === "duration") {
+            const durationMinutes = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_DURATION) as number ?? 0);
+            finishTotalNeeded = durationMinutes * 60 * 1000; // totalDurationMs
+        }
+        else if (finishCondType === "orgasm") {
+            finishTotalNeeded = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_ORGASM_COUNT) as number ?? 0);
+        }
+        else if (finishCondType === "orgasm_ruined") {
+            finishTotalNeeded = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_ORGASM_RUINED_COUNT) as number ?? 0);
+        }
+        else if (finishCondType === "orgasm_resisted") {
+            finishTotalNeeded = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_ORGASM_RESISTED_COUNT) as number ?? 0);
+        }
+        else if (finishCondType === "spank") {
+            finishTotalNeeded = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_SPANK_COUNT) as number ?? 0);
+        } else {
+            this.showErrorDialog("unknown", () => {});
+            return;
+        }
 
         // Start to Build TaskData
         let taskData: TaskData = {
             id: 0, // placeholder
-            type: "wear_bondage", // placeholder
+            type: taskType, // placeholder
+            finishType: finishCondType,
             description: "",
-            elapsedtimeMs: 0,
-            totalDurationMs: totalDurationMs, // in millisec
-            progress: 0,
+            finishCurrentCount: 0,
+            finishTotalNeeded: finishTotalNeeded,
+            progressPerc: 0,
             enforce: enforce,
             goodPtsOnSucces: goodPtsOnSucces,
             badPtsOnFailure: badPtsOnFailure,
         }
 
-        //const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
+        // Get the last specifics fields
         let created = false;
         let cannotStartReason: TaskCannotStartReason = "unknown";
         let retryFunction;
@@ -316,6 +443,23 @@ export class GuiCreateTaskView extends GuiViewBase {
         }, 2000);
     }
 
+
+/**
+ * Helpers
+ */
+
+    // Helper for specifcs type/end condition Card group
+    private addGroupTitleAndHelp(container: HTMLElement, title: string, helptitle: string, helpContent: string) {
+        // Sub-type options Title
+        const h4 = document.createElement("h4");
+        h4.innerText = title;
+        container.appendChild(h4);
+
+        // Specifics help/info
+        const taskHelpSection = GuiHelper.createHelpSection(helptitle, helpContent);
+        container.appendChild(taskHelpSection);
+    }
+
     private getRewardPoints(container: HTMLElement) {
         if (this.settings.enablePointsSystem) {
             return this.calculateRewardPoints(container);
@@ -327,18 +471,38 @@ export class GuiCreateTaskView extends GuiViewBase {
     private calculateRewardPoints(container: HTMLElement): number {
         const taskType = GuiHelper.getFormFieldValue(container, this.FIELD_TASK_TYPE) as TaskType;
         if (!taskType) return 0;
+        const finishType = GuiHelper.getFormFieldValue(container, this.FIELD_FINISH_CONDITION) as FinishType;
+        if (!finishType) return 0;
         const setting = getTaskTypeSetting(this.tasksSettings, taskType);
         if (!setting) return 0;
 
-        let durationMinutes = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_DURATION) as number);
-        if (durationMinutes < 0) durationMinutes = 0;
+        // Get Finish count/duration
+        let finishCurrentTotal = 0;
+        let finishBaseTotal: number = getFinishTypeSetting(this.tasksSettings, finishType, taskType).baseCount ?? 0;
+        if (finishType === "duration") {
+            let durationMinutes = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_DURATION) as number ?? 0);
+            if (durationMinutes < 0) durationMinutes = 0;
+            finishCurrentTotal = durationMinutes * 60 * 1000;
+        }
+        else if (finishType === "orgasm") {
+            finishCurrentTotal = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_ORGASM_COUNT) as number ?? 0);
+        }
+        else if (finishType === "orgasm_ruined") {
+            finishCurrentTotal = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_ORGASM_RUINED_COUNT) as number ?? 0);
+        }
+        else if (finishType === "orgasm_resisted") {
+            finishCurrentTotal = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_ORGASM_RESISTED_COUNT) as number ?? 0);
+        }
+        else if (finishType === "spank") {
+            finishCurrentTotal = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_SPANK_COUNT) as number ?? 0);
+        } else {
+            return 0;
+        }
 
         const enforced = GuiHelper.getFormFieldValue(container, this.FIELD_ENFORCE) as boolean;
-
-        const durationMs = durationMinutes * 1000 * 60;
-        const pts = ChaoticMistressModule.calculatePointsFromDuration(
-            durationMs,
-            setting.baseDurationMs,
+        const pts = ChaoticMistressModule.calculatePointsFromFinishCount(
+            finishCurrentTotal,
+            finishBaseTotal,
             setting.baseGoodPtsReward,
             enforced
         );
@@ -363,10 +527,13 @@ export class GuiCreateTaskView extends GuiViewBase {
         switch (cannotStartReason) {
             case "overwrite_only":
                 errorString = this.STRINGS.ERROR_TASK_ALREADY_ACTIVE;
+                break;
             case "not_available":
                 errorString = this.STRINGS.ERROR_TASK_NOT_AVAILABLE;
+                break;
             case "not_enabled":
                 errorString = this.STRINGS.ERROR_TASK_NOT_ENABLED;
+                break;
         }
 
         if (cannotStartReason === "overwrite_only") {

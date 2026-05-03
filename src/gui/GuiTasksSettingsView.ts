@@ -22,6 +22,7 @@ export class GuiTasksSettingsView extends GuiViewBase {
     private STRINGS = {
         PAGE_TITLE: "Tasks Settings",
 
+        CATEGORY_FINISH_WEIGHT: "Finish Weight for Random Selection",
         CATEGORY_BONDAGE_ITEMS: "Bondage/Restraint Items",
 
         HELP_BASE_TASK_TITLE: "Tasks Overview/Information",
@@ -61,11 +62,213 @@ export class GuiTasksSettingsView extends GuiViewBase {
         const helpSection = GuiHelper.createHelpSection(this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
         form.appendChild(helpSection);
 
+        const finishMainCard = this.buildTaskFinishCard();
         const bondageTaskMainCard = this.buildWearBondageTaskCard();
 
         // Final Assembly
+        form.appendChild(finishMainCard);
         form.appendChild(bondageTaskMainCard);
         this.parent.appendChild(form);
+    }
+
+    private buildTaskFinishCard(): HTMLElement {
+        // Fields
+        const FIELD_FINISH_TITLE: GuiFormField = {
+            html_id: "atb-finish-card-title",
+            label: "Alternative Task Finish Activity",
+            type: "display-text",
+            default_value: true
+        };
+        const FIELD_DURATION_WEIGHT: GuiFormField = {
+            html_id: "atb-finish-duration-weight",
+            label: "Weight for Duration (for Random Task)",
+            type: "number",
+            min_value: 0,
+            max_value: 1000,
+            default_value: this.settings.taskFinishSettings.randWeightDuration,
+            onChange: (value: number) => {
+                this.settings.taskFinishSettings.randWeightDuration = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_ORGASM_ENABLE: GuiFormField = {
+            html_id: "atb-finish-orgasm-enable",
+            label: "Enable Orgasm as Task Finish requierment",
+            type: "checkbox",
+            default_value: this.settings.taskFinishSettings.orgasm.enable,
+            onChange: (value: boolean) => {
+                this.settings.taskFinishSettings.orgasm.enable = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_ORGASM_BASE: GuiFormField = {
+            html_id: "atb-finish-orgasm-base",
+            label: "Base Orgasm Needed",
+            type: "number",
+            min_value: 1,
+            max_value: 500,
+            default_value: this.settings.taskFinishSettings.orgasm.baseCount,
+            onChange: (value: number) => {
+                this.settings.taskFinishSettings.orgasm.baseCount = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_ORGASM_WEIGHT: GuiFormField = {
+            html_id: "atb-finish-orgasm-weight",
+            label: "Weight for Orgasm (for Random Task)",
+            type: "number",
+            min_value: 0,
+            max_value: 1000,
+            default_value: this.settings.taskFinishSettings.orgasm.randomWeight,
+            onChange: (value: number) => {
+                this.settings.taskFinishSettings.orgasm.randomWeight = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_ORGASM_RUINED_ENABLE: GuiFormField = {
+            html_id: "atb-finish-orgasm-ruined-enable",
+            label: "Enable Orgasm Ruined",
+            type: "checkbox",
+            default_value: this.settings.taskFinishSettings.orgasmRuined.enable,
+            onChange: (value: boolean) => {
+                this.settings.taskFinishSettings.orgasmRuined.enable = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_ORGASM_RUINED_BASE: GuiFormField = {
+            html_id: "atb-finish-orgasm-ruined-base",
+            label: "Base Orgasm Ruined Needed",
+            type: "number",
+            min_value: 1,
+            max_value: 500,
+            default_value: this.settings.taskFinishSettings.orgasmRuined.baseCount,
+            onChange: (value: number) => {
+                this.settings.taskFinishSettings.orgasmRuined.baseCount = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_ORGASM_RUINED_WEIGHT: GuiFormField = {
+            html_id: "atb-finish-orgasm-ruined-weight",
+            label: "Weight for Orgasm Ruined (for Random Task)",
+            type: "number",
+            min_value: 0,
+            max_value: 1000,
+            default_value: this.settings.taskFinishSettings.orgasmRuined.randomWeight,
+            onChange: (value: number) => {
+                this.settings.taskFinishSettings.orgasmRuined.randomWeight = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_ORGASM_RESISTED_ENABLE: GuiFormField = {
+            html_id: "atb-finish-orgasm-resisted-enable",
+            label: "Enable Orgasm Resisted",
+            type: "checkbox",
+            default_value: this.settings.taskFinishSettings.orgasmResisted.enable,
+            onChange: (value: boolean) => {
+                this.settings.taskFinishSettings.orgasmResisted.enable = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_ORGASM_RESISTED_BASE: GuiFormField = {
+            html_id: "atb-finish-orgasm-resisted-base",
+            label: "Base Orgasm Resisted Needed",
+            type: "number",
+            min_value: 1,
+            max_value: 500,
+            default_value: this.settings.taskFinishSettings.orgasmResisted.baseCount,
+            onChange: (value: number) => {
+                this.settings.taskFinishSettings.orgasmResisted.baseCount = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_ORGASM_RESISTED_WEIGHT: GuiFormField = {
+            html_id: "atb-finish-orgasm-resisted-weight",
+            label: "Weight for Orgasm Resisted (for Random Task)",
+            type: "number",
+            min_value: 0,
+            max_value: 1000,
+            default_value: this.settings.taskFinishSettings.orgasmResisted.randomWeight,
+            onChange: (value: number) => {
+                this.settings.taskFinishSettings.orgasmResisted.randomWeight = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_SPANK_ENABLE: GuiFormField = {
+            html_id: "atb-finish-spank-enable",
+            label: "Enable Spank",
+            type: "checkbox",
+            default_value: this.settings.taskFinishSettings.spank.enable,
+            onChange: (value: boolean) => {
+                this.settings.taskFinishSettings.spank.enable = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_SPANK_BASE: GuiFormField = {
+            html_id: "atb-finish-spank-base",
+            label: "Base Spank Needed",
+            type: "number",
+            min_value: 1,
+            max_value: 500,
+            default_value: this.settings.taskFinishSettings.spank.baseCount,
+            onChange: (value: number) => {
+                this.settings.taskFinishSettings.spank.baseCount = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_SPANK_WEIGHT: GuiFormField = {
+            html_id: "atb-finish-spank-weight",
+            label: "Weight for Spank (for Random Task)",
+            type: "number",
+            min_value: 0,
+            max_value: 1000,
+            default_value: this.settings.taskFinishSettings.spank.randomWeight,
+            onChange: (value: number) => {
+                this.settings.taskFinishSettings.spank.randomWeight = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+
+
+        // Build Main card for bondage tasks
+        const finishTuple = GuiHelper.createFeatureToggleCard(FIELD_FINISH_TITLE, true);
+        const finishMainCard = finishTuple.card;
+        const finishContent = finishTuple.contentArea;
+
+        const finishOrgasmEnable = GuiHelper.createFormField(FIELD_ORGASM_ENABLE);
+        const finishOrgasmBase = GuiHelper.createFormField(FIELD_ORGASM_BASE);
+        const finishOrgasmRuinedEnable = GuiHelper.createFormField(FIELD_ORGASM_RUINED_ENABLE);
+        const finishOrgasmRuinedBase = GuiHelper.createFormField(FIELD_ORGASM_RUINED_BASE);
+        const finishOrgasmResistedEnable = GuiHelper.createFormField(FIELD_ORGASM_RESISTED_ENABLE);
+        const finishOrgasmResistedBase = GuiHelper.createFormField(FIELD_ORGASM_RESISTED_BASE);
+        const finishSpankEnable = GuiHelper.createFormField(FIELD_SPANK_ENABLE);
+        const finishSpankBase = GuiHelper.createFormField(FIELD_SPANK_BASE);
+
+        const finishDurationWeight = GuiHelper.createFormField(FIELD_DURATION_WEIGHT);
+        const finishOrgasmWeight = GuiHelper.createFormField(FIELD_ORGASM_WEIGHT);
+        const finishOrgasmRuinedWeight = GuiHelper.createFormField(FIELD_ORGASM_RUINED_WEIGHT);
+        const finishOrgasmResistedWeight = GuiHelper.createFormField(FIELD_ORGASM_RESISTED_WEIGHT);
+        const finishSpankWeight = GuiHelper.createFormField(FIELD_SPANK_WEIGHT);
+
+
+        const finishOrgasmRow = GuiHelper.createTwoElemRow(finishOrgasmEnable, finishOrgasmBase);
+        const finishOrgasmRuinedRow = GuiHelper.createTwoElemRow(finishOrgasmRuinedEnable, finishOrgasmRuinedBase);
+        const finishOrgasmResistedRow = GuiHelper.createTwoElemRow(finishOrgasmResistedEnable, finishOrgasmResistedBase);
+        const finishSpankRow = GuiHelper.createTwoElemRow(finishSpankEnable, finishSpankBase);
+
+        // Put all weight together to not waste too much space
+        const finishWeightRow1 = GuiHelper.createTwoElemRow(finishDurationWeight, finishOrgasmWeight);
+        const finishWeightRow2 = GuiHelper.createTwoElemRow(finishOrgasmRuinedWeight, finishOrgasmResistedWeight);
+
+        finishContent.appendChild(finishOrgasmRow);
+        finishContent.appendChild(finishOrgasmRuinedRow);
+        finishContent.appendChild(finishOrgasmResistedRow);
+        finishContent.appendChild(finishSpankRow);
+        GuiHelper.createContentTitle(finishContent, this.STRINGS.CATEGORY_FINISH_WEIGHT);
+        finishContent.appendChild(finishWeightRow1);
+        finishContent.appendChild(finishWeightRow2);
+        finishContent.appendChild(finishSpankWeight);
+
+        return finishMainCard;
     }
 
     private buildWearBondageTaskCard(): HTMLElement {

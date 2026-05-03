@@ -18,7 +18,7 @@ export class TaskWearBondage extends TaskBase {
         this.lastTimeWearingItem = Date.now();
         this.updateProgress();
 
-        if (this.isExpired()) {
+        if (this.isFinishConditionComplete()) {
             // End the task (success)
             this.triggerTaskCompletion(true, false);
             return;
@@ -46,7 +46,7 @@ export class TaskWearBondage extends TaskBase {
     }
 
     protected updateProgress() {
-        let progress = Math.floor((this.data.elapsedtimeMs / this.data.totalDurationMs) * 100);
+        let progress = Math.floor((this.data.finishCurrentCount / this.data.finishTotalNeeded) * 100);
         if (progress > 100) {
             progress = 100;
         }
@@ -54,13 +54,13 @@ export class TaskWearBondage extends TaskBase {
             progress = 0;
         }
         if (this.isFinished()) {
-            this.data.progress = 100;
+            this.data.progressPerc = 100;
         } else {
-            this.data.progress = progress;
+            this.data.progressPerc = progress;
         }
 
         let enforcedStr = this.data.enforce ? " (enforced)" : "";
-        this.data.description = `Wear ${this.data.itemToWear} for ${Math.round((this.data.totalDurationMs) / 1000)} seconds.` + enforcedStr;
+        this.data.description = `Wear ${this.data.itemToWear} ` + enforcedStr;
     }
 
 
@@ -90,7 +90,7 @@ export class TaskWearBondage extends TaskBase {
             this.lastChecked = currentTime;
 
             // Check if task is finished
-            if (this.isExpired()) {
+            if (this.isFinishConditionComplete()) {
                 // End the task (success)
                 this.triggerTaskCompletion(true, false);
                 return;
@@ -263,6 +263,6 @@ export class TaskWearBondage extends TaskBase {
     }
 
 
-    public onChatEvent(chatData: any): void {}
+    //public onChatEvent(chatData: any): void {}
     public onOrgasmEvent(character: any): void {}
 }

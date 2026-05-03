@@ -8,6 +8,9 @@
 export type TaskType = "wear_bondage";
 export type PunishementType = "full_bondage";
 
+// TODO: "orgasm_given" | "spank_given" | "date_time"
+export type FinishType = "duration" | "orgasm" | "orgasm_ruined" | "orgasm_resisted" | "spank";
+
 // TODO: "shock" | "blindfold"
 export type WearBondageType = "hand" | "leg" | "gag" | "chastity" | "toy";
 // excluded blindfold and earwear
@@ -17,11 +20,12 @@ export type WearBondageType = "hand" | "leg" | "gag" | "chastity" | "toy";
 export interface FullTaskType {
     taskType: TaskType;
     taskSubType?: WearBondageType | null;
+    // EndConditionType ?
 }
 
 
 /*
-********** Task/Punish Settings **********
+********** Task/Punish/Finish Settings **********
 */
 
 export interface SingleTaskSettings {
@@ -39,6 +43,23 @@ export interface SinglePunishmentSettings extends SingleTaskSettings {
     baseBadPtsReduction: number; // How much bad points is removed when taking this punishements
 }
 
+export interface SingleFinishSettings {
+    enable: boolean;
+    baseCount: number;
+    randomWeight: number;
+}
+
+export interface TaskFinishSettings {
+    //enableDuration: boolean; // Duration cannot be toggled Off
+    //baseDuration: number; // I prefer baseDuration to stay per TaskType
+    randWeightDuration: number;
+
+    orgasm: SingleFinishSettings;
+    orgasmRuined: SingleFinishSettings;
+    orgasmResisted: SingleFinishSettings;
+    spank: SingleFinishSettings;
+}
+
 export interface WearBondageTaskSettings extends SingleTaskSettings {
     baseGracePeriodMs: number; // in millisec
 
@@ -49,10 +70,14 @@ export interface WearBondageTaskSettings extends SingleTaskSettings {
     enableToy: boolean;
 }
 
+
 // Data for the TaskManagerModule
 export interface TasksSettings {
     // Tasks
     wearBondageTaskSettings: WearBondageTaskSettings;
+
+    // Tasks Finish Condition
+    taskFinishSettings: TaskFinishSettings;
 
     // Punishments
     fullBondagePunishmentSettings: SinglePunishmentSettings;
@@ -71,6 +96,29 @@ export const DefaultTasksSettings: TasksSettings = {
         enableGag: true,
         enableChastity: true,
         enableToy: true
+    },
+    taskFinishSettings: {
+        randWeightDuration: 50,
+        orgasm: {
+            enable: true,
+            baseCount: 20,
+            randomWeight: 15,
+        },
+        orgasmRuined: {
+            enable: true,
+            baseCount: 40,
+            randomWeight: 10,
+        },
+        orgasmResisted: {
+            enable: true,
+            baseCount: 15,
+            randomWeight: 10,
+        },
+        spank: {
+            enable: true,
+            baseCount: 20,
+            randomWeight: 5,
+        },
     },
     fullBondagePunishmentSettings: {
         enable: true,
@@ -101,6 +149,9 @@ export const FullPunishementList: PunishementType[] =
     "full_bondage",
 ];
 
+export const FullFinishList: FinishType[] =
+[ "duration", "orgasm", "orgasm_ruined", "orgasm_resisted", "spank" ];
+
 
 export function getTaskTypeSetting(setting: TasksSettings, type: TaskType | PunishementType): SingleTaskSettings | undefined {
     switch (type) {
@@ -126,6 +177,34 @@ export function getTaskTypeConstant(type: TaskType | PunishementType): TaskConst
             return FullBondagePunishementConstants;
     }
     return undefined;
+}
+
+export function getFinishTypeSetting(setting: TasksSettings, finishType: FinishType, taskType: TaskType | undefined): SingleFinishSettings {
+    switch (finishType) {
+        case "duration":
+            let baseDuration = 30 * 60 * 1000;
+            if (taskType) {
+                let taskTypeSetting = getTaskTypeSetting(setting, taskType);
+                if (taskTypeSetting) {
+                    baseDuration = taskTypeSetting.baseDurationMs;
+                }
+            }
+            let durationSetting: SingleFinishSettings = {
+                enable: true,
+                baseCount: baseDuration,
+                randomWeight: setting.taskFinishSettings.randWeightDuration
+            }
+            return durationSetting;
+
+        case "orgasm":
+            return setting.taskFinishSettings.orgasm;
+        case "orgasm_ruined":
+            return setting.taskFinishSettings.orgasmRuined;
+        case "orgasm_resisted":
+            return setting.taskFinishSettings.orgasmResisted;
+        case "spank":
+            return setting.taskFinishSettings.spank;
+    }
 }
 
 

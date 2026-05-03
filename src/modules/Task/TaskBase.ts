@@ -17,32 +17,37 @@ export abstract class TaskBase {
         this.data = data;
     }
 
-    // --- Abstract Methods ---
     /** Returns the dynamic text displayed in the UI */
     public abstract getDescription(): string;
 
     public getProgress(): number {
-        return this.data.progress;
+        return this.data.progressPerc;
     }
-    public gettimeLeft(): number {
+    /*public gettimeLeft(): number {
         return this.data.totalDurationMs - this.data.elapsedtimeMs;
+    }*/
+
+    public getData(): TaskData {
+        return this.data;
     }
 
     protected abstract updateProgress(): void;
 
     /** Called every tick by the TaskManager. */
     public onTick(currentTime: number): void {
-        if (this.data.elapsedtimeMs >= this.data.totalDurationMs || this.isFinished()) {
+        if (this.isFinishConditionComplete() || this.isFinished()) {
             return; // Nothing to do
         }
 
-        // Update elapsed time
         if (this.lastTickTime > 0) { // On first tick lastTickTime == 0
-            let elpasedTime = currentTime - this.lastTickTime;
-            if (elpasedTime > 0) { // should be always true ?
-                this.data.elapsedtimeMs += elpasedTime;
-                if (this.data.elapsedtimeMs > this.data.totalDurationMs) {
-                    this.data.elapsedtimeMs = this.data.totalDurationMs;
+            // Update elapsed time for "duration" FinishType
+            if (this.data.finishType == "duration") {
+                let elpasedTime = currentTime - this.lastTickTime;
+                if (elpasedTime > 0) { // should be always true ?
+                    this.data.finishCurrentCount += elpasedTime;
+                    if (this.data.finishCurrentCount > this.data.finishTotalNeeded) {
+                        this.data.finishCurrentCount = this.data.finishTotalNeeded;
+                    }
                 }
             }
 
@@ -58,26 +63,37 @@ export abstract class TaskBase {
         this.lastTickTime = currentTime;
     }
 
-    /** Called by TaskManager */
-    public abstract onChatEvent(chatData: any): void;
 
     /** Called by TaskManager */
-    public abstract onOrgasmEvent(character: any): void;
+    public onPlayerOrgasm() {
+        if (this.data.finishType == "orgasm") {
+            this.data.finishCurrentCount += 1;
+        }
+    }
+    public onPlayerOrgasmRuined() {
+        if (this.data.finishType == "orgasm_ruined") {
+            this.data.finishCurrentCount += 1;
+        }
+    }
+    public onPlayerOrgasmResisted() {
+        if (this.data.finishType == "orgasm_resisted") {
+            this.data.finishCurrentCount += 1;
+        }
+    }
+    public onPlayerSpanked() {
+        if (this.data.finishType == "spank") {
+            this.data.finishCurrentCount += 1;
+        }
+    }
+
 
     /** TaskManager will use it to check if the task should be removed */
     public isFinished(): boolean {
         return this.isTaskFinished;
     }
-
-    public getData(): TaskData {
-        return this.data;
+    protected isFinishConditionComplete(): boolean {
+        return (this.data.finishCurrentCount >= this.data.finishTotalNeeded);
     }
-
-    /** Checks if the task has run out of time */
-    protected isExpired(): boolean {
-        return (this.data.elapsedtimeMs >= this.data.totalDurationMs);
-    }
-
     public isTransgessionOccuring(): boolean {
         return this.transgessionOccuring;
     }
@@ -86,7 +102,7 @@ export abstract class TaskBase {
     public triggerTaskCompletion(succes: boolean, skipPts: boolean): void {
         this.isTaskFinished = true;
         this.transgessionOccuring = false;
-        this.data.progress = 100;
+        this.data.progressPerc = 100;
 
         console.log("ATB: Task is finished: " + this.getDescription());
         sendLocalMessage("Task is finished: " + this.getDescription(), ChatColor.Purple);

@@ -5,8 +5,8 @@ export interface ChaoticMistressSettings {
 
     // For Random Task
     averageNewTaskPerHour: number; // percent
-    minRandomDuration: number; // percent, multiply duration of tasks / punishements
-    maxRandomDuration: number; // percent, multiply duration of tasks / punishements
+    minRandomFinishNeeded: number; // percent, multiply duration/count of tasks / punishements
+    maxRandomFinishNeeded: number; // percent, multiply duration/count of tasks / punishements
     weightUsePunishAsTask: number; // Weight to add with others tasks when choosing randomTask.
     //avoidRandomTaskWhenAfk: boolean;
 
@@ -23,8 +23,8 @@ export const DefaultChaoticMistressSettings: ChaoticMistressSettings = {
     enablePointsSystem: true,
 
     averageNewTaskPerHour: 2,
-    minRandomDuration: 40, // 40% of base duration
-    maxRandomDuration: 250, // 250% of base duration
+    minRandomFinishNeeded: 40, // 40% of base duration/count
+    maxRandomFinishNeeded: 250, // 250% of base duration/count
     weightUsePunishAsTask: 1,
 
     forcedPunishementThreshold: 100,
