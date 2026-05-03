@@ -115,9 +115,9 @@ export class GuiChaoticMistressView extends GuiViewBase {
         form.appendChild(pointsSystemCard);
         form.appendChild(randomTaskCard);
 
-        GuiHelper.createContentTitle(form, this.STRINGS.CATEGORY_SELECT_PUNISHEMENT);
         form.appendChild(pointsPanel);
 
+        GuiHelper.createContentTitle(form, this.STRINGS.CATEGORY_SELECT_PUNISHEMENT);
         this.createAllPunishementsCards(form);
 
         this.parent.appendChild(form);

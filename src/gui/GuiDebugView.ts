@@ -5,13 +5,16 @@ import { addRandomRestrain } from "@/utility/ItemUtility";
 import { RandomEventsModule } from "@/modules/RandomEventsModule";
 import GuiViewBase from "./GuiViewBase";
 import { getCharacterChaoticMistressSettings, saveSettings } from "@/utility/CharacterWrapper";
+import { ChaoticMistressModule } from "@/modules/ChaoticMistressModule";
 
 export class GuiDebugView extends GuiViewBase {
     private STRINGS = {
         PAGE_TITLE: "Debug Page",
-        RESET_GOOD_PTS: "Reset Good Points",
+        ADD_GOOD_PTS: "Add 50 Good Points",
         RESET_BAD_PTS: "Reset Bad Points",
         CLEAR_ALL_TASKS: "Clear All Tasks",
+        RANDOM_TASK: "Trigger Random Task",
+        RANDOM_PUNISH: "Trigger Random Punishement",
         ADD_RANDOM_ITEM: "Equip Random Item",
         TEST_RANDOM_ITEM: "Test Random Item (Arm or torso)",
         TRIGGER_RANDOM_EVENT: "Trigger Random Event",
@@ -29,10 +32,10 @@ export class GuiDebugView extends GuiViewBase {
     public unload() {
     }
 
-    private resetGoodPts() {
+    private addGoodPts(pts: number) {
         const setting = getCharacterChaoticMistressSettings(this.character)
         if (setting) {
-            setting.goodPts = 0;
+            setting.goodPts += pts;
             saveSettings(this.character);
         }
     }
@@ -59,12 +62,13 @@ export class GuiDebugView extends GuiViewBase {
         form.style.gap = "25px";
 
         // Pts debug
+        //GuiHelper.createContentTitle(form, "Task/Points Debug");
 
         const resetGoodPointsBtn = document.createElement("button");
         resetGoodPointsBtn.className = "atb-main-btn";
-        resetGoodPointsBtn.innerText = this.STRINGS.RESET_GOOD_PTS;
+        resetGoodPointsBtn.innerText = this.STRINGS.ADD_GOOD_PTS;
         resetGoodPointsBtn.onclick = () => {
-            this.resetGoodPts();
+            this.addGoodPts(50);
         };
 
         const resetBadPointsBtn = document.createElement("button");
@@ -77,6 +81,32 @@ export class GuiDebugView extends GuiViewBase {
         const ptsRow = GuiHelper.createTwoElemRow(resetBadPointsBtn, resetGoodPointsBtn);
         form.appendChild(ptsRow);
 
+
+        // Random Task test
+
+        GuiHelper.createContentTitle(form, "Random Task Debug");
+
+        const randomTaskBtn = document.createElement("button");
+        randomTaskBtn.className = "atb-main-btn";
+        randomTaskBtn.innerText = this.STRINGS.RANDOM_TASK;
+        randomTaskBtn.onclick = () => {
+            const cm = ModuleManager.getModule("ChaoticMistressModule") as ChaoticMistressModule;
+            if (cm) cm.triggerRandomTask();
+        };
+        //form.appendChild(randomTaskBtn);
+
+        const randomPunishBtn = document.createElement("button");
+        randomPunishBtn.className = "atb-main-btn";
+        randomPunishBtn.innerText = this.STRINGS.RANDOM_PUNISH;
+        randomPunishBtn.onclick = () => {
+            const cm = ModuleManager.getModule("ChaoticMistressModule") as ChaoticMistressModule;
+            if (cm) cm.triggerRandomPunishment();
+        };
+        //form.appendChild(randomPunishBtn);
+        const randomTaskRow = GuiHelper.createTwoElemRow(randomTaskBtn, randomPunishBtn);
+        form.appendChild(randomTaskRow);
+
+
         // Clear all task
         const clearAllTasksBtn = document.createElement("button");
         clearAllTasksBtn.className = "atb-main-btn";
@@ -88,6 +118,7 @@ export class GuiDebugView extends GuiViewBase {
 
 
         // Random item test
+        GuiHelper.createContentTitle(form, "Random Items Test");
 
         const addRandomBtn = document.createElement("button");
         addRandomBtn.className = "atb-main-btn";
@@ -108,6 +139,7 @@ export class GuiDebugView extends GuiViewBase {
         form.appendChild(randomItemRow);
 
         // Random Event debug
+        GuiHelper.createContentTitle(form, "Random Event Test");
 
         const randomEventBtn = document.createElement("button");
         randomEventBtn.className = "atb-main-btn";
