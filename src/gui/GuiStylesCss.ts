@@ -88,7 +88,7 @@ export const uiStyles = `
     .atb-main-btn {
         padding: 12px; background: var(--atb-primary); color: var(--atb-text);
         border: none; border-radius: 6px; cursor: pointer;
-        font-weight: bold; margin-top: 10px; transition: background 0.2s;
+        font-weight: bold; transition: background 0.2s;
     }
     .atb-main-btn:hover { background: var(--atb-primary-hover); }
     .atb-main-btn.success { background: var(--atb-success); }

@@ -1,6 +1,7 @@
 import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
 import { allInternalfields, CoreSettings, DefaultCoreSettings } from "@/models/CoreSettings";
 import { GeneralSettings } from "@/models/GeneralSettings";
+import { OutfitsSettings } from "@/models/OutfitSettings";
 import { RandomEventsSettings } from "@/models/RandomEventsSettings";
 import { TaskManagerSettings } from "@/models/TaskManagerSettings";
 import { TasksSettings } from "@/models/TasksSettings";
@@ -28,6 +29,9 @@ export default class StorageManager {
     static getTasksSettings(): TasksSettings {
         return StorageManager.globalSettings.TasksSettings;
     }
+    static getOutfitSettings(): OutfitsSettings {
+        return StorageManager.globalSettings.OutfitsSettings;
+    }
 
     static getPublicSettings(): CoreSettings {
         // TODO: Select settings based on remote Access settings
@@ -38,6 +42,7 @@ export default class StorageManager {
             ChaoticMistressModule: this.getChaoticMistressSettings(),
             TaskManagerModule: this.getTaskManagerSettings(),
             TasksSettings: this.getTasksSettings(),
+            OutfitsSettings: this.getOutfitSettings(),
         }
         return publicSettings;
     }

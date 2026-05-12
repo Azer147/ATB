@@ -286,8 +286,7 @@ export class GuiChaoticMistressView extends GuiViewBase {
                 container.appendChild(row);
             } else {
                 // Odd number of cards: put the last one in a row with an empty div so it stays half-width
-                const emptyDiv = document.createElement("div");
-                const row = GuiHelper.createTwoElemRow(card1, emptyDiv);
+                const row = GuiHelper.createTwoElemRow(card1, undefined);
                 container.appendChild(row);
             }
         }

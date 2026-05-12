@@ -68,6 +68,79 @@ export function formatTimeMs(ms: number): string {
     }
 }
 
+export function triggerShock() {
+	console.log("ATB: triggerShock: TODO");
+	/*
+	PropertyShockPublishAction(C, Item, true);
+	StruggleProgressStruggleCount = 0;
+	StruggleProgress = 0;
+	DialogLeaveDueToItem = true;
+	*/
+}
+
+export function getNameOrNickname(C: OtherCharacter | PlayerCharacter) {
+	if (C.Nickname && C.Nickname.length > 0) {
+		return C.Nickname;
+	}
+	return C.Name;
+}
+
+// Copied from LSCG
+export function getBCXData(): any {
+	try {
+		const parsed = LZString.decompressFromBase64(Player.ExtensionSettings.BCX);
+		if (parsed) {
+			let parsedData = JSON.parse(parsed);
+			return parsedData;
+		}
+		return (Player.ExtensionSettings.BCX.split(":")[1]);
+	}
+	catch (e) { return undefined; }
+}
+
+// Copied from LSCG
+export function getBCXActiveCurseSlots(): AssetGroupName[] {
+	let bcxCurses = getBCXData()?.conditions?.curses?.conditions;
+	if (!bcxCurses) return [];
+	return (Object.keys(bcxCurses).filter(key => bcxCurses[key]?.active ?? false)) as AssetGroupName[];
+}
+
+export function isCharacterLscgEffectsPreventOutfit(C: OtherCharacter | PlayerCharacter) {
+	const lscgEffect = ["cursed-item", "polymorphed", "redressed"];
+	if (C.LSCG) {
+		// I know its ugly, but should work
+		try {
+			let haveEffect = C.LSCG?.StateModule?.states?.find((state) => {
+				//return state.type == "cursed-item"
+				return (state && lscgEffect.includes(state.type) && state.active);
+			});
+			//if (cursedstate && cursedstate.active) {
+			if (haveEffect) {
+				return true;
+			}
+		} catch {
+			return false;
+		}
+	}
+	return false;
+}
+
+export function shouldTriggerFromAveragePerHour(avgPerHour: number, tickPeriodMs: number): boolean {
+	if (avgPerHour) {
+		const msPerHour = 60 * 60 * 1000;
+
+		// Example: If tickPeriodMs is 60000 (1 min) and averageTaskPerHour is 2.
+		// (60000 / 3600000) * 2 = 0.0333 (A 3.33% chance every minute)
+		const chanceRandomTask = (tickPeriodMs / msPerHour) * avgPerHour;
+
+		// Roll the dice
+		if (Math.random() < chanceRandomTask) {
+			return true;
+		}
+	}
+	return false;
+}
+
 export function getPadlockItem(C: Character, lockType: AssetLockType): Item | undefined {
 	let asset: Asset | null = AssetGet(C.AssetFamily, "ItemMisc", lockType);
 	if (asset == null) {

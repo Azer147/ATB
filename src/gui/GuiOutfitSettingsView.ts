@@ -1,0 +1,216 @@
+import { GuiHelper, GuiFormField } from "./GuiHelper";
+import GuiViewBase from "./GuiViewBase";
+import { getCharacterOutfitSettings, saveSettings } from "@/utility/CharacterWrapper";
+import { allOutfitList, extractOutfitDataFromId, getOutfitSettingsFromId, OutfitId, OutfitsSettings, RawOutfit } from "@/models/OutfitSettings";
+
+export class GuiOutfitSettingsView extends GuiViewBase {
+    private shouldSaveSetting: boolean = false;
+    private settings!: OutfitsSettings;
+
+    private previewCanva: HTMLCanvasElement | null = null;
+    private previewcanvaContext: CanvasRenderingContext2D | null = null;
+    private previewChar: Character | undefined;
+
+    private UPDATE_PREVIEW_TIME_MS = 100;
+    private updatePreviewInterval: number = 0;
+
+
+    private HELP_BASE_TASK_TEXT = `
+    TODO
+    `;
+
+    private STRINGS = {
+        PAGE_TITLE: "TODO",
+
+        HELP_BASE_TASK_TITLE: "TODO",
+
+        BTN_SHOW: "Show"
+    };
+
+
+    constructor(parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter) {
+        super(parent, C);
+
+        const settings = getCharacterOutfitSettings(this.character)
+        if (!settings) {
+            // Build error page
+            GuiHelper.buildErrorPage(parent);
+            return;
+        }
+        this.settings = settings;
+
+        let outfitViewer = document.createElement("div");
+        let outfitCards = document.createElement("div");
+        this.testOutfitViewer(outfitViewer);
+        this.buildOutfitSettingsPage(outfitCards);
+
+        let row = GuiHelper.createTwoElemRow(outfitViewer, outfitCards);
+        // We want the card to take more space
+        outfitCards.style.flex = "2";
+
+        // Make outfitViewer stick
+        outfitViewer.style.position = "sticky";
+        outfitViewer.style.top = "20px"; // The distance from the top of the scrolling container
+        outfitViewer.style.alignSelf = "flex-start";
+
+        this.parent.appendChild(row);
+    }
+
+    public update() {
+    }
+
+    public unload() {
+        if (this.shouldSaveSetting) {
+            saveSettings(this.character);
+        }
+        if (this.updatePreviewInterval) {
+            clearInterval(this.updatePreviewInterval);
+        }
+        /*if (this.previewChar) {
+            CharacterDelete(this.previewChar);
+        }*/
+    }
+
+    private updatePreview() {
+        if (this.previewCanva && this.previewcanvaContext && this.previewChar) {
+            this.previewcanvaContext.clearRect(0, 0, this.previewCanva.width, this.previewCanva.height);
+            DrawCharacter(this.previewChar, -50, -20, 1, true, this.previewcanvaContext);
+        }
+    }
+
+    private testOutfitViewer(container: HTMLElement) {
+        this.previewCanva = document.createElement("canvas");
+        this.previewCanva.style.position = "relative";
+        this.previewCanva.style.display = "flex";
+        // TODO: Probably need to calculate it from the base GuiMainView width/height
+        this.previewCanva.width = 400;
+        this.previewCanva.height = 950;
+        this.previewCanva.style.margin = "0";
+
+        this.previewcanvaContext = this.previewCanva.getContext("2d");
+        if (!this.previewcanvaContext) {
+            console.warn("ATB: DEBUG: Cannot get canvaContext!");
+            return;
+        }
+
+        this.previewChar = CharacterLoadSimple(`ATB-Outfit-Viewer`);
+        // To prevent holding nested ref from this.character
+        const appearanceStr = CharacterAppearanceStringify(this.character);
+        CharacterAppearanceRestore(this.previewChar, appearanceStr);
+
+        //CharacterNaked(this.previewChar, false);
+        CharacterReleaseTotal(this.previewChar, false);
+        CharacterResetFacialExpression(this.previewChar);
+        CharacterRefresh(this.previewChar, false, false);
+
+        // Issue: Can't see previewchar if Player is blind..
+
+        //DrawCharacter(this.previewChar, -50, -20, 1, true, this.previewcanvaContext);
+
+        // Need fast interval for animations
+        // Note: We could also just DrawCharacter once if needed, if we don't care about animations
+        this.updatePreviewInterval = setInterval(() => {this.updatePreview()}, this.UPDATE_PREVIEW_TIME_MS);
+
+        container.appendChild(this.previewCanva);
+    }
+
+    private showOutfit(outfitId: OutfitId) {
+        let outfitItem = extractOutfitDataFromId(outfitId);
+        if (this.previewChar) {
+            CharacterReleaseTotal(this.previewChar, false);
+            CharacterNaked(this.previewChar, false);
+            CharacterResetFacialExpression(this.previewChar);
+
+            for (let i = 0; i < outfitItem.length; i++) {
+                let item = outfitItem[i];
+
+                let appliedItem = InventoryWear(this.previewChar, item.Name, item.Group, item.Color, item.Difficulty, undefined, item.Craft, false);
+                if (item.Property && appliedItem) {
+                    appliedItem.Property = item.Property;
+                }
+            }
+            CharacterRefresh(this.previewChar, false, false);
+        }
+    }
+
+    public buildOutfitSettingsPage(container: HTMLElement) {
+        //GuiHelper.createContentTitle(this.parent, this.STRINGS.PAGE_TITLE, true);
+
+        const form = document.createElement("div");
+        form.style.display = "flex";
+        form.style.flexDirection = "column";
+        form.style.gap = "15px";
+
+        const helpSection = GuiHelper.createHelpSection(this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
+        form.appendChild(helpSection);
+
+        for (let i=0; i < allOutfitList.length; i++) {
+            const outfitCard = this.buildOutfitCard(allOutfitList[i]);
+            if (outfitCard) form.appendChild(outfitCard);
+        }
+
+        container.appendChild(form);
+    }
+
+    private buildOutfitCard(outfitData: RawOutfit): HTMLElement | undefined {
+        const outfitSettings = getOutfitSettingsFromId(this.settings, outfitData.id);
+
+        if (outfitSettings) {
+            // Fields
+            const FIELD_ENABLE: GuiFormField = {
+                html_id: "atb-outfit-enable-" + outfitData.id,
+                label: outfitData.name,
+                type: "checkbox",
+                default_value: outfitSettings.enable,
+                onChange: (value: boolean) => {
+                    outfitSettings.enable = value;
+                    this.shouldSaveSetting = true;
+                }
+            };
+            const FIELD_ENABLE_RANDOM: GuiFormField = {
+                html_id: "atb-outfit-enable-random-" + outfitData.id,
+                label: "Enable For Random Task",
+                type: "checkbox",
+                default_value: outfitSettings.enableForRandomTask,
+                onChange: (value: boolean) => {
+                    outfitSettings.enableForRandomTask = value;
+                    this.shouldSaveSetting = true;
+                }
+            };
+            const FIELD_WEIGHT_RANDOM: GuiFormField = {
+                html_id: "atb-outfit-weight" + outfitData.id,
+                label: "Weight For Random Task",
+                type: "number",
+                min_value: 0,
+                max_value: 1000,
+                default_value: outfitSettings.randomWeight,
+                onChange: (value: number) => {
+                    outfitSettings.randomWeight = value;
+                    this.shouldSaveSetting = true;
+                }
+            };
+
+            const createTaskBtn = document.createElement("button");
+            createTaskBtn.className = "atb-main-btn";
+            createTaskBtn.innerText = this.STRINGS.BTN_SHOW;
+            createTaskBtn.onclick = () => {
+                this.showOutfit(outfitData.id);
+            };
+
+            // Build Main card
+            const outfitTuple = GuiHelper.createFeatureToggleCard(FIELD_ENABLE, true, createTaskBtn);
+            const outfitMainCard = outfitTuple.card;
+            const outfitContent = outfitTuple.contentArea;
+
+            const enableRandom = GuiHelper.createFormField(FIELD_ENABLE_RANDOM);
+            const weightRandom = GuiHelper.createFormField(FIELD_WEIGHT_RANDOM);
+            const rowRandom = GuiHelper.createTwoElemRow(enableRandom, weightRandom);
+            outfitContent.appendChild(rowRandom);
+
+            return outfitMainCard;
+        }
+
+        return undefined;
+    }
+
+}

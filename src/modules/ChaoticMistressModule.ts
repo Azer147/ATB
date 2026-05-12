@@ -5,8 +5,10 @@ import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
 import ModuleManager from "@/utility/ModuleManager";
 import { TaskManagerModule } from "./TaskManagerModule";
 import { FinishType, FullFinishList, FullPunishementList, FullTaskList, FullTaskType, getFinishTypeSetting, getTaskTypeConstant, getTaskTypeSetting, PunishementType, SingleTaskSettings, TasksSettings, TaskType } from "@/models/TasksSettings";
-import { ChatColor, sendLocalMessage } from "@/utility/utility";
+import { ChatColor, CloneAndRandomizeList, sendLocalMessage, shouldTriggerFromAveragePerHour } from "@/utility/utility";
 import { TaskCannotStartReason } from "@/models/TaskManagerSettings";
+import { allOutfitList, getOutfitSettingsFromId, OutfitId, OutfitTag, RawOutfit } from "@/models/OutfitSettings";
+import { isCharacterHaveEchoItem } from "@/utility/CharacterWrapper";
 
 export class ChaoticMistressModule extends ModuleBase {
     TICK_PERIOD_MS: number = 1000 * 60; // 1 min
@@ -59,19 +61,9 @@ export class ChaoticMistressModule extends ModuleBase {
 
         // Check if should trigger Random Task
         if (this.settings.enableRandomTasks) {
-            let averageTaskPerHour = this.settings.averageNewTaskPerHour;
-            if (averageTaskPerHour) {
-                const msPerHour = 60 * 60 * 1000;
-
-                // Example: If TICK_PERIOD_MS is 60000 (1 min) and averageTaskPerHour is 2.
-                // (60000 / 3600000) * 2 = 0.0333 (A 3.33% chance every minute)
-                const chanceRandomTask = (this.TICK_PERIOD_MS / msPerHour) * averageTaskPerHour;
-
-                // Roll the dice
-                if (Math.random() < chanceRandomTask) {
-                    console.log("ATB: Random task triggered!");
-                    this.triggerRandomTask();
-                }
+            if (shouldTriggerFromAveragePerHour(this.settings.averageNewTaskPerHour, this.TICK_PERIOD_MS)) {
+                console.log("ATB: Random task triggered!");
+                this.triggerRandomTask();
             }
         }
     }
@@ -104,6 +96,7 @@ export class ChaoticMistressModule extends ModuleBase {
 
     triggerRandomTask(): void {
         let availTask: FullTaskType[] = ChaoticMistressModule.getAvailableTasks(Player, false);
+        console.warn("ATB: triggerRandomTask: availTask: ", availTask);
         if (availTask.length === 0) {
             return;
         }
@@ -113,6 +106,7 @@ export class ChaoticMistressModule extends ModuleBase {
         const selectedTask = this.selectRandomByWeight("task", availTask);
         if (selectedTask) {
             const selectedFinish = this.selectRandomByWeight("finish", FullFinishList, selectedTask.taskType);
+            // TODO: getAvailable finish (after task/outfit)
 
             const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
             let taskSetting = getTaskTypeSetting(this.tasksSettings, selectedTask.taskType);
@@ -126,12 +120,104 @@ export class ChaoticMistressModule extends ModuleBase {
                 const reward = ChaoticMistressModule.calculatePointsFromFinishCount(randFinishNeeded, baseFinishNeeded, taskSetting.baseGoodPtsReward, false);
 
                 if (selectedTask.taskType === "wear_bondage" && selectedTask.taskSubType) {
-                        const gracePeriod = this.tasksSettings.wearBondageTaskSettings.baseGracePeriodMs;
-                        console.log(`ATB: triggerRandomTask: Selected ${selectedTask.taskType} wearType: ${selectedTask.taskSubType} finish type: ${selectedFinish} count: ${randFinishNeeded}`);
-                        tm.startWearBondageTask(selectedTask.taskSubType, selectedFinish, randFinishNeeded, false, reward, failure, gracePeriod);
+                    const gracePeriod = this.tasksSettings.wearBondageTaskSettings.baseGracePeriodMs;
+                    console.log(`ATB: triggerRandomTask: Selected ${selectedTask.taskType} wearType: ${selectedTask.taskSubType} finish type: ${selectedFinish} count: ${randFinishNeeded}`);
+                    tm.startWearBondageTask(selectedTask.taskSubType, selectedFinish, randFinishNeeded, false, reward, failure, gracePeriod);
+                }
+                if (selectedTask.taskType === "wear_outfit") {
+                    this.startRandomWearOutfitTask(selectedFinish, randFinishNeeded, reward, failure);
                 }
             }
         }
+    }
+
+    // Additional part of triggerRandomTask (to reduce triggerRandomTask() size)
+    private startRandomWearOutfitTask(selectedFinish, randFinishNeeded, reward, failure) {
+        const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
+        const gracePeriod = this.tasksSettings.wearOutfitTaskSettings.baseGracePeriodMs;
+        const avgRandomExt = this.tasksSettings.wearOutfitTaskSettings.averageRandomExtPerHour;
+
+        // Select Random Outfit
+        let excludeTags: OutfitTag[] = [];
+        if (this.tasksSettings.wearOutfitTaskSettings.randomCanUseHarshOutfit == false) {
+            excludeTags.push("harsh");
+        }
+
+        const selectedOutfit = this.selectRandomOutfit([], excludeTags); // exclude harsh outfit
+        if (!selectedOutfit) {
+            return;
+        }
+
+        // Calc Random removeOnFinish
+        let removeOnFinish = true;
+        if (Math.floor(Math.random() * 100) > this.tasksSettings.wearOutfitTaskSettings.chanceRemoveOnFinish) {
+            removeOnFinish = false;
+        }
+
+        console.log(`ATB: triggerRandomTask: Selected wear_outfit outfitId: ${selectedOutfit} finish type: ${selectedFinish} count: ${randFinishNeeded}`);
+        tm.startWearOutfitTask(selectedOutfit, selectedFinish, randFinishNeeded, false, reward, failure, gracePeriod, removeOnFinish, avgRandomExt);
+    }
+
+    selectRandomOutfit(includeTags: OutfitTag[] = [], excludeTags: OutfitTag[] = []): OutfitId | undefined {
+        // build weighted list
+        let totalWeight = 0;
+        const weightedList = allOutfitList.map(outfit => {
+            let weight = 0;
+
+            let outfitSetting = getOutfitSettingsFromId(Player.ATB.OutfitsSettings, outfit.id);
+            if (this.isOutfitAvailable(outfit, includeTags, excludeTags) && outfitSetting.enableForRandomTask) {
+                weight = outfitSetting.randomWeight
+            }
+
+            if (weight < 0) weight = 0;
+            totalWeight += weight;
+            return { outfit, weight };
+        });
+        if (totalWeight === 0) {
+            return undefined;
+        }
+
+        let randomRoll = Math.random() * totalWeight;
+
+        // Select task based on weight
+        let selected: OutfitId | undefined = undefined;
+        for (let item of weightedList) {
+            randomRoll -= item.weight;
+            if (randomRoll <= 0) {
+                selected = item.outfit.id;
+                break;
+            }
+        }
+        return selected;
+    }
+
+    isOutfitAvailable(outfit: RawOutfit, includeTags: OutfitTag[] = [], excludeTags: OutfitTag[] = []): boolean {
+        let includeCond: boolean = false;
+        let excludeCond: boolean = false;
+
+        let outfitSetting = getOutfitSettingsFromId(Player.ATB.OutfitsSettings, outfit.id);
+        if (!outfitSetting.enable) {
+            return false;
+        }
+
+        // Ignore outfit using echo addon if player don't have it
+        if (outfit.tags.includes("use_echo") && isCharacterHaveEchoItem(Player) == false) {
+            return false;
+        }
+
+        if (includeTags.length > 0) {
+            includeCond = outfit.tags.some((tag) => { return includeTags.includes(tag); });
+        } else {
+            includeCond = true;
+        }
+
+        if (excludeTags.length > 0) {
+            excludeCond = (outfit.tags.some((tag) => { return excludeTags.includes(tag); }) == false);
+        } else {
+            excludeCond = true;
+        }
+
+        return (includeCond && excludeCond);
     }
 
 

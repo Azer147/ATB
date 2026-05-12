@@ -7,8 +7,9 @@ import { GuiPunishementsSettingsView } from "./GuiPunishementsSettingsView";
 import { GuiRandomEventsView } from "./GuiRandomEventsView";
 import { GuiTasksSettingsView } from "./GuiTasksSettingsView";
 import GuiViewBase from "./GuiViewBase";
+import { GuiOutfitSettingsView } from "./GuiOutfitSettingsView";
 
-type TabName = "Dashboard" | "Create Task" | "Chaotic Mistress" | "Random Events" | "Tasks Settings" | "Punishements Settings" | "Debug";
+type TabName = "Dashboard" | "Create Task" | "Chaotic Mistress" | "Random Events" | "Tasks Settings" | "Punishements Settings" | "Outfit Settings" | "Debug";
 
 export interface TabConfig {
     render: (parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter) => GuiViewBase | undefined;
@@ -36,6 +37,7 @@ export class GuiMainView {
         }},*/
         "Tasks Settings": {render: (parent, C) => { return new GuiTasksSettingsView(parent, C) as GuiViewBase; }},
         "Punishements Settings": {render: (parent, C) => { return new GuiPunishementsSettingsView(parent, C) as GuiViewBase; }},
+        "Outfit Settings": {render: (parent, C) => { return new GuiOutfitSettingsView(parent, C) as GuiViewBase; }},
         "Debug": {render: (parent, C) => { return new GuiDebugView(parent, C) as GuiViewBase; },
                     showCondition: (C) => { return C.IsPlayer()}},
     };

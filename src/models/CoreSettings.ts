@@ -1,5 +1,6 @@
 import { ChaoticMistressInternalfields, ChaoticMistressSettings, DefaultChaoticMistressSettings } from "./ChaoticMistressSettings";
 import { DefaultGeneralSettings, GeneralInternalfields, GeneralSettings } from "./GeneralSettings";
+import { DefaultOutfitSettings, OutfitsSettings } from "./OutfitSettings";
 import { DefaultRandomEventsSettings, RandomEventsSettings } from "./RandomEventsSettings";
 import { SleepControlSettings } from "./SleepControlSettings";
 import { DefaultTaskManagerSettings, TaskManagerInternalfields, TaskManagerSettings } from "./TaskManagerSettings";
@@ -12,6 +13,7 @@ export interface CoreSettings {
     ChaoticMistressModule: ChaoticMistressSettings;
     TaskManagerModule: TaskManagerSettings;
     TasksSettings: TasksSettings;
+    OutfitsSettings: OutfitsSettings;
     //SleepControlModule: SleepControlSettings;
 }
 
@@ -22,6 +24,7 @@ export const DefaultCoreSettings: CoreSettings = {
     ChaoticMistressModule: DefaultChaoticMistressSettings,
     TaskManagerModule: DefaultTaskManagerSettings,
     TasksSettings: DefaultTasksSettings,
+    OutfitsSettings: DefaultOutfitSettings,
     //SleepControlModule: DefaultSleepControlSettings
 }
 

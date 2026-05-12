@@ -44,10 +44,14 @@ export class GuiHelper {
         parent.appendChild(title);
     }
 
-    public static createTwoElemRow(elem1: HTMLElement, elem2: HTMLElement): HTMLDivElement {
+    public static createTwoElemRow(elem1: HTMLElement | undefined, elem2: HTMLElement | undefined): HTMLDivElement {
         const row = document.createElement("div");
         row.style.display = "flex";
         row.style.gap = "15px";
+
+        // Create empty div if elem undefined to keep spacing correct
+        if (!elem1) elem1 = document.createElement("div");
+        if (!elem2) elem2 = document.createElement("div");
 
         elem1.style.flex = "1";
         elem2.style.flex = "1";
@@ -274,7 +278,6 @@ export class GuiHelper {
 
             if (btnConfig.isPrimary) {
                 btn.className = "atb-main-btn";
-                btn.style.marginTop = "0";
             } else {
                 btn.className = "atb-action-btn";
             }
@@ -298,7 +301,7 @@ export class GuiHelper {
         container.appendChild(backdrop);
     }
 
-    public static createFeatureToggleCard(field: GuiFormField, useContentArea: boolean): { card: HTMLDivElement, contentArea: HTMLDivElement } {
+    public static createFeatureToggleCard(field: GuiFormField, useContentArea: boolean, rightSideElem?: HTMLElement): { card: HTMLDivElement, contentArea: HTMLDivElement } {
         if (field.type !== "checkbox" && field.type !== "display-text") {
             console.warn("ATB: createFeatureToggleCard requires a checkbox or display-text GuiFormField.");
         }
@@ -307,6 +310,7 @@ export class GuiHelper {
 
         const card = document.createElement("div");
         card.className = `atb-feature-card ${isEnabled ? "is-enabled" : ""}`;
+        if (rightSideElem) card.style.padding = "8px"; // lower padding when using rightSideElem
 
         // Row: Header
         const header = document.createElement("div");
@@ -346,12 +350,16 @@ export class GuiHelper {
         headerLeft.appendChild(checkboxWrapper);
 
         // Right side of the header: Status
-        const statusText = document.createElement("span");
-        statusText.className = "atb-feature-status";
-        statusText.innerText = isEnabled ? "Enabled" : "Disabled";
+        let statusText;
+        if (!rightSideElem) {
+            statusText = document.createElement("span");
+            statusText.className = "atb-feature-status";
+            statusText.innerText = isEnabled ? "Enabled" : "Disabled";
+            rightSideElem = statusText;
+        }
 
         header.appendChild(headerLeft);
-        header.appendChild(statusText);
+        header.appendChild(rightSideElem as HTMLElement);
 
         // contentArea
         const contentArea = document.createElement("div");
@@ -378,11 +386,11 @@ export class GuiHelper {
 
                 if (checked) {
                     card.classList.add("is-enabled");
-                    statusText.innerText = "Enabled";
+                    if (statusText) statusText.innerText = "Enabled";
                     updateExpandedState(true); // Auto-expand when enabled
                 } else {
                     card.classList.remove("is-enabled");
-                    statusText.innerText = "Disabled";
+                    if (statusText) statusText.innerText = "Disabled";
                     updateExpandedState(false); // Auto-collapse when disabled
                 }
 

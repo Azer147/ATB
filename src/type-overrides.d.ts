@@ -5,12 +5,12 @@
 
 interface PlayerCharacter extends Character {
     ATB: import("./models/CoreSettings").CoreSettings;
-    //ATB: CoreSettings;
+    LSCG: any
 }
 
 interface OtherCharacter extends Character {
     ATB: import("./models/CoreSettings").CoreSettings;
-    //ATB: CoreSettings;
+    LSCG: any
 }
 
 interface ExtensionSettings {

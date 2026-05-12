@@ -5,7 +5,7 @@
 */
 
 // TODO: "outfit" | "activity" | "say" | "arousal" | "escape"
-export type TaskType = "wear_bondage";
+export type TaskType = "wear_bondage" | "wear_outfit";
 export type PunishementType = "full_bondage";
 
 // TODO: "orgasm_given" | "spank_given" | "date_time"
@@ -35,6 +35,8 @@ export interface SingleTaskSettings {
     randomWeight: number; // Weigthed chance to be picked among other tasks (for Chaotic Mistress)
 
     baseDurationMs: number; // in millisec
+    baseGracePeriodMs: number; // in millisec
+
     baseGoodPtsReward: number;
     baseBadPointsPenalty: number; // Can be either on complete failure or partial failure depending if the task can fail and end.
 }
@@ -61,8 +63,6 @@ export interface TaskFinishSettings {
 }
 
 export interface WearBondageTaskSettings extends SingleTaskSettings {
-    baseGracePeriodMs: number; // in millisec
-
     enableHand: boolean;
     enableLeg: boolean;
     enableGag: boolean;
@@ -70,11 +70,19 @@ export interface WearBondageTaskSettings extends SingleTaskSettings {
     enableToy: boolean;
 }
 
+export interface WearOutfitTaskSettings extends SingleTaskSettings {
+    baseGracePeriodMs: number; // in millisec
+
+    averageRandomExtPerHour: number, // For Random Task
+    chanceRemoveOnFinish: number, // For Random Task
+    randomCanUseHarshOutfit: boolean // For Random Task
+}
 
 // Data for the TaskManagerModule
 export interface TasksSettings {
     // Tasks
     wearBondageTaskSettings: WearBondageTaskSettings;
+    wearOutfitTaskSettings: WearOutfitTaskSettings;
 
     // Tasks Finish Condition
     taskFinishSettings: TaskFinishSettings;
@@ -88,14 +96,25 @@ export const DefaultTasksSettings: TasksSettings = {
         enable: true,
         randomWeight: 10,
         baseDurationMs: 30 * 60 * 1000, // 30 min
+        baseGracePeriodMs: 30 * 1000, // 30 sec,
         baseGoodPtsReward: 10,
         baseBadPointsPenalty: 5,
-        baseGracePeriodMs: 30 * 1000, // 30 sec,
         enableHand: true,
         enableLeg: true,
         enableGag: true,
         enableChastity: true,
         enableToy: true
+    },
+    wearOutfitTaskSettings: {
+        enable: true,
+        randomWeight: 20,
+        baseDurationMs: 30 * 60 * 1000, // 30 min
+        baseGracePeriodMs: 45 * 1000, // 45sec
+        baseGoodPtsReward: 10,
+        baseBadPointsPenalty: 5,
+        averageRandomExtPerHour: 20,
+        chanceRemoveOnFinish: 50,
+        randomCanUseHarshOutfit: false
     },
     taskFinishSettings: {
         randWeightDuration: 50,
@@ -124,6 +143,7 @@ export const DefaultTasksSettings: TasksSettings = {
         enable: true,
         randomWeight: 10,
         baseDurationMs: 30 * 60 * 1000, // 30 min
+        baseGracePeriodMs: 15 * 1000, // 15 sec
         baseGoodPtsReward: 20,
         baseBadPointsPenalty: 5,
         baseBadPtsReduction: 30,
@@ -142,6 +162,7 @@ export const FullTaskList: FullTaskType[] =
     {taskType: "wear_bondage", taskSubType: "gag"},
     {taskType: "wear_bondage", taskSubType: "chastity"},
     {taskType: "wear_bondage", taskSubType: "toy"},
+    {taskType: "wear_outfit"},
 ];
 
 export const FullPunishementList: PunishementType[] =
@@ -158,6 +179,8 @@ export function getTaskTypeSetting(setting: TasksSettings, type: TaskType | Puni
         // Tasks
         case "wear_bondage":
             return setting.wearBondageTaskSettings;
+        case "wear_outfit":
+            return setting.wearOutfitTaskSettings;
 
         // Punishements
         case "full_bondage":
@@ -171,6 +194,8 @@ export function getTaskTypeConstant(type: TaskType | PunishementType): TaskConst
         // Tasks
         case "wear_bondage":
             return WearBondageTaskConstants;
+        case "wear_outfit":
+            return WearOutfitTaskConstants;
 
         // Punishements
         case "full_bondage":
@@ -235,6 +260,19 @@ export interface TaskConstant {
 
 export const WearBondageTaskConstants: TaskConstant = {
     name: "Wear Bondage/Restraint",
+    incompatibleTasks: [
+        {taskType: "wear_outfit"},
+    ],
+}
+export const WearOutfitTaskConstants: TaskConstant = {
+    name: "Wear Outfit",
+    incompatibleTasks: [
+        {taskType: "wear_bondage", taskSubType: "hand"},
+        {taskType: "wear_bondage", taskSubType: "leg"},
+        {taskType: "wear_bondage", taskSubType: "gag"},
+        {taskType: "wear_bondage", taskSubType: "chastity"},
+        {taskType: "wear_bondage", taskSubType: "toy"},
+    ],
 }
 
 export const FullBondagePunishementConstants: TaskConstant = {

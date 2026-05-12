@@ -1,5 +1,5 @@
 import { GuiHelper, GuiFormField } from "./GuiHelper";
-import { TasksSettings } from "@/models/TasksSettings";
+import { SingleTaskSettings, TasksSettings } from "@/models/TasksSettings";
 import GuiViewBase from "./GuiViewBase";
 import { getCharacterTasksSettings, saveSettings } from "@/utility/CharacterWrapper";
 
@@ -24,6 +24,7 @@ export class GuiTasksSettingsView extends GuiViewBase {
 
         CATEGORY_FINISH_WEIGHT: "Finish Weight for Random Selection",
         CATEGORY_BONDAGE_ITEMS: "Bondage/Restraint Items",
+        CATEGORY_ADDITIONAL_FOR_RANDOM: "Additional values for Random Task",
 
         HELP_BASE_TASK_TITLE: "Tasks Overview/Information",
     };
@@ -64,11 +65,92 @@ export class GuiTasksSettingsView extends GuiViewBase {
 
         const finishMainCard = this.buildTaskFinishCard();
         const bondageTaskMainCard = this.buildWearBondageTaskCard();
+        const outfitTaskMainCard = this.buildWearOutfitTaskCard();
 
         // Final Assembly
         form.appendChild(finishMainCard);
         form.appendChild(bondageTaskMainCard);
+        form.appendChild(outfitTaskMainCard);
         this.parent.appendChild(form);
+    }
+
+    // Handle all fields common to all tasks
+    // Namely: randomWeight, baseDurationMs, baseGracePeriodMs,
+    //          baseGoodPtsReward, baseBadPointsPenalty
+    private appendCommonTaskField(container: HTMLElement, prefixId: string, taskSetting: SingleTaskSettings) {
+        const FIELD_WEIGHT: GuiFormField = {
+            html_id: prefixId + "-weight",
+            label: "Weight of Event for random Tasks (0 - 1000)",
+            type: "number",
+            min_value: 0,
+            max_value: 1000,
+            default_value: taskSetting.randomWeight,
+            onChange: (value: number) => {
+                taskSetting.randomWeight = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_DURATION: GuiFormField = {
+            html_id: prefixId + "-duration",
+            label: "Base Duration (minutes)",
+            type: "number",
+            min_value: 5,
+            max_value: 10080, // 7 days
+            default_value: Math.floor(taskSetting.baseDurationMs / (1000 * 60)),
+            onChange: (value: number) => {
+                taskSetting.baseDurationMs = value * 1000 * 60;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_REWARD: GuiFormField = {
+            html_id: prefixId + "-reward",
+            label: "Base Good Points Reward on task completion",
+            type: "number",
+            min_value: 0,
+            max_value: 100,
+            default_value: taskSetting.baseGoodPtsReward,
+            onChange: (value: number) => {
+                taskSetting.baseGoodPtsReward = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_PENALTY: GuiFormField = {
+            html_id: prefixId + "-penalty",
+            label: "Base Bad Points Penalty on task failure",
+            type: "number",
+            min_value: 0,
+            max_value: 100,
+            default_value: taskSetting.baseBadPointsPenalty,
+            onChange: (value: number) => {
+                taskSetting.baseBadPointsPenalty = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_GRACE_PERIOD: GuiFormField = {
+            html_id: prefixId + "-grace-period",
+            label: "Grace Period before Penalty(seconds)",
+            type: "number",
+            min_value: 10,
+            max_value: 3600, // 1 hour
+            default_value: Math.floor(taskSetting.baseGracePeriodMs / 1000),
+            onChange: (value: number) => {
+                taskSetting.baseGracePeriodMs = (value * 1000);
+                this.shouldSaveSetting = true;
+            }
+        };
+
+        const bondageTaskWeight = GuiHelper.createFormField(FIELD_WEIGHT);
+        const bondageTaskDuration = GuiHelper.createFormField(FIELD_DURATION);
+        const bondageTaskReward = GuiHelper.createFormField(FIELD_REWARD);
+        const bondageTaskPenalty = GuiHelper.createFormField(FIELD_PENALTY);
+        const bondageTaskGracePeriod = GuiHelper.createFormField(FIELD_GRACE_PERIOD);
+
+        const bondageRow1 = GuiHelper.createTwoElemRow(bondageTaskWeight, bondageTaskDuration);
+        const bondageRowPts = GuiHelper.createTwoElemRow(bondageTaskReward, bondageTaskPenalty);
+
+        container.appendChild(bondageRow1);
+        container.appendChild(bondageRowPts);
+        container.appendChild(bondageTaskGracePeriod);
     }
 
     private buildTaskFinishCard(): HTMLElement {
@@ -229,7 +311,7 @@ export class GuiTasksSettingsView extends GuiViewBase {
         };
 
 
-        // Build Main card for bondage tasks
+        // Build Main card for finish
         const finishTuple = GuiHelper.createFeatureToggleCard(FIELD_FINISH_TITLE, true);
         const finishMainCard = finishTuple.card;
         const finishContent = finishTuple.contentArea;
@@ -272,138 +354,79 @@ export class GuiTasksSettingsView extends GuiViewBase {
     }
 
     private buildWearBondageTaskCard(): HTMLElement {
+        const prefixId = "atb-task-outfit";
+        const taskSetting = this.settings.wearBondageTaskSettings;
         // Fields
         const FIELD_ENABLE: GuiFormField = {
-            html_id: "atb-task-bondage-enable",
+            html_id: prefixId + "-enable",
             label: "Enable Wear Bondage/Restraints Task",
             type: "checkbox",
-            default_value: this.settings.wearBondageTaskSettings.enable,
+            default_value: taskSetting.enable,
             onChange: (value: boolean) => {
-                this.settings.wearBondageTaskSettings.enable = value;
+                taskSetting.enable = value;
                 this.shouldSaveSetting = true;
             }
         };
-        const FIELD_WEIGHT: GuiFormField = {
-            html_id: "atb-task-bondage-weight",
-            label: "Weight of Event for random Tasks (0 - 1000)",
-            type: "number",
-            min_value: 0,
-            max_value: 1000,
-            default_value: this.settings.wearBondageTaskSettings.randomWeight,
-            onChange: (value: number) => {
-                this.settings.wearBondageTaskSettings.randomWeight = value;
-                this.shouldSaveSetting = true;
-            }
-        };
-        const FIELD_DURATION: GuiFormField = {
-            html_id: "atb-task-bondage-duration",
-            label: "Base Duration (minutes)",
-            type: "number",
-            min_value: 5,
-            max_value: 10080, // 7 days
-            default_value: Math.floor(this.settings.wearBondageTaskSettings.baseDurationMs / (1000 * 60)),
-            onChange: (value: number) => {
-                this.settings.wearBondageTaskSettings.baseDurationMs = value * 1000 * 60;
-                this.shouldSaveSetting = true;
-            }
-        };
-        const FIELD_REWARD: GuiFormField = {
-            html_id: "atb-task-bondage-reward",
-            label: "Base Good Points Reward on task completion",
-            type: "number",
-            min_value: 0,
-            max_value: 100,
-            default_value: this.settings.wearBondageTaskSettings.baseGoodPtsReward,
-            onChange: (value: number) => {
-                this.settings.wearBondageTaskSettings.baseGoodPtsReward = value;
-                this.shouldSaveSetting = true;
-            }
-        };
-        const FIELD_PENALTY: GuiFormField = {
-            html_id: "atb-task-bondage-penalty",
-            label: "Base Bad Points Penalty on task failure",
-            type: "number",
-            min_value: 0,
-            max_value: 100,
-            default_value: this.settings.wearBondageTaskSettings.baseBadPointsPenalty,
-            onChange: (value: number) => {
-                this.settings.wearBondageTaskSettings.baseBadPointsPenalty = value;
-                this.shouldSaveSetting = true;
-            }
-        };
-        const FIELD_GRACE_PERIOD: GuiFormField = {
-            html_id: "atb-task-bondage-grace-period",
-            label: "Grace Period before Penalty(seconds)",
-            type: "number",
-            min_value: 10,
-            max_value: 3600, // 1 hour
-            default_value: Math.floor(this.settings.wearBondageTaskSettings.baseGracePeriodMs / 1000),
-            onChange: (value: number) => {
-                this.settings.wearBondageTaskSettings.baseGracePeriodMs = (value * 1000);
-                this.shouldSaveSetting = true;
-            }
-        };
+        // Specifics fields
         const FIELD_ENABLE_HAND: GuiFormField = {
-            html_id: "atb-task-bondage-enable-hand",
+            html_id: prefixId + "-enable-hand",
             label: "Enable Hand Bondage/Restraints",
             type: "checkbox",
-            default_value: this.settings.wearBondageTaskSettings.enableHand,
+            default_value: taskSetting.enableHand,
             onChange: (value: boolean) => {
-                this.settings.wearBondageTaskSettings.enableHand = value;
+                taskSetting.enableHand = value;
                 this.shouldSaveSetting = true;
             }
         };
         const FIELD_ENABLE_LEG: GuiFormField = {
-            html_id: "atb-task-bondage-enable-leg",
+            html_id: prefixId + "-enable-leg",
             label: "Enable Leg Bondage/Restraints",
             type: "checkbox",
-            default_value: this.settings.wearBondageTaskSettings.enableLeg,
+            default_value: taskSetting.enableLeg,
             onChange: (value: boolean) => {
-                this.settings.wearBondageTaskSettings.enableLeg = value;
+                taskSetting.enableLeg = value;
                 this.shouldSaveSetting = true;
             }
         };
         const FIELD_ENABLE_GAG: GuiFormField = {
-            html_id: "atb-task-bondage-enable-gag",
+            html_id: prefixId + "-enable-gag",
             label: "Enable Gag Bondage/Restraints",
             type: "checkbox",
-            default_value: this.settings.wearBondageTaskSettings.enableGag,
+            default_value: taskSetting.enableGag,
             onChange: (value: boolean) => {
-                this.settings.wearBondageTaskSettings.enableGag = value;
+                taskSetting.enableGag = value;
                 this.shouldSaveSetting = true;
             }
         };
         const FIELD_ENABLE_CHASTITY: GuiFormField = {
-            html_id: "atb-task-bondage-enable-chastity",
+            html_id: prefixId + "-enable-chastity",
             label: "Enable Chastity Bondage/Restraints",
             type: "checkbox",
-            default_value: this.settings.wearBondageTaskSettings.enableChastity,
+            default_value: taskSetting.enableChastity,
             onChange: (value: boolean) => {
-                this.settings.wearBondageTaskSettings.enableChastity = value;
+                taskSetting.enableChastity = value;
                 this.shouldSaveSetting = true;
             }
         };
         const FIELD_ENABLE_TOY: GuiFormField = {
-            html_id: "atb-task-bondage-enable-toy",
+            html_id: prefixId + "-enable-toy",
             label: "Enable Toy Bondage/Restraints",
             type: "checkbox",
-            default_value: this.settings.wearBondageTaskSettings.enableToy,
+            default_value: taskSetting.enableToy,
             onChange: (value: boolean) => {
-                this.settings.wearBondageTaskSettings.enableToy = value;
+                taskSetting.enableToy = value;
                 this.shouldSaveSetting = true;
             }
         };
 
-        // Build Main card for bondage tasks
-        const bondageTaskTuple = GuiHelper.createFeatureToggleCard(FIELD_ENABLE, true);
-        const bondageTaskMainCard = bondageTaskTuple.card;
-        const bondageTaskContent = bondageTaskTuple.contentArea;
+        // Build Main task card
+        const tuple = GuiHelper.createFeatureToggleCard(FIELD_ENABLE, true);
+        const taskMainCard = tuple.card;
+        const taskContent = tuple.contentArea;
 
-        const bondageTaskWeight = GuiHelper.createFormField(FIELD_WEIGHT);
-        const bondageTaskDuration = GuiHelper.createFormField(FIELD_DURATION);
-        const bondageTaskReward = GuiHelper.createFormField(FIELD_REWARD);
-        const bondageTaskPenalty = GuiHelper.createFormField(FIELD_PENALTY);
-        const bondageTaskGracePeriod = GuiHelper.createFormField(FIELD_GRACE_PERIOD);
+        // Append directly to taskContent
+        this.appendCommonTaskField(taskContent, prefixId, taskSetting);
+
         const bondageTaskEnableHand = GuiHelper.createFormField(FIELD_ENABLE_HAND);
         const bondageTaskEnableLeg = GuiHelper.createFormField(FIELD_ENABLE_LEG);
         const bondageTaskEnableGag = GuiHelper.createFormField(FIELD_ENABLE_GAG);
@@ -411,22 +434,88 @@ export class GuiTasksSettingsView extends GuiViewBase {
         const bondageTaskEnableToy = GuiHelper.createFormField(FIELD_ENABLE_TOY);
 
 
-        const bondageRow1 = GuiHelper.createTwoElemRow(bondageTaskWeight, bondageTaskDuration);
-        const bondageRowPts = GuiHelper.createTwoElemRow(bondageTaskReward, bondageTaskPenalty);
         //const bondageRow3 = GuiHelper.createTwoElemRow(bondageTaskGracePeriod, bondageTaskDuration);
         const bondageRowEnable1 = GuiHelper.createTwoElemRow(bondageTaskEnableHand, bondageTaskEnableLeg);
         const bondageRowEnable2 = GuiHelper.createTwoElemRow(bondageTaskEnableGag, bondageTaskEnableChastity);
         //const bondageRowEnable3 = GuiHelper.createTwoElemRow(bondageRowEnable1, );
 
-        bondageTaskContent.appendChild(bondageRow1);
-        bondageTaskContent.appendChild(bondageRowPts);
-        bondageTaskContent.appendChild(bondageTaskGracePeriod);
-        GuiHelper.createContentTitle(bondageTaskContent, this.STRINGS.CATEGORY_BONDAGE_ITEMS);
-        bondageTaskContent.appendChild(bondageRowEnable1);
-        bondageTaskContent.appendChild(bondageRowEnable2);
-        bondageTaskContent.appendChild(bondageTaskEnableToy);
+        GuiHelper.createContentTitle(taskContent, this.STRINGS.CATEGORY_BONDAGE_ITEMS);
+        taskContent.appendChild(bondageRowEnable1);
+        taskContent.appendChild(bondageRowEnable2);
+        taskContent.appendChild(bondageTaskEnableToy);
 
-        return bondageTaskMainCard;
+        return taskMainCard;
+    }
+
+    private buildWearOutfitTaskCard(): HTMLElement {
+        const prefixId = "atb-task-outfit";
+        const taskSetting = this.settings.wearOutfitTaskSettings;
+        // Fields
+        const FIELD_ENABLE: GuiFormField = {
+            html_id: prefixId + "-enable",
+            label: "Enable Wear Outfit Task",
+            type: "checkbox",
+            default_value: taskSetting.enable,
+            onChange: (value: boolean) => {
+                taskSetting.enable = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_RANDOM_ITEM_EXT: GuiFormField = {
+            html_id: prefixId + "-random-ext",
+            label: "Randomize Items Option (Average Per Hour)",
+            type: "number",
+            min_value: 0,
+            max_value: 30,
+            default_value: taskSetting.averageRandomExtPerHour,
+            onChange: (value: number) => {
+                taskSetting.averageRandomExtPerHour = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_REMOVE_ON_FINISH: GuiFormField = {
+            html_id: prefixId + "-remove-finish",
+            label: "Chance Remove on Finish",
+            type: "number",
+            min_value: 0,
+            max_value: 100,
+            default_value: taskSetting.chanceRemoveOnFinish,
+            onChange: (value: number) => {
+                taskSetting.chanceRemoveOnFinish = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_CAN_USE_HARSH: GuiFormField = {
+            html_id: prefixId + "-use-harsh",
+            label: "Can Use Harsh Outfit",
+            type: "checkbox",
+            default_value: taskSetting.randomCanUseHarshOutfit,
+            onChange: (value: boolean) => {
+                taskSetting.randomCanUseHarshOutfit = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+
+        // Build Main task card
+        const tuple = GuiHelper.createFeatureToggleCard(FIELD_ENABLE, true);
+        const taskMainCard = tuple.card;
+        const taskContent = tuple.contentArea;
+
+        // Append directly to taskContent
+        this.appendCommonTaskField(taskContent, prefixId, taskSetting);
+
+        const randomizeItem = GuiHelper.createFormField(FIELD_RANDOM_ITEM_EXT);
+        const chanceRemove = GuiHelper.createFormField(FIELD_REMOVE_ON_FINISH);
+        const canUseHarsh = GuiHelper.createFormField(FIELD_CAN_USE_HARSH);
+
+        const row = GuiHelper.createTwoElemRow(randomizeItem, chanceRemove);
+
+
+        GuiHelper.createContentTitle(taskContent, this.STRINGS.CATEGORY_ADDITIONAL_FOR_RANDOM);
+        taskContent.appendChild(row);
+        taskContent.appendChild(canUseHarsh);
+
+        return taskMainCard;
     }
 
 }

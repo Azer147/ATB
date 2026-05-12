@@ -16,16 +16,6 @@ export class TaskWearBondage extends TaskBase {
     constructor(data: TaskData) {
         super(data);
         this.lastTimeWearingItem = Date.now();
-        this.updateProgress();
-
-        if (this.isFinishConditionComplete()) {
-            // End the task (success)
-            this.triggerTaskCompletion(true, false);
-            return;
-        }
-
-        // TODO: move in triggerTask fct ? (so it dont trigger on restore)
-        sendLocalMessage("New Rule: " + this.getDescription(), ChatColor.Purple);
 
         // If player cannot equip it themselve, we handle it at the start of the task
         // TODO: For charUnableToEquipItem, maybe put a chat message with button to ask Player if we should to equip random item
@@ -262,7 +252,4 @@ export class TaskWearBondage extends TaskBase {
         }
     }
 
-
-    //public onChatEvent(chatData: any): void {}
-    public onOrgasmEvent(character: any): void {}
 }

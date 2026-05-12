@@ -1,7 +1,7 @@
 import { TaskData } from "@/models/TaskManagerSettings";
 import ModuleManager from "@/utility/ModuleManager";
 import { ChaoticMistressModule } from "../ChaoticMistressModule";
-import { ChatColor, sendLocalMessage } from "@/utility/utility";
+import { ChatColor, formatTimeMs, sendLocalMessage } from "@/utility/utility";
 import StorageManager from "@/utility/StroageManager";
 
 export abstract class TaskBase {
@@ -15,6 +15,17 @@ export abstract class TaskBase {
     /** Initializes a brand new task */
     constructor(data: TaskData) {
         this.data = data;
+        this.updateProgress();
+
+        if (this.isFinishConditionComplete()) {
+            // End the task (success)
+            this.triggerTaskCompletion(true, false);
+            return;
+        }
+
+        // TODO: move in triggerTask fct ? (so it dont trigger on restore)
+        sendLocalMessage("New Rule: " + this.getDescription(), ChatColor.Purple);
+        sendLocalMessage(this.getFinishDescription("Rule will finish"), ChatColor.Purple);
     }
 
     /** Returns the dynamic text displayed in the UI */
@@ -32,6 +43,24 @@ export abstract class TaskBase {
     }
 
     protected abstract updateProgress(): void;
+
+
+    public getFinishDescription(prefixStr: string): string {
+        const finishCountLeftToDo = this.data.finishTotalNeeded - this.data.finishCurrentCount;
+        switch (this.data.finishType) {
+            case "duration":
+                return prefixStr + " in " + formatTimeMs(finishCountLeftToDo) + ".";
+            case "orgasm":
+                return prefixStr + " after you Orgasmed " + finishCountLeftToDo + " times.";
+            case "orgasm_resisted":
+                return prefixStr + " after you Resisted orgasm " + finishCountLeftToDo + " times.";
+            case "orgasm_ruined":
+                return prefixStr + " after " + finishCountLeftToDo + " Ruined orgasm.";
+            case "spank":
+                return prefixStr + " after you've been Spanked " + finishCountLeftToDo + " times.";
+        }
+    }
+
 
     /** Called every tick by the TaskManager. */
     public onTick(currentTime: number): void {

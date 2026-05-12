@@ -4,10 +4,12 @@ import StorageManager from "@/utility/StroageManager";
 import { TaskCannotStartReason, TaskData, TaskManagerSettings } from "@/models/TaskManagerSettings";
 import { TaskBase } from "./Task/TaskBase";
 import { TaskWearBondage } from "./Task/TaskWearBondage";
-import { ChatColor, sendLocalMessage } from "@/utility/utility";
+import { ChatColor, isCharacterLscgEffectsPreventOutfit, sendLocalMessage } from "@/utility/utility";
 import { GuiMainView } from "@/gui/GuiMainView";
-import { FinishType, FullTaskType, WearBondageType } from "@/models/TasksSettings";
+import { FinishType, FullTaskType, getTaskTypeConstant, WearBondageType } from "@/models/TasksSettings";
 import { getCharacterTaskManagerSettings, getCharacterTasksSettings } from "@/utility/CharacterWrapper";
+import { OutfitId } from "@/models/OutfitSettings";
+import { TaskWearOutfit } from "./Task/TaskWearOutfit";
 
 export class TaskManagerModule extends ModuleBase {
     TICK_PERIOD_MS: number = 800; // 0.8sec
@@ -156,7 +158,7 @@ export class TaskManagerModule extends ModuleBase {
     // --- TASK LIFECYCLE ---
 
     public startTask(taskData: TaskData, overwrite?: boolean): boolean {
-        if (taskData.type == "wear_bondage" && taskData.itemToWear && taskData.gracePeriodMs) {
+        if (taskData.type == "wear_bondage" && taskData.itemToWear) {
             return this.startWearBondageTask(taskData.itemToWear,
                 taskData.finishType,
                 taskData.finishTotalNeeded,
@@ -164,6 +166,21 @@ export class TaskManagerModule extends ModuleBase {
                 taskData.goodPtsOnSucces,
                 taskData.badPtsOnFailure,
                 taskData.gracePeriodMs,
+                overwrite
+            );
+        }
+        else if (taskData.type == "wear_outfit" && taskData.outfitId
+                    && taskData.removeOnFinish && taskData.averageRandomExtPerHour
+        ) {
+            return this.startWearOutfitTask(taskData.outfitId,
+                taskData.finishType,
+                taskData.finishTotalNeeded,
+                taskData.enforce,
+                taskData.goodPtsOnSucces,
+                taskData.badPtsOnFailure,
+                taskData.gracePeriodMs,
+                taskData.removeOnFinish,
+                taskData.averageRandomExtPerHour,
                 overwrite
             );
         }
@@ -233,31 +250,48 @@ export class TaskManagerModule extends ModuleBase {
                 const taskData = tms.activeTasks[i];
                 if (TaskManagerModule.isSameTaskType(taskData, type)) {
                     if (taskData.enforce) {
-                        return "not_available";
+                        return "not_available_same_task";
                     } else {
                         return "overwrite_only";
+                    }
+                } else {
+                    // Check incompatible task
+                    const taskConst = getTaskTypeConstant(taskData.type);
+                    if (taskConst && taskConst.incompatibleTasks) {
+                        let isIncompatible = taskConst.incompatibleTasks.some((value) => {
+                            if (type.taskType == value.taskType
+                                && (type.taskSubType == value.taskSubType)) {
+                                    return true;
+                            }
+                            return false;
+                        });
+
+                        if (isIncompatible) {
+                            return "not_available_incompatible";
+                        }
                     }
                 }
             }
         }
 
-        // old non-static way
-        /*let task = this.getActiveTaskByType(type);
-        if (task) {
-            if (task.getData().enforce) {
-                return "not_available";
-            } else {
-                return "overwrite_only";
-            }
-        }*/
-
-        //const taskSettings = StorageManager.getTasksSettings();
         // Other reason
         if (type.taskType == "wear_bondage" && type.taskSubType) {
             if (!TaskManagerModule.isWearBondageTypeEnabled(C, type.taskSubType)) {
                 return "not_enabled";
             } else if (!TaskWearBondage.getItemAvailibility(C).includes(type.taskSubType)) {
-                return "not_available";
+                return "not_available_apply_item";
+            } else {
+                return "can_start";
+            }
+        }
+        if (type.taskType == "wear_outfit") {
+            const ts = getCharacterTasksSettings(C);
+            if (ts && !ts.wearOutfitTaskSettings.enable) {
+                return "not_enabled";
+            } else if (isCharacterLscgEffectsPreventOutfit(C)) {
+                return "not_available_lscg";
+            } else if (TaskWearOutfit.getAvailableOutfit(C).length <= 0) {
+                return "not_available_outfit";
             } else {
                 return "can_start";
             }
@@ -279,7 +313,9 @@ export class TaskManagerModule extends ModuleBase {
                 if (taskData.type == "wear_bondage") {
                     task = new TaskWearBondage(taskData);
                 }
-                // TODO: Add other task type
+                if (taskData.type == "wear_outfit") {
+                    task = new TaskWearOutfit(taskData);
+                }
 
                 if (task) {
                     this.startNewTask(task, undefined);
@@ -375,6 +411,44 @@ export class TaskManagerModule extends ModuleBase {
             }
         }
         return false;
+    }
+
+
+    startWearOutfitTask(outfitId: OutfitId, finishType: FinishType, finishTotal: number,
+                        enforce: boolean, successPts: number, failurePts: number,
+                        gracePeriod: number, removeOnFinish: boolean, avgRandomExt: number,
+                        overwrite: boolean = false): boolean {
+        // Case where the same task with same item already exist
+        const sameTask = this.getActiveTaskByType({taskType: "wear_outfit"});
+        if (sameTask) {
+            if (overwrite) {
+                // on overwrite, force finish the same already active task with no pts reward
+                sameTask.triggerTaskCompletion(false, true);
+            } else {
+                console.warn("ATB: startWearBondageTask: Cannot start task: task requirement not met or already running.");
+                return false;
+            }
+        }
+
+        let taskData: TaskData = {
+            id: this.generateUniqueTaskId(),
+            type: "wear_outfit",
+            description: "", // Will be updated by TaskWearOutfit
+            finishType: finishType,
+            finishCurrentCount: 0,
+            finishTotalNeeded: finishTotal,
+            progressPerc: 0,
+            enforce: enforce,
+            goodPtsOnSucces: successPts,
+            badPtsOnFailure: failurePts,
+            outfitId: outfitId,
+            gracePeriodMs: gracePeriod,
+            removeOnFinish: removeOnFinish,
+            averageRandomExtPerHour: avgRandomExt
+        }
+        let task = new TaskWearOutfit(taskData);
+        this.startNewTask(task, taskData);
+        return true;
     }
 
 }

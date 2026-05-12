@@ -9,6 +9,7 @@ import { TaskBase } from "@/modules/Task/TaskBase";
 import ModuleManager from "./ModuleManager";
 import { RemoteModule } from "@/modules/RemoteModule";
 import { ChaoticMistressModule } from "@/modules/ChaoticMistressModule";
+import { OutfitsSettings } from "@/models/OutfitSettings";
 
 /**
  * Wrappers to handle most Character access between PlayerCharacter and OhterCharacter
@@ -43,6 +44,11 @@ export function getCharacterTasksSettings(C: OtherCharacter | PlayerCharacter): 
     if (C.ATB && C.ATB.TasksSettings) return C.ATB.TasksSettings;
     return undefined;
 }
+export function getCharacterOutfitSettings(C: OtherCharacter | PlayerCharacter): OutfitsSettings | undefined {
+    if (C.IsPlayer()) return StorageManager.getOutfitSettings();
+    if (C.ATB && C.ATB.OutfitsSettings) return C.ATB.OutfitsSettings;
+    return undefined;
+}
 export function saveSettings(C: OtherCharacter | PlayerCharacter) {
     if (C.IsPlayer()) {
         StorageManager.saveSettings();
@@ -52,6 +58,12 @@ export function saveSettings(C: OtherCharacter | PlayerCharacter) {
     }
 }
 
+export function isCharacterHaveEchoItem(C: any): boolean {
+    if (C && C.ECHO_INFO2 && C.ECHO_INFO2.服装拓展) {
+        return true;
+    }
+    return false;
+}
 
 /**
  * Operatrions Wrapper
