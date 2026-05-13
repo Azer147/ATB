@@ -16,6 +16,7 @@ export class ChaoticMistressModule extends ModuleBase {
 
     settings: ChaoticMistressSettings;
     tasksSettings: TasksSettings;
+    isOverPunishThresholdWarningDone: boolean = false;
 
     constructor() {
         super("ChaoticMistressModule", "Chaotic Mistress", "Manages karma and executes punishments.");
@@ -52,10 +53,17 @@ export class ChaoticMistressModule extends ModuleBase {
         // Check if should trigger punishement
         if (this.settings.enablePointsSystem) {
             let isOverPunishThreshold = (this.settings.forcedPunishementThreshold > 0 && this.settings.badPts > this.settings.forcedPunishementThreshold);
-            if (isOverPunishThreshold) {
+            if (isOverPunishThreshold && !this.isOverPunishThresholdWarningDone) {
                 sendLocalMessage("Your have exceeded Bad Points threshold.", ChatColor.Red);
-                this.triggerRandomPunishment();
+                this.isOverPunishThresholdWarningDone = true;
                 return;
+            } else if (isOverPunishThreshold && this.isOverPunishThresholdWarningDone) {
+                if (this.triggerRandomPunishment()) {
+                    // success
+                    this.isOverPunishThresholdWarningDone = false;
+                }
+            } else {
+                this.isOverPunishThresholdWarningDone = false;
             }
         }
 
@@ -240,18 +248,19 @@ export class ChaoticMistressModule extends ModuleBase {
     ********** Punishements related Functions **********
     */
 
-    triggerRandomPunishment(): void {
+    triggerRandomPunishment(): boolean {
         let availPunish: PunishementType[] = ChaoticMistressModule.getAvailablePunishements(Player);
         if (availPunish.length === 0) {
-            return;
+            return false;
         }
 
         const selectedPunish = this.selectRandomByWeight("punish", availPunish);
 
         if (selectedPunish) {
             const duration = this.getRandomFinishCountOrDuration(this.tasksSettings.fullBondagePunishmentSettings.baseDurationMs);
-            ChaoticMistressModule.startPunishementByType(selectedPunish, duration);
+            return ChaoticMistressModule.startPunishementByType(selectedPunish, duration);
         }
+        return false;
     }
 
     public static getAvailablePunishements(C: OtherCharacter | PlayerCharacter = Player): PunishementType[] {
