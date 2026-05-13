@@ -90,6 +90,16 @@ export class GuiChaoticMistressView extends GuiViewBase {
                     startPunishementforCharacter(this.character, "full_bondage", duration);
                 }
             });
+            this.punishementList.push({
+                name: "Harsh Outfit",
+                setting: this.tasksSettings.harshOutfitPunishmentSettings,
+                checkAvailable: () => {
+                    return ChaoticMistressModule.getAvailablePunishements().includes("harsh_outfit");
+                },
+                onStart: (duration: number) => {
+                    startPunishementforCharacter(this.character, "harsh_outfit", duration);
+                }
+            });
         }
     }
 

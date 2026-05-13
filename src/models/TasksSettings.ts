@@ -6,7 +6,7 @@
 
 // TODO: "outfit" | "activity" | "say" | "arousal" | "escape"
 export type TaskType = "wear_bondage" | "wear_outfit";
-export type PunishementType = "full_bondage";
+export type PunishementType = "full_bondage" | "harsh_outfit";
 
 // TODO: "orgasm_given" | "spank_given" | "date_time"
 export type FinishType = "duration" | "orgasm" | "orgasm_ruined" | "orgasm_resisted" | "spank";
@@ -89,6 +89,7 @@ export interface TasksSettings {
 
     // Punishments
     fullBondagePunishmentSettings: SinglePunishmentSettings;
+    harshOutfitPunishmentSettings: SinglePunishmentSettings;
 }
 
 export const DefaultTasksSettings: TasksSettings = {
@@ -147,6 +148,15 @@ export const DefaultTasksSettings: TasksSettings = {
         baseGoodPtsReward: 20,
         baseBadPointsPenalty: 5,
         baseBadPtsReduction: 30,
+    },
+    harshOutfitPunishmentSettings: {
+        enable: true,
+        randomWeight: 10,
+        baseDurationMs: 30 * 60 * 1000, // 30 min
+        baseGracePeriodMs: 15 * 1000, // 15 sec
+        baseGoodPtsReward: 20,
+        baseBadPointsPenalty: 5,
+        baseBadPtsReduction: 30,
     }
 }
 
@@ -168,6 +178,7 @@ export const FullTaskList: FullTaskType[] =
 export const FullPunishementList: PunishementType[] =
 [
     "full_bondage",
+    "harsh_outfit"
 ];
 
 export const FullFinishList: FinishType[] =
@@ -185,6 +196,8 @@ export function getTaskTypeSetting(setting: TasksSettings, type: TaskType | Puni
         // Punishements
         case "full_bondage":
             return setting.fullBondagePunishmentSettings;
+        case "harsh_outfit":
+            return setting.harshOutfitPunishmentSettings;
     }
     return undefined;
 }
@@ -200,6 +213,8 @@ export function getTaskTypeConstant(type: TaskType | PunishementType): TaskConst
         // Punishements
         case "full_bondage":
             return FullBondagePunishementConstants;
+        case "harsh_outfit":
+            return HarshOutfitPunishementConstants;
     }
     return undefined;
 }
@@ -287,4 +302,11 @@ export const FullBondagePunishementConstants: TaskConstant = {
         {taskType: "wear_bondage", taskSubType: "chastity"},
         {taskType: "wear_bondage", taskSubType: "toy"},
     ],
+}
+export const HarshOutfitPunishementConstants: TaskConstant = {
+    name: "Harsh Outfit",
+
+    mandatoryTasks: [
+        {taskType: "wear_outfit"},
+    ]
 }

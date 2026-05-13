@@ -284,13 +284,17 @@ export class ChaoticMistressModule extends ModuleBase {
         return availPunish;
     }
 
-    public static startPunishementByType(type: PunishementType, duration: number) {
+    public static startPunishementByType(type: PunishementType, duration: number): boolean {
         const cm = ModuleManager.getModule("ChaoticMistressModule") as ChaoticMistressModule;
         if (cm) {
             if (type === "full_bondage") {
-                cm.startFullBondagePunishment(duration);
+                return cm.startFullBondagePunishment(duration);
+            }
+            if (type === "harsh_outfit") {
+                return cm.startHarshOutfitPunishment(duration);
             }
         }
+        return false;
     }
 
     startFullBondagePunishment(duration: number): boolean {
@@ -311,6 +315,35 @@ export class ChaoticMistressModule extends ModuleBase {
             tm.startWearBondageTask("gag", "duration", duration, true, reward, penalty, grace, true);
             tm.startWearBondageTask("chastity", "duration", duration, true, reward, penalty, grace, true);
             tm.startWearBondageTask("toy", "duration", duration, true, reward, penalty, grace, true);
+
+            // TODO: check retrun and return false if needed
+            this.modifyBadPts(-badPtsReduction);
+
+            return true;
+        }
+        return false;
+    }
+
+    startHarshOutfitPunishment(duration: number): boolean {
+        const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
+        if (tm) {
+            const punishSetting = this.tasksSettings.harshOutfitPunishmentSettings;
+            const badPtsReduction = ChaoticMistressModule.calculatePointsFromFinishCount(duration, punishSetting.baseDurationMs, punishSetting.baseBadPtsReduction, true);
+            const penalty = punishSetting.baseBadPointsPenalty;
+            const reward = punishSetting.baseGoodPtsReward;
+            //const grace = this.tasksSettings.wearBondageTaskSettings.baseGracePeriodMs;
+            const grace = 15000;
+            const avgRandomExt = this.tasksSettings.wearOutfitTaskSettings.averageRandomExtPerHour;
+
+            const selectedOutfit = this.selectRandomOutfit(["harsh"], []); // only harsh outfit
+            if (!selectedOutfit) {
+                return false;
+            }
+
+            console.log(`ATB: startHarshOutfitPunishment: Starting with duration: ${duration} and outfit: ${selectedOutfit}`);
+            sendLocalMessage("Starting Harsh Outfit Punishement", ChatColor.Purple);
+
+            tm.startWearOutfitTask(selectedOutfit, "duration", duration, true, reward, penalty, grace, true, avgRandomExt, true);
 
             // TODO: check retrun and return false if needed
             this.modifyBadPts(-badPtsReduction);
