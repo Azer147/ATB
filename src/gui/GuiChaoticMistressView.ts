@@ -112,7 +112,7 @@ export class GuiChaoticMistressView extends GuiViewBase {
         form.style.flexDirection = "column";
         form.style.gap = "15px";
 
-        const helpSection = GuiHelper.createHelpSection(this.STRINGS.BASE_HELP_TITLE, this.BASE_HELP_TEXT);
+        const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.BASE_HELP_TITLE, this.BASE_HELP_TEXT);
         form.appendChild(helpSection);
 
         const pointsSystemCard = this.buildPointsSystemCard(form);

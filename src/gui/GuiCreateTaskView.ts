@@ -1,7 +1,7 @@
 import { TaskManagerModule } from "@/modules/TaskManagerModule";
 import { getTaskCannotStartReasonToString, TaskCannotStartReason, TaskData } from "@/models/TaskManagerSettings";
 import { GuiHelper, GuiFormField } from "./GuiHelper";
-import { FinishType, getFinishTypeSetting, getTaskTypeSetting, TasksSettings, TaskType, WearBondageType } from "@/models/TasksSettings";
+import { FinishType, FullTaskType, getFinishTypeSetting, getTaskTypeSetting, TasksSettings, TaskType, WearBondageType } from "@/models/TasksSettings";
 import { ChaoticMistressModule } from "@/modules/ChaoticMistressModule";
 import GuiViewBase from "./GuiViewBase";
 import { getCharacterChaoticMistressSettings, getCharacterTasksSettings, saveSettings, startTaskforCharacter } from "@/utility/CharacterWrapper";
@@ -18,6 +18,8 @@ export class GuiCreateTaskView extends GuiViewBase {
     private finishCondSelect: HTMLElement | undefined;
     private specificTaskTypeFields: HTMLDivElement | undefined;
     private specificFinishCondFields: HTMLDivElement | undefined;
+    private createTaskBtn: HTMLButtonElement | undefined;
+    private errorTaskCannotStartElem: HTMLDivElement | undefined;
 
     // TODO: Use default value from task settings
     // Common fields
@@ -34,13 +36,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         html_id: "atb-finish-condition",
         label: "Finish Condition",
         type: "select",
-        options: [
-            { value: "duration", label: "Duration (connected time)" },
-            { value: "orgasm", label: "Orgasm Received" },
-            { value: "orgasm_ruined", label: "Orgasm Ruined" },
-            { value: "orgasm_resisted", label: "Orgasm Resisted" },
-            { value: "spank", label: "Spank Received" }
-        ]
+        options: [] // Will be fill on build
     };
 
     // Fields common to all task
@@ -69,7 +65,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         html_id: "atb-create-task-penalty",
         label: "Penalty (Bad Points)",
         type: "number",
-        default_value: 10,
+        default_value: 10, // placeholder
         min_value: 0,
         max_value: 1000,
     };
@@ -77,7 +73,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         html_id: "atb-create-task-grace-period",
         label: "Grace Period (Seconds)",
         type: "number",
-        default_value: 15,
+        default_value: 15, // placeholder
         min_value: 5,
         max_value: 60
     };
@@ -87,7 +83,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         html_id: "atb-create-task-duration",
         label: "Duration (Minutes)",
         type: "number",
-        default_value: 3,
+        default_value: 3, // placeholder
         min_value: 1,
         max_value: 24 * 60
     };
@@ -95,7 +91,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         html_id: "atb-create-task-orgasm-count",
         label: "Orgasm needed",
         type: "number",
-        default_value: 20,
+        default_value: 20, // placeholder
         min_value: 1,
         max_value: 500
     };
@@ -103,7 +99,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         html_id: "atb-create-task-orgasm-ruined-count",
         label: "Orgasm Ruined needed",
         type: "number",
-        default_value: 40,
+        default_value: 40, // placeholder
         min_value: 1,
         max_value: 2000
     };
@@ -111,7 +107,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         html_id: "atb-create-task-orgasm-resisted-count",
         label: "Orgasm Resisted needed",
         type: "number",
-        default_value: 20,
+        default_value: 20, // placeholder
         min_value: 1,
         max_value: 500
     };
@@ -119,7 +115,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         html_id: "atb-create-task-spank-count",
         label: "Spank needed",
         type: "number",
-        default_value: 30,
+        default_value: 30, // placeholder
         min_value: 1,
         max_value: 1000
     };
@@ -129,13 +125,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         html_id: "atb-create-task-wear-type",
         label: "Wear Type",
         type: "select",
-        options: [
-            { value: "gag", label: "Gag / Mouth"},
-            { value: "hand", label: "Hands / Arms" },
-            { value: "leg", label: "Legs / Feet" },
-            { value: "chastity", label: "Chastity" },
-            { value: "toy", label: "Toys / Vibrator" }
-        ]
+        options: [] // Will be filled on build
     };
 
     // Wear Outfit task specifics fields
@@ -156,7 +146,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         html_id: "atb-create-task-randomize-ext",
         label: "Randomize Extended item (average per hour)",
         type: "number",
-        default_value: 15,
+        default_value: 15, // placeholder
         min_value: 0,
         max_value: 30
     };
@@ -184,6 +174,9 @@ export class GuiCreateTaskView extends GuiViewBase {
 
 
     private STRINGS = {
+        PAGE_NO_TASK_AVAIL_TITTLE: "No tasks available or enabled.",
+        PAGE_NO_TASK_AVAIL_CONTENT: "Check your settings to enable some tasks.",
+
         PAGE_TITLE: "Assign a New Task",
         CREATE_TASK_BTN: "Create Task",
         CREATE_TASK_BTN_SUCCESS: "Task created!",
@@ -213,7 +206,17 @@ export class GuiCreateTaskView extends GuiViewBase {
         } else {
             this.settings = settings;
             this.tasksSettings = tasksSettings;
-            this.buildCreateTaskPage();
+            this.fillDefaultValueCommon();
+            if (this.FIELD_TASK_TYPE.options && this.FIELD_TASK_TYPE.options.length > 0) {
+                this.buildCreateTaskPage();
+            } else {
+                parent.innerHTML = "";
+                GuiHelper.createContentTitle(parent, this.STRINGS.PAGE_NO_TASK_AVAIL_TITTLE, true);
+                const text = document.createElement("p");
+                text.style.color = "var(--atb-text-muted)";
+                text.innerText = this.STRINGS.PAGE_NO_TASK_AVAIL_CONTENT;
+                parent.appendChild(text);
+            }
         }
     }
 
@@ -223,6 +226,78 @@ export class GuiCreateTaskView extends GuiViewBase {
         //saveSettings(this.character);
     }
 
+    // Should be done only once
+    private fillDefaultValueCommon() {
+        // Finish default value
+        this.FIELD_ORGASM_COUNT.default_value = this.tasksSettings.taskFinishSettings.orgasm.baseCount;
+        this.FIELD_ORGASM_RESISTED_COUNT.default_value = this.tasksSettings.taskFinishSettings.orgasmResisted.baseCount;
+        this.FIELD_ORGASM_RUINED_COUNT.default_value = this.tasksSettings.taskFinishSettings.orgasmRuined.baseCount;
+        this.FIELD_SPANK_COUNT.default_value = this.tasksSettings.taskFinishSettings.spank.baseCount;
+
+        // outfit specifc
+        this.FIELD_RANDOMIZE_EXT.default_value = this.tasksSettings.wearOutfitTaskSettings.averageRandomExtPerHour;
+
+        // filter disabled options
+        if (this.FIELD_TASK_TYPE.options && this.FIELD_TASK_TYPE.options.length > 0) {
+            this.FIELD_TASK_TYPE.options = this.FIELD_TASK_TYPE.options.filter(opt => {
+                const setting = getTaskTypeSetting(this.tasksSettings, opt.value as TaskType);
+                return setting && setting.enable;
+            });
+        }
+
+        // Populate Finish condition
+        this.FIELD_FINISH_CONDITION.options = [];
+        this.FIELD_FINISH_CONDITION.options.push({ value: "duration", label: "Duration (connected time)" });
+        if (this.tasksSettings.taskFinishSettings.orgasm.enable) {
+            this.FIELD_FINISH_CONDITION.options.push({ value: "orgasm", label: "Orgasm Received" });
+        }
+        if (this.tasksSettings.taskFinishSettings.orgasmRuined.enable) {
+            this.FIELD_FINISH_CONDITION.options.push({ value: "orgasm_ruined", label: "Orgasm Ruined" });
+        }
+        if (this.tasksSettings.taskFinishSettings.orgasmResisted.enable) {
+            this.FIELD_FINISH_CONDITION.options.push({ value: "orgasm_resisted", label: "Orgasm Resisted" });
+        }
+        if (this.tasksSettings.taskFinishSettings.spank.enable) {
+            this.FIELD_FINISH_CONDITION.options.push({ value: "spank", label: "Spank Received" });
+        }
+
+        // Populate Wear type
+        this.FIELD_WEAR_TYPE.options = [];
+        if (this.tasksSettings.wearBondageTaskSettings.enableGag) {
+            this.FIELD_WEAR_TYPE.options.push({ value: "gag", label: "Gag / Mouth"});
+        }
+        if (this.tasksSettings.wearBondageTaskSettings.enableHand) {
+            this.FIELD_WEAR_TYPE.options.push({ value: "hand", label: "Hands / Arms" });
+        }
+        if (this.tasksSettings.wearBondageTaskSettings.enableLeg) {
+            this.FIELD_WEAR_TYPE.options.push({ value: "leg", label: "Legs / Feet" });
+        }
+        if (this.tasksSettings.wearBondageTaskSettings.enableChastity) {
+            this.FIELD_WEAR_TYPE.options.push({ value: "chastity", label: "Chastity" });
+        }
+        if (this.tasksSettings.wearBondageTaskSettings.enableToy) {
+            this.FIELD_WEAR_TYPE.options.push({ value: "toy", label: "Toys / Vibrator" });
+        }
+
+        // Populate Outfit Select
+        this.FIELD_OUTFIT_ID.options = [];
+        for (let i = 0; i < allOutfitList.length; i++) {
+            let outfitData = allOutfitList[i];
+            // TODO: check available
+            this.FIELD_OUTFIT_ID.options.push({value: outfitData.id, label: outfitData.name})
+        }
+    }
+
+
+    private fillDefaultValueForTaskTypeSelected(container: HTMLElement = this.parent) {
+        const taskType = GuiHelper.getFormFieldValue(container, this.FIELD_TASK_TYPE) as TaskType;
+        const taskTypeSettings = getTaskTypeSetting(this.tasksSettings, taskType);
+        if (taskTypeSettings) {
+            this.FIELD_DURATION.default_value = Math.floor(taskTypeSettings.baseDurationMs / (60 * 1000)); // convert to minutes
+            this.FIELD_GRACE_PERIOD.default_value = Math.floor(taskTypeSettings.baseGracePeriodMs / 1000); // covnert to seconds
+            this.FIELD_PENALTY.default_value = taskTypeSettings.baseBadPointsPenalty;
+        }
+    }
 
     public buildCreateTaskPage() {
         GuiHelper.createContentTitle(this.parent, this.STRINGS.PAGE_TITLE, true);
@@ -232,10 +307,8 @@ export class GuiCreateTaskView extends GuiViewBase {
         form.style.flexDirection = "column";
         form.style.gap = "15px";
 
-        const helpSection = GuiHelper.createHelpSection(this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
+        const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
         form.appendChild(helpSection);
-
-        // TODO: filter out unavailable FIELD_TASK_TYPE
 
         // Task type select
         this.taskTypeSelect = GuiHelper.createFormField(this.FIELD_TASK_TYPE);
@@ -244,6 +317,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         this.specificTaskTypeFields.className = "atb-dynamic-fields";
         // Trigger change when changing the task type select
         this.taskTypeSelect.querySelector("select")!.addEventListener("change", () => { this.changeTaskTypeFields() });
+        this.fillDefaultValueForTaskTypeSelected(this.taskTypeSelect);
         this.changeTaskTypeFields();
 
         // Finish condition select
@@ -271,12 +345,12 @@ export class GuiCreateTaskView extends GuiViewBase {
 
 
         // Create Task Button
-        const createTaskBtn = document.createElement("button");
-        createTaskBtn.className = "atb-main-btn";
-        createTaskBtn.style.marginTop = "10px";
-        createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN;
-        createTaskBtn.onclick = () => {
-            this.onClickCreateTask(form, createTaskBtn);
+        this.createTaskBtn = document.createElement("button");
+        this.createTaskBtn.className = "atb-main-btn";
+        this.createTaskBtn.style.marginTop = "10px";
+        this.createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN;
+        this.createTaskBtn.onclick = () => {
+            this.onClickCreateTask(form);
         };
 
         // ROW: Finish select + Grace period
@@ -284,15 +358,20 @@ export class GuiCreateTaskView extends GuiViewBase {
         // ROW: Reward + Penalty
         const ptsRow = GuiHelper.createTwoElemRow(rewardDisplay, badPtsInput);
 
+        this.errorTaskCannotStartElem = document.createElement("div");
+        this.errorTaskCannotStartElem.style.display = "none";
+
         // Final Assembly
         form.appendChild(this.taskTypeSelect);
         form.appendChild(this.specificTaskTypeFields);
+        form.appendChild(this.errorTaskCannotStartElem);
         form.appendChild(finishGraceRow);
         form.appendChild(this.specificFinishCondFields);
         form.appendChild(ptsRow);
-        form.appendChild(createTaskBtn);
+        form.appendChild(this.createTaskBtn);
         //this.form = form;
 
+        this.checkTaskCanStartAndUpdateUI();
         this.updateRewardPoints(form);
         this.parent.appendChild(form);
     }
@@ -301,6 +380,53 @@ export class GuiCreateTaskView extends GuiViewBase {
 /**
  * Dynamic fields for Task Type
  */
+
+    private checkTaskCanStartAndUpdateUI() {
+        // Task cannot start Warning/Error
+        const currentType = GuiHelper.getFormFieldValue(this.parent, this.FIELD_TASK_TYPE) as TaskType;
+        if (currentType && this.errorTaskCannotStartElem) {
+            const fullTaskType: FullTaskType = { taskType: currentType };
+
+            if (currentType === "wear_bondage") {
+                const itemToWear = GuiHelper.getFormFieldValue(this.parent, this.FIELD_WEAR_TYPE) as WearBondageType;
+                fullTaskType.taskSubType = itemToWear;
+            }
+            const cannotStartReason = TaskManagerModule.isTaskCanStart(this.character, fullTaskType);
+
+            if (cannotStartReason == "can_start") {
+                this.errorTaskCannotStartElem.style.display = "none";
+
+                // Update main button
+                if (this.createTaskBtn) {
+                    this.createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN;
+                    this.createTaskBtn.classList.remove("success");
+                    this.createTaskBtn.classList.remove("failed");
+                    this.createTaskBtn.disabled = false;
+                }
+            }
+            else {
+                const reasonString = getTaskCannotStartReasonToString(cannotStartReason);
+                let type: "error" | "warning" = "error";
+
+                if (cannotStartReason === "overwrite_only") {
+                    type = "warning";
+                }
+
+                const elem = GuiHelper.createInfoSection(type, reasonString);
+                this.errorTaskCannotStartElem.innerHTML = "";
+                this.errorTaskCannotStartElem.appendChild(elem);
+                this.errorTaskCannotStartElem.style.display = "block";
+
+                // Update main button
+                if (this.createTaskBtn && type === "error") {
+                    this.createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN;
+                    this.createTaskBtn.classList.remove("success");
+                    this.createTaskBtn.classList.add("failed");
+                    this.createTaskBtn.disabled = true;
+                }
+            }
+        }
+    }
 
 
     private changeTaskTypeFields() {
@@ -314,6 +440,8 @@ export class GuiCreateTaskView extends GuiViewBase {
             if (currentType === "wear_outfit") {
                 this.addWearOutfitTypeElem(this.specificTaskTypeFields);
             }
+
+            this.checkTaskCanStartAndUpdateUI();
         }
     };
 
@@ -324,10 +452,11 @@ export class GuiCreateTaskView extends GuiViewBase {
             this.HELP_WEAR_TASK_TEXT
         );
 
-        // TODO: filter unavailable FIELD_WEAR_TYPE
-
         // ROW: Wear type + (future option)
         const weartaskTypeSelect = GuiHelper.createFormField(this.FIELD_WEAR_TYPE);
+
+        weartaskTypeSelect.querySelector("select")!.addEventListener("change", () => { this.checkTaskCanStartAndUpdateUI() });
+
         const row = GuiHelper.createTwoElemRow(weartaskTypeSelect, undefined);
         container.appendChild(row);
     }
@@ -338,14 +467,6 @@ export class GuiCreateTaskView extends GuiViewBase {
             this.STRINGS.HELP_WEAR_OUTFIT_TITLE,
             this.HELP_WEAR_OUTFIT_TEXT
         );
-
-        // Populate Outfit Select
-        this.FIELD_OUTFIT_ID.options = [];
-        for (let i = 0; i < allOutfitList.length; i++) {
-            let outfitData = allOutfitList[i];
-            // TODO: check available
-            this.FIELD_OUTFIT_ID.options.push({value: outfitData.id, label: outfitData.name})
-        }
 
         // Final assembly
         const outfitIdSelect = GuiHelper.createFormField(this.FIELD_OUTFIT_ID);
@@ -408,7 +529,8 @@ export class GuiCreateTaskView extends GuiViewBase {
  */
 
 
-    private onClickCreateTask(container: HTMLElement, createBtn: HTMLButtonElement) {
+    private onClickCreateTask(container: HTMLElement) {
+        if (!this.createTaskBtn) return;
         // Get all common value
         const taskType = GuiHelper.getFormFieldValue(container, this.FIELD_TASK_TYPE) as TaskType;
         const finishCondType = GuiHelper.getFormFieldValue(container, this.FIELD_FINISH_CONDITION) as FinishType;
@@ -496,20 +618,22 @@ export class GuiCreateTaskView extends GuiViewBase {
 
         // Update button style
         if (created) {
-            createBtn.innerText = this.STRINGS.CREATE_TASK_BTN_SUCCESS;
-            createBtn.classList.add("success");
+            this.createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN_SUCCESS;
+            this.createTaskBtn.classList.add("success");
         } else {
-            createBtn.innerText = this.STRINGS.CREATE_TASK_BTN_FAILED;
-            createBtn.classList.add("failed");
+            this.createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN_FAILED;
+            this.createTaskBtn.classList.add("failed");
             this.showErrorDialog(cannotStartReason, retryFunction);
         }
-        createBtn.disabled = true;
+        this.createTaskBtn.disabled = true;
         setTimeout(() => {
+            if (!this.createTaskBtn) return;
             // Revert button style to normal
-            createBtn.innerText = this.STRINGS.CREATE_TASK_BTN;
-            createBtn.classList.remove("success");
-            createBtn.classList.remove("failed");
-            createBtn.disabled = false;
+            this.createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN;
+            this.createTaskBtn.classList.remove("success");
+            this.createTaskBtn.classList.remove("failed");
+            this.createTaskBtn.disabled = false;
+            this.checkTaskCanStartAndUpdateUI();
         }, 2000);
     }
 
@@ -526,7 +650,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         container.appendChild(h4);
 
         // Specifics help/info
-        const taskHelpSection = GuiHelper.createHelpSection(helptitle, helpContent);
+        const taskHelpSection = GuiHelper.createInfoSection("info", helptitle, helpContent);
         container.appendChild(taskHelpSection);
     }
 
@@ -592,9 +716,10 @@ export class GuiCreateTaskView extends GuiViewBase {
     // TODO: html id should be a static (const) variable
     private showErrorDialog(cannotStartReason: TaskCannotStartReason, onOverwrite: () => void) {
         const mainContainer = document.getElementById("atb-overlay-container")!;
-        const errorString = getTaskCannotStartReasonToString(cannotStartReason);
+        let errorString = getTaskCannotStartReasonToString(cannotStartReason);
 
         if (cannotStartReason === "overwrite_only") {
+            errorString += "<br>Do you want to overwrite the existing task with the new parameters?<br>(this will restart the timer)";
             GuiHelper.showDialog(
                 mainContainer,
                 this.STRINGS.ERROR_DIALOG_TITLE,

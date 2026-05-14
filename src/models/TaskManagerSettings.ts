@@ -72,7 +72,7 @@ export function getTaskCannotStartReasonToString(reason: TaskCannotStartReason):
         case "not_available_lscg":
             return "The selected task cannot be started, an LSCG Magic/Curse/Effect is active.";
         case "overwrite_only":
-            return "The same task type is already active.<br>Do you want to overwrite the existing task with the new parameters?<br>(this will restart the timer)";
+            return "The same task type is already active, but it can be overwrited.";
         case "can_start":
             return "The selected task can start."; // Shouldn't be used to display
         default: // "unknown"

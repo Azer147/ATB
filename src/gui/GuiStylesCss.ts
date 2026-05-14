@@ -11,6 +11,7 @@ export const uiStyles = `
         --atb-primary: #2196F3;
         --atb-primary-hover: #1e88e5;
         --atb-success: #4CAF50;
+        --atb-warn: #FFC107;
         --atb-danger: #F44336;
     }
 
@@ -170,14 +171,23 @@ export const uiStyles = `
 
 
     /* Help Section (Collapsible) */
-    .atb-help-section {
+    .atb-info-section {
         background: var(--atb-bg-input);
         border: 1px solid var(--atb-border);
         border-radius: 6px;
         overflow: hidden;
     }
 
-    .atb-help-header {
+    .atb-info-section.is-warning {
+        color: var(--atb-warn);
+        border-color: var(--atb-warn);
+    }
+    .atb-info-section.is-error {
+        color: var(--atb-danger);
+        border-color: var(--atb-danger);
+    }
+
+    .atb-info-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -189,17 +199,17 @@ export const uiStyles = `
         transition: background 0.2s;
     }
 
-    .atb-help-header:hover {
+    .atb-info-header:hover {
         background: var(--atb-bg-card);
     }
 
-    .atb-help-arrow {
+    .atb-info-arrow {
         transition: transform 0.3s ease;
         font-size: 0.8em;
         color: var(--atb-text-muted);
     }
 
-    .atb-help-content {
+    .atb-info-content {
         padding: 15px;
         border-top: 1px solid var(--atb-border);
         font-size: 0.85em;

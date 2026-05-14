@@ -60,7 +60,7 @@ export class GuiTasksSettingsView extends GuiViewBase {
         form.style.flexDirection = "column";
         form.style.gap = "15px";
 
-        const helpSection = GuiHelper.createHelpSection(this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
+        const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
         form.appendChild(helpSection);
 
         const finishMainCard = this.buildTaskFinishCard();

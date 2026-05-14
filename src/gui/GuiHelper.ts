@@ -210,39 +210,68 @@ export class GuiHelper {
         return textDisplay;
     }
 
-    public static createHelpSection(title: string, contentHtml: string): HTMLDivElement {
+    public static createInfoSection(type: "info" | "warning" | "error", title: string, contentHtml?: string): HTMLDivElement {
         const wrapper = document.createElement("div");
-        wrapper.className = "atb-help-section";
+        wrapper.className = "atb-info-section";
+
+        if (type === "warning") {
+            wrapper.classList.add("is-warning");
+        } else if (type === "error") {
+            wrapper.classList.add("is-error");
+        }
 
         const header = document.createElement("div");
-        header.className = "atb-help-header";
+        header.className = "atb-info-header";
+
+        const picto = type === "info" ? "ℹ️" : type === "warning" ? "⚠️" : "❌";
 
         const titleSpan = document.createElement("span");
-        //titleSpan.innerHTML = `ℹ️ <strong>${title}</strong>`;
-        titleSpan.innerHTML = `ℹ️ ${title}`;
-
-        const arrowSpan = document.createElement("span");
-        arrowSpan.className = "atb-help-arrow";
-        arrowSpan.innerText = "▼";
+        //titleSpan.innerHTML = `${picto} <strong>${title}</strong>`;
+        titleSpan.innerHTML = `${picto} ${title}`;
 
         header.appendChild(titleSpan);
-        header.appendChild(arrowSpan);
+        wrapper.appendChild(header);
 
-        const content = document.createElement("div");
-        content.className = "atb-help-content";
-        content.style.display = "none";
-        content.innerHTML = contentHtml;
+        if (contentHtml && contentHtml.trim() !== "") {
+            const arrowSpan = document.createElement("span");
+            arrowSpan.className = "atb-info-arrow";
+            arrowSpan.innerText = "▼";
 
-        // Toggle logic
-        header.onclick = () => {
-            const isExpanded = content.style.display === "block";
-            content.style.display = isExpanded ? "none" : "block";
-            arrowSpan.style.transform = isExpanded ? "rotate(0deg)" : "rotate(180deg)";
-        };
+            header.appendChild(arrowSpan);
+
+            const content = document.createElement("div");
+            content.className = "atb-info-content";
+            content.style.display = "none";
+            content.innerHTML = contentHtml;
+
+            // Toggle logic
+            header.onclick = () => {
+                const isExpanded = content.style.display === "block";
+                content.style.display = isExpanded ? "none" : "block";
+                arrowSpan.style.transform = isExpanded ? "rotate(0deg)" : "rotate(180deg)";
+            };
+
+            wrapper.appendChild(content);
+        }
+
+        return wrapper;
+    }
+
+    public static createWarningSection(title: string, contentHtml: string): HTMLDivElement {
+        const wrapper = document.createElement("div");
+        wrapper.className = "atb-info-section";
+        wrapper.classList.add("is-warning");
+
+        const header = document.createElement("div");
+        header.className = "atb-info-header";
+
+        const titleSpan = document.createElement("span");
+        //titleSpan.innerHTML = `⚠️ <strong>${title}</strong>`;
+        titleSpan.innerHTML = `⚠️ ${title}`;
+
+        header.appendChild(titleSpan);
 
         wrapper.appendChild(header);
-        wrapper.appendChild(content);
-
         return wrapper;
     }
 

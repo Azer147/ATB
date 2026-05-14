@@ -66,9 +66,9 @@ export class GuiOutfitSettingsView extends GuiViewBase {
         if (this.updatePreviewInterval) {
             clearInterval(this.updatePreviewInterval);
         }
-        /*if (this.previewChar) {
+        if (this.previewChar) {
             CharacterDelete(this.previewChar);
-        }*/
+        }
     }
 
     private updatePreview() {
@@ -141,7 +141,7 @@ export class GuiOutfitSettingsView extends GuiViewBase {
         form.style.flexDirection = "column";
         form.style.gap = "15px";
 
-        const helpSection = GuiHelper.createHelpSection(this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
+        const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
         form.appendChild(helpSection);
 
         for (let i=0; i < allOutfitList.length; i++) {
