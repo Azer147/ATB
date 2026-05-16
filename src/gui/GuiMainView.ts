@@ -8,8 +8,10 @@ import { GuiRandomEventsView } from "./GuiRandomEventsView";
 import { GuiTasksSettingsView } from "./GuiTasksSettingsView";
 import GuiViewBase from "./GuiViewBase";
 import { GuiOutfitSettingsView } from "./GuiOutfitSettingsView";
+import { GuiOutfitEditorView } from "./GuiOutfitEditorView";
 
-type TabName = "Dashboard" | "Create Task" | "Chaotic Mistress" | "Random Events" | "Tasks Settings" | "Punishements Settings" | "Outfit Settings" | "Debug";
+type TabName = "Dashboard" | "Create Task" | "Chaotic Mistress" | "Random Events" | "Tasks Settings" | "Punishements Settings"
+             | "Outfit Settings" | "Outfit Editor" | "Debug";
 
 export interface TabConfig {
     render: (parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter) => GuiViewBase | undefined;
@@ -29,15 +31,11 @@ export class GuiMainView {
         "Create Task": {render: (parent, C) => { return new GuiCreateTaskView(parent, C) as GuiViewBase; }},
         "Chaotic Mistress": {render: (parent, C) => { return new GuiChaoticMistressView(parent, C) as GuiViewBase; }},
         "Random Events": {render: (parent, C) => { return new GuiRandomEventsView(parent, C) as GuiViewBase; }},
-        /*"Training": {render: (parent, C) => {
-            const error = document.createElement("h3");
-            error.innerText = "Training - Coming soon.";
-            parent.appendChild(error);
-            return undefined;
-        }},*/
         "Tasks Settings": {render: (parent, C) => { return new GuiTasksSettingsView(parent, C) as GuiViewBase; }},
         "Punishements Settings": {render: (parent, C) => { return new GuiPunishementsSettingsView(parent, C) as GuiViewBase; }},
         "Outfit Settings": {render: (parent, C) => { return new GuiOutfitSettingsView(parent, C) as GuiViewBase; }},
+        "Outfit Editor": {render: (parent, C) => { return new GuiOutfitEditorView(parent, C) as GuiViewBase; },
+                        showCondition: (C) => { return C.IsPlayer()}},
         "Debug": {render: (parent, C) => { return new GuiDebugView(parent, C) as GuiViewBase; },
                     showCondition: (C) => { return C.IsPlayer()}},
     };

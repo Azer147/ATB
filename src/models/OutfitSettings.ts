@@ -163,12 +163,17 @@ export function extractOutfitDataFromId(outfitId: OutfitId): ItemBundle[] {
     if (outfitId) {
         const rawOutfit = getRawOutfitFromId(outfitId);
         if (rawOutfit) {
-            const parsed = LZString.decompressFromBase64(rawOutfit.code);
-            if (parsed) {
-                const parsedData = JSON.parse(parsed);
-                return parsedData as ItemBundle[];
-            }
+            return extractOutfitDataFromCode(rawOutfit.code);
         }
+    }
+    return [];
+}
+
+export function extractOutfitDataFromCode(outfitCode: string): ItemBundle[] {
+    const parsed = LZString.decompressFromBase64(outfitCode);
+    if (parsed) {
+        const parsedData = JSON.parse(parsed);
+        return parsedData as ItemBundle[];
     }
     return [];
 }

@@ -290,4 +290,40 @@ export const uiStyles = `
         padding-top: 15px;
         border-top: 1px solid var(--atb-bg-card);
     }
+
+    /* Hue Slider For Outfit Colors */
+    .atb-hue-slider {
+        -webkit-appearance: none; /* Removes default webkit styles */
+        appearance: none;
+        width: 100%;
+        height: 12px;
+        border-radius: 6px;
+        /* The magic 0-360 hue gradient */
+        background: linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%);
+        outline: none;
+        margin: 10px 0;
+    }
+
+    /* Style the draggable handle */
+    .atb-hue-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 2px solid #333333;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .atb-hue-slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 2px solid #333333;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
 `;
