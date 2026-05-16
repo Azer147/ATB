@@ -291,6 +291,50 @@ export const uiStyles = `
         border-top: 1px solid var(--atb-bg-card);
     }
 
+    /* Field Tooltips */
+    .atb-tooltip {
+        position: relative;
+        display: inline-flex;
+        //align-items: center;
+        //justify-content: center;
+        margin-left: 5px;
+        vertical-align: bottom;
+        user-select: none;
+    }
+
+    .atb-tooltip svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        color: var(--atb-text-muted, #888);
+    }
+
+    .atb-tooltip-text {
+        display: none;
+        width: max-content;
+        max-width: 400px;
+        background-color: var(--atb-bg-input, #222);
+        color: var(--atb-text, #fff);
+        border: 1px solid var(--atb-bg-card, #444);
+        text-align: left;
+        border-radius: 6px;
+        padding: 8px 12px;
+        position: absolute;
+        bottom: 125%;
+        opacity: 0;
+        transition: opacity 0.2s;
+        font-weight: normal;
+        font-size: 0.9rem;
+        pointer-events: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+
+    .atb-tooltip:hover .atb-tooltip-text,
+    .atb-tooltip-text.visible {
+        display: block;
+        opacity: 1;
+    }
+
     /* Hue Slider For Outfit Colors */
     .atb-hue-slider {
         -webkit-appearance: none; /* Removes default webkit styles */

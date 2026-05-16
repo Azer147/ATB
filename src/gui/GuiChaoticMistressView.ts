@@ -344,6 +344,7 @@ export class GuiChaoticMistressView extends GuiViewBase {
         const durationInput = GuiHelper.createNumberInput(
             htmlId,
             "Duration (Minutes)",
+            undefined,
             Math.floor(config.setting.baseDurationMs / (1000 * 60)),
             5,
             10000,

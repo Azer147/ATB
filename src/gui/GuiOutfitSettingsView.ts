@@ -141,8 +141,8 @@ export class GuiOutfitSettingsView extends GuiViewBase {
         form.style.flexDirection = "column";
         form.style.gap = "15px";
 
-        const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
-        form.appendChild(helpSection);
+        //const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
+        //form.appendChild(helpSection);
 
         for (let i=0; i < allOutfitList.length; i++) {
             const outfitCard = this.buildOutfitCard(allOutfitList[i]);

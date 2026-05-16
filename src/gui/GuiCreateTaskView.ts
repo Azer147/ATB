@@ -6,7 +6,8 @@ import { ChaoticMistressModule } from "@/modules/ChaoticMistressModule";
 import GuiViewBase from "./GuiViewBase";
 import { getCharacterChaoticMistressSettings, getCharacterTasksSettings, saveSettings, startTaskforCharacter } from "@/utility/CharacterWrapper";
 import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
-import { allOutfitList, OutfitId } from "@/models/OutfitSettings";
+import { allOutfitList, getRawOutfitFromId, OutfitId } from "@/models/OutfitSettings";
+import { TaskWearOutfit } from "@/modules/Task/TaskWearOutfit";
 
 export class GuiCreateTaskView extends GuiViewBase {
     //private form: HTMLElement;
@@ -21,7 +22,6 @@ export class GuiCreateTaskView extends GuiViewBase {
     private createTaskBtn: HTMLButtonElement | undefined;
     private errorTaskCannotStartElem: HTMLDivElement | undefined;
 
-    // TODO: Use default value from task settings
     // Common fields
     private FIELD_TASK_TYPE: GuiFormField = {
         html_id: "atb-create-task-type",
@@ -35,6 +35,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     private FIELD_FINISH_CONDITION: GuiFormField = {
         html_id: "atb-finish-condition",
         label: "Finish Condition",
+        description: "What need to be done to get the reward and end the task.",
         type: "select",
         options: [] // Will be fill on build
     };
@@ -43,6 +44,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     private FIELD_ENFORCE: GuiFormField = {
         html_id: "atb-create-task-enforce",
         label: "Enforce Task (Unskippable)",
+        description: "When enforced, the task cannot be skipped and might be harsher in some cases.",
         type: "checkbox",
         useInputPadding: true, // makes it align correctly with input fields on the same row
         default_value: false,
@@ -50,6 +52,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     private FIELD_REWARD_INPUT: GuiFormField = {
         html_id: "atb-create-task-reward",
         label: "Reward (Good Points)",
+        description: "The amount of good points the character will receive upon completing the task.",
         type: "number",
         default_value: 10,
         min_value: 0,
@@ -64,6 +67,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     private FIELD_PENALTY: GuiFormField = {
         html_id: "atb-create-task-penalty",
         label: "Penalty (Bad Points)",
+        description: "Penalty points awarded upon transgression during the task.",
         type: "number",
         default_value: 10, // placeholder
         min_value: 0,
@@ -72,6 +76,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     private FIELD_GRACE_PERIOD: GuiFormField = {
         html_id: "atb-create-task-grace-period",
         label: "Grace Period (Seconds)",
+        description: "Time given before starting to apply penalties when the task is not respected.",
         type: "number",
         default_value: 15, // placeholder
         min_value: 5,
@@ -124,6 +129,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     private FIELD_WEAR_TYPE: GuiFormField = {
         html_id: "atb-create-task-wear-type",
         label: "Wear Type",
+        description: "Type of bondage/restraint to wear for the task. The Player need to wear at least one item of the selected type to respect the task.",
         type: "select",
         options: [] // Will be filled on build
     };
@@ -145,6 +151,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     private FIELD_RANDOMIZE_EXT: GuiFormField = {
         html_id: "atb-create-task-randomize-ext",
         label: "Randomize Extended item (average per hour)",
+        description: "Randomly change some items options. Higher number means it will happen more frequently. (0 to disable)",
         type: "number",
         default_value: 15, // placeholder
         min_value: 0,
@@ -160,6 +167,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     However, the current active task will not yield any reward and the progress will be lost.<br>
     <br>
     Task <strong>Wear Bondage/Restraints:</strong> Player must wear specified restraints or get <strong>Bad Points penalty</strong>.
+    Task <strong>Wear Outfit:</strong> Player will be forced to wear a restrictive outfit. Player will get <strong>Bad Points penalty</strong> if they try to remove it.
     `;
 
     private HELP_WEAR_TASK_TEXT = `
@@ -280,11 +288,13 @@ export class GuiCreateTaskView extends GuiViewBase {
         }
 
         // Populate Outfit Select
+        const availOutfit = TaskWearOutfit.getAvailableOutfit(this.character);
         this.FIELD_OUTFIT_ID.options = [];
-        for (let i = 0; i < allOutfitList.length; i++) {
-            let outfitData = allOutfitList[i];
-            // TODO: check available
-            this.FIELD_OUTFIT_ID.options.push({value: outfitData.id, label: outfitData.name})
+        for (let i = 0; i < availOutfit.length; i++) {
+            let outfitData = getRawOutfitFromId(availOutfit[i]);
+            if (outfitData) {
+                this.FIELD_OUTFIT_ID.options.push({value: outfitData.id, label: outfitData.name})
+            }
         }
     }
 

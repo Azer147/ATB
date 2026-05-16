@@ -2,7 +2,8 @@
 export interface GuiFormField {
     html_id: string;
     label: string;
-    //descrption: string; // not sure needed (for now helper is not per field)
+    description?: string;
+
     type: "number" | "checkbox" | "select" | "text" | "display-text";
 
     // for all except select
@@ -63,15 +64,15 @@ export class GuiHelper {
     public static createFormField(field: GuiFormField): HTMLElement {
         switch (field.type) {
             case "number":
-                return this.createNumberInput(field.html_id, field.label, field.default_value as number, field.min_value ?? 0, field.max_value ?? 10000, field.onChange);
+                return this.createNumberInput(field.html_id, field.label, field.description, field.default_value as number, field.min_value ?? 0, field.max_value ?? 10000, field.onChange);
             case "checkbox":
-                return this.createCheckbox(field.html_id, field.label, field.default_value as boolean, field.useInputPadding ?? false, field.onChange);
+                return this.createCheckbox(field.html_id, field.label, field.description, field.default_value as boolean, field.useInputPadding ?? false, field.onChange);
             case "select":
-                return this.createSelect(field.html_id, field.label, field.options ?? [], field.onChange);
+                return this.createSelect(field.html_id, field.label, field.description, field.options ?? [], field.onChange);
+            case "text":
+                return this.createTextInput(field.html_id, field.label, field.description, field.default_value as string, field.onChange);
             case "display-text":
                 return this.createTextDisplay(field.html_id, field.label, field.usePrimaryColor);
-            //case "text":
-                // TODO
             default:
                 const error = document.createElement("span");
                 error.innerText = `Unsupported field type: ${field.type}`;
@@ -96,13 +97,15 @@ export class GuiHelper {
                 return (elem as HTMLInputElement).checked;
             case "select":
                 return (elem as HTMLSelectElement).value;
+            case "text":
+                return (elem as HTMLInputElement).value;
             default:
                 console.error(`ATB: Error: Unsupported field type: ${field.type}`);
                 return null;
         }
     }
 
-    public static createCheckbox(htmlId: string, labelText: string, defaultValue: boolean, useInputPadding: boolean, onChange?: (value: boolean) => void): HTMLElement {
+    public static createCheckbox(htmlId: string, labelText: string, description: string | undefined, defaultValue: boolean, useInputPadding: boolean, onChange?: (value: boolean) => void): HTMLElement {
         const checkboxWrapper = document.createElement("label");
         checkboxWrapper.className = "atb-checkbox-label";
 
@@ -121,18 +124,31 @@ export class GuiHelper {
         }
 
         checkboxWrapper.appendChild(checkboxInput);
-        checkboxWrapper.appendChild(document.createTextNode(labelText));
+        //checkboxWrapper.appendChild(document.createTextNode(labelText));
+
+        // Handle alignement with the tooltip
+        const textSpan = document.createElement("span");
+        textSpan.innerText = labelText;
+        checkboxWrapper.appendChild(textSpan);
+
+        if (description) {
+            checkboxWrapper.appendChild(this.createTooltip(description));
+        }
 
         return checkboxWrapper;
     }
 
-    public static createNumberInput(htmlId: string, labelText: string, defaultValue: number, min: number, max: number, onChange?: (value: number) => void): HTMLDivElement {
+    public static createNumberInput(htmlId: string, labelText: string, description: string | undefined, defaultValue: number, min: number, max: number, onChange?: (value: number) => void): HTMLDivElement {
         const wrapper = document.createElement("div");
         wrapper.className = "atb-form-group";
 
         const label = document.createElement("label");
         label.className = "atb-form-label";
         label.innerText = labelText;
+
+        if (description) {
+            label.appendChild(this.createTooltip(description));
+        }
 
         const input = document.createElement("input");
         input.id = htmlId;
@@ -162,13 +178,17 @@ export class GuiHelper {
         return wrapper;
     }
 
-    public static createSelect(htmlId: string, labelText: string, options: {value: string, label: string}[], onChange?: (value: string) => void): HTMLDivElement {
+    public static createSelect(htmlId: string, labelText: string, description: string | undefined, options: {value: string, label: string}[], onChange?: (value: string) => void): HTMLDivElement {
         const wrapper = document.createElement("div");
         wrapper.className = "atb-form-group";
 
         const label = document.createElement("label");
         label.className = "atb-form-label";
         label.innerText = labelText;
+
+        if (description) {
+            label.appendChild(this.createTooltip(description));
+        }
 
         const select = document.createElement("select");
         select.className = "atb-form-input";
@@ -190,6 +210,35 @@ export class GuiHelper {
         return wrapper;
     }
 
+    public static createTextInput(htmlId: string, labelText: string, description: string | undefined, defaultValue: string, onChange?: (value: string) => void): HTMLDivElement {
+        const wrapper = document.createElement("div");
+        wrapper.className = "atb-form-group";
+
+        const label = document.createElement("label");
+        label.className = "atb-form-label";
+        label.innerText = labelText;
+
+        if (description) {
+            label.appendChild(this.createTooltip(description));
+        }
+
+        const input = document.createElement("input");
+        input.id = htmlId;
+        input.className = "atb-form-input";
+        input.type = "text";
+        input.value = defaultValue.toString();
+
+        if (onChange) {
+            input.addEventListener("change", () => {
+                onChange(input.value)
+            });
+        }
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(input);
+        return wrapper;
+    }
+
     public static createTextDisplay(htmlId: string, labelText: string, usePrimaryColor: boolean = false): HTMLDivElement {
         let color = "var(--atb-text-secondary)";
         if (usePrimaryColor) {
@@ -208,6 +257,76 @@ export class GuiHelper {
         textDisplay.innerText = labelText;
 
         return textDisplay;
+    }
+
+    public static createTooltip(description: string): HTMLSpanElement {
+        const wrapper = document.createElement("span");
+        wrapper.className = "atb-tooltip";
+        // Help icon from heroicons.com
+        wrapper.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
+            </svg>
+        `;
+
+        const text = document.createElement("span");
+        text.className = "atb-tooltip-text";
+        text.innerText = description;
+
+        // Prevent tooltip to overflow to one side or the other
+        const adjustPosition = () => {
+            // Initial position
+            text.style.left = "50%";
+            text.style.right = "auto";
+            text.style.transform = "translateX(-50%)";
+
+            const textRect = text.getBoundingClientRect();
+            // Maybe not a good idea to hardcode it, but i'm lazy to add a new arg everywhere for it
+            const container = wrapper.closest('.atb-content-area');
+            if (!container) return; // Shouldn't happen
+            const containerRect = container.getBoundingClientRect();
+            const padding = 15; // Safe distance from edge
+
+            let shiftX = 0;
+
+            // Check if overflowing
+            if (textRect.right > containerRect.right - padding) {
+                shiftX = (containerRect.right - padding) - textRect.right;
+            } else if (textRect.left < containerRect.left + padding) {
+                shiftX = (containerRect.left + padding) - textRect.left;
+            }
+
+            // Shift accordingly if an overflow occured
+            if (shiftX !== 0) {
+                text.style.transform = `translateX(calc(-50% + ${shiftX}px))`;
+            }
+        };
+
+        // Hover
+        wrapper.addEventListener("mouseenter", adjustPosition);
+        wrapper.addEventListener("mouseleave", () => {
+            text.classList.remove("visible");
+        });
+
+        // For mobile: Toggle on click
+        wrapper.addEventListener("click", (e) => {
+            // Prevent click to also activate a checkbox
+            e.preventDefault();
+            e.stopPropagation();
+
+            document.querySelectorAll('.atb-tooltip-text.visible').forEach(el => {
+                if (el !== text) el.classList.remove('visible');
+            });
+
+            if (!text.classList.contains("visible")) {
+                adjustPosition();
+            }
+
+            text.classList.toggle("visible");
+        });
+
+        wrapper.appendChild(text);
+        return wrapper;
     }
 
     public static createInfoSection(type: "info" | "warning" | "error", title: string, contentHtml?: string): HTMLDivElement {
@@ -365,7 +484,7 @@ export class GuiHelper {
         let checkboxInput;
         let checkboxWrapper: HTMLElement;
         if (field.type == "checkbox") {
-            checkboxWrapper = this.createCheckbox(field.html_id, field.label, isEnabled, false);
+            checkboxWrapper = this.createCheckbox(field.html_id, field.label, field.description, isEnabled, false);
             checkboxInput = checkboxWrapper.querySelector("input") as HTMLInputElement;
         } else { // display-text
             checkboxWrapper = document.createElement("div");
