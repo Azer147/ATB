@@ -16,7 +16,7 @@ export class GuiDebugView extends GuiViewBase {
         RANDOM_TASK: "Trigger Random Task",
         RANDOM_PUNISH: "Trigger Random Punishement",
         ADD_RANDOM_ITEM: "Equip Random Item",
-        TEST_RANDOM_ITEM: "Test Random Item (Arm or torso)",
+        TEST_RANDOM_ITEM: "Equip 10 Random Item",
         TRIGGER_RANDOM_EVENT: "Trigger Random Event",
         PASSWORD_LOCK_EVENT: "Trigger Password Lock Event",
     };
@@ -124,7 +124,7 @@ export class GuiDebugView extends GuiViewBase {
         addRandomBtn.className = "atb-main-btn";
         addRandomBtn.innerText = this.STRINGS.ADD_RANDOM_ITEM;
         addRandomBtn.onclick = () => {
-            addRandomRestrain(Player, 1, undefined, true);
+            addRandomRestrain(Player, 1, true, undefined, true);
         };
         //form.appendChild(addRandomBtn);
 
@@ -132,7 +132,7 @@ export class GuiDebugView extends GuiViewBase {
         testRandomBtn.className = "atb-main-btn";
         testRandomBtn.innerText = this.STRINGS.TEST_RANDOM_ITEM;
         testRandomBtn.onclick = () => {
-            addRandomRestrain(Player, 1, ["ItemArms", "ItemTorso", "ItemTorso2"], true, ["Block"]);
+            addRandomRestrain(Player, 10, true);
         };
         //form.appendChild(testRandomBtn);
         const randomItemRow = GuiHelper.createTwoElemRow(addRandomBtn, testRandomBtn);

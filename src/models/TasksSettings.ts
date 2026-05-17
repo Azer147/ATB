@@ -11,9 +11,8 @@ export type PunishementType = "full_bondage" | "harsh_outfit";
 // TODO: "orgasm_given" | "spank_given" | "date_time"
 export type FinishType = "duration" | "orgasm" | "orgasm_ruined" | "orgasm_resisted" | "spank";
 
-// TODO: "shock" | "blindfold"
-export type WearBondageType = "hand" | "leg" | "gag" | "chastity" | "toy";
-// excluded blindfold and earwear
+export type WearBondageType = "hand" | "leg" | "gag" | "chastity" | "toy" | "blindfold" | "shock";
+// excluded earwear
 
 // Because some TaskType have several subType that can be active in paralel
 // FullTaskType is needed to describe a single startable task
@@ -68,6 +67,8 @@ export interface WearBondageTaskSettings extends SingleTaskSettings {
     enableGag: boolean;
     enableChastity: boolean;
     enableToy: boolean;
+    enableBlindfold: boolean;
+    enableShock: boolean;
 }
 
 export interface WearOutfitTaskSettings extends SingleTaskSettings {
@@ -104,7 +105,9 @@ export const DefaultTasksSettings: TasksSettings = {
         enableLeg: true,
         enableGag: true,
         enableChastity: true,
-        enableToy: true
+        enableToy: true,
+        enableBlindfold: false,
+        enableShock: true
     },
     wearOutfitTaskSettings: {
         enable: true,
@@ -172,6 +175,8 @@ export const FullTaskList: FullTaskType[] =
     {taskType: "wear_bondage", taskSubType: "gag"},
     {taskType: "wear_bondage", taskSubType: "chastity"},
     {taskType: "wear_bondage", taskSubType: "toy"},
+    {taskType: "wear_bondage", taskSubType: "blindfold"},
+    {taskType: "wear_bondage", taskSubType: "shock"},
     {taskType: "wear_outfit"},
 ];
 
@@ -287,6 +292,8 @@ export const WearOutfitTaskConstants: TaskConstant = {
         {taskType: "wear_bondage", taskSubType: "gag"},
         {taskType: "wear_bondage", taskSubType: "chastity"},
         {taskType: "wear_bondage", taskSubType: "toy"},
+        {taskType: "wear_bondage", taskSubType: "blindfold"},
+        {taskType: "wear_bondage", taskSubType: "shock"},
     ],
 }
 
@@ -301,6 +308,8 @@ export const FullBondagePunishementConstants: TaskConstant = {
     optionalTasks: [
         {taskType: "wear_bondage", taskSubType: "chastity"},
         {taskType: "wear_bondage", taskSubType: "toy"},
+        {taskType: "wear_bondage", taskSubType: "blindfold"},
+        {taskType: "wear_bondage", taskSubType: "shock"},
     ],
 }
 export const HarshOutfitPunishementConstants: TaskConstant = {

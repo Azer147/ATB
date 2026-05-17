@@ -324,6 +324,8 @@ export class ChaoticMistressModule extends ModuleBase {
             tm.startWearBondageTask("gag", "duration", duration, true, reward, penalty, grace, true);
             tm.startWearBondageTask("chastity", "duration", duration, true, reward, penalty, grace, true);
             tm.startWearBondageTask("toy", "duration", duration, true, reward, penalty, grace, true);
+            tm.startWearBondageTask("blindfold", "duration", duration, true, reward, penalty, grace, true);
+            tm.startWearBondageTask("shock", "duration", duration, true, reward, penalty, grace, true);
 
             // TODO: check retrun and return false if needed
             this.modifyBadPts(-badPtsReduction);

@@ -1,7 +1,7 @@
 import { TaskData } from "@/models/TaskManagerSettings";
 import { TaskBase } from "./TaskBase";
-import { ChatColor, getCharacterFreeSlots, sendLocalMessage } from "@/utility/utility";
-import { addRandomRestrain } from "@/utility/ItemUtility";
+import { ChatColor, CloneAndRandomizeList, getCharacterFreeSlots, sendLocalMessage } from "@/utility/utility";
+import { addRandomRestrain, addRandomShockDevice, getItemListByGroup, isShockItem } from "@/utility/ItemUtility";
 import { WearBondageType } from "@/models/TasksSettings";
 
 
@@ -76,7 +76,7 @@ export class TaskWearBondage extends TaskBase {
 
             // Update internal variable
             let isWearingBefore = this.isWearingItem;
-            this.isWearingItem = TaskWearBondage.checkIfWearingItem(itemToWear);
+            this.isWearingItem = TaskWearBondage.checkIfWearingItem(Player, itemToWear);
             this.lastChecked = currentTime;
 
             // Check if task is finished
@@ -114,40 +114,10 @@ export class TaskWearBondage extends TaskBase {
         }
     }
 
-    // Note: Since we want to count only items that add effect,
-    //      we check if Player have effect and not item slot when possible
-    private static checkIfWearingItem(itemToWear: WearBondageType): boolean {
-        // TODO: Because other addon like BCX can add effect to player without any item
-        // For example Player can have Effect "Slow" without wearing any item with the rule "Always leave room slowly"
-        // Then we should to check individual item effects
-
-        switch (itemToWear) {
-            case "hand":
-                return Player.HasEffect("Block");
-            case "leg":
-                // TODO: Check for Effect "Slow"
-                let firstCheck: boolean = Player.HasEffect("CuffedFeet") || Player.HasEffect("Freeze");
-                if (!firstCheck) {
-                    let slot = TaskWearBondage.getSlotPerBondageType("leg");
-                    return getCharacterFreeSlots(Player, slot).length != slot.length;
-                }
-                return firstCheck;
-            case "gag":
-                return Player.IsGagged();
-            case "chastity":
-                return Player.IsChaste();
-            case "toy":
-                let slot = TaskWearBondage.getSlotPerBondageType("toy");
-                return getCharacterFreeSlots(Player, slot).length != slot.length;
-        }
-
-        return false; // Placeholder
-    }
-
     // Force Equip a Random items if checkIfWearingItem() return false
     // return true if an item was equiped
     private enforceWear(itemToWear: WearBondageType): boolean {
-        if (TaskWearBondage.checkIfWearingItem(itemToWear)) {
+        if (TaskWearBondage.checkIfWearingItem(Player, itemToWear)) {
             return false;
         }
         let slotFilter: AssetGroupItemName[] = TaskWearBondage.getSlotPerBondageType(itemToWear);
@@ -189,18 +159,122 @@ export class TaskWearBondage extends TaskBase {
                 effectFilter.push("UseRemote");
                 effectFilter.push("Egged");
                 break;
+            case "blindfold":
+                effectFilter.push("BlindLight");
+                effectFilter.push("BlindNormal");
+                effectFilter.push("BlindHeavy");
+                effectFilter.push("BlindTotal");
+                break;
+            //case "shock":
+            //    effectFilter.push("TriggerShock");
+            //    effectFilter.push("ReceiveShock");
+            //    break;
+        }
+
+        if (itemToWear == "shock") {
+            // Special handling to find Shock device
+            const itemAdded = addRandomShockDevice(Player, false);
+            if (itemAdded) return true;
+            return false;
         }
 
         // Add 1 item that fit the effect
-        let itemAdded = addRandomRestrain(Player, 1, slotFilter, true, effectFilter);
+        let itemAdded = addRandomRestrain(Player, 1, false, slotFilter, true, effectFilter);
 
         // Then we can fill randomly some other aplicable slot for more fun
         let nbToAdd = Math.floor(Math.random() * slotFilter.length);
         if (nbToAdd > 0) {
-            itemAdded = itemAdded.concat(addRandomRestrain(Player, nbToAdd, slotFilter, true));
+            itemAdded = itemAdded.concat(addRandomRestrain(Player, nbToAdd, false, slotFilter, true));
         }
 
-        return itemAdded.length > 0;
+        if (itemAdded.length > 0) {
+            TaskBase.setNeedCharacterUpdate(true);
+            return true;
+        }
+        return false;
+    }
+
+    // Note: We want only items that have an effect, not just wearing in the slot
+    private static checkIfWearingItem(C: OtherCharacter | PlayerCharacter, itemToWear: WearBondageType): boolean {
+        // Because other addon like BCX can add effect to player without any item
+        // We check individual item effects instead of Player.hasEffect()
+
+        const effects = TaskWearBondage.getAllEffectsPerBondageType(itemToWear);
+        for (let i = 0; i < C.Appearance.length; i++) {
+            const item = C.Appearance[i];
+
+            if (itemToWear == "shock") {
+                // This one have a spicifc way to check as we can't rely on effect only
+                if (isShockItem(item)) {
+                    return true;
+                }
+            } else {
+                for (const effect of effects) {
+                    if (InventoryItemHasEffect(item, effect)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false; // Placeholder
+    }
+
+    private static getAllEffectsPerBondageType(itemToWear: WearBondageType): EffectName[] {
+        let effects: EffectName[] = [];
+
+        switch (itemToWear) {
+            case "hand":
+                effects.push("Block");
+                break;
+            case "leg":
+                effects.push("Slow");
+                effects.push("Freeze");
+                effects.push("CuffedFeet");
+                break;
+            case "gag":
+                effects.push("GagTotal4");
+                effects.push("GagTotal3");
+                effects.push("GagTotal2");
+                effects.push("GagTotal");
+                effects.push("GagVeryHeavy");
+                effects.push("GagHeavy");
+                effects.push("GagMedium");
+                effects.push("GagNormal");
+                effects.push("GagEasy");
+                effects.push("GagLight");
+                effects.push("GagVeryLight");
+                break;
+            case "chastity":
+                effects.push("Chaste");
+                break;
+            case "toy":
+                effects.push("Vibrating");
+                effects.push("UseRemote");
+                effects.push("Egged");
+                effects.push("Edged");
+                effects.push("DenialMode");
+                effects.push("RuinOrgasms");
+                break;
+            case "blindfold":
+                effects.push("BlindLight");
+                effects.push("BlindNormal");
+                effects.push("BlindHeavy");
+                effects.push("BlindTotal");
+                break;
+            case "shock":
+                effects.push("TriggerShock");
+                effects.push("ReceiveShock");
+                break;
+            //case "deaf":
+                //effects.push("DeafLight");
+                //effects.push("DeafNormal");
+                //effects.push("DeafHeavy");
+                //effects.push("DeafTotal");
+                //break;
+        }
+
+        return effects;
     }
 
     public charUnableToEquipItem(itemToWear: WearBondageType | undefined): boolean {
@@ -212,20 +286,26 @@ export class TaskWearBondage extends TaskBase {
     public static getItemAvailibility(C: OtherCharacter | PlayerCharacter = Player): WearBondageType[] {
         let itemAvail: WearBondageType[] = [];
 
-        if (TaskWearBondage.checkIfWearingItem("hand") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("hand")).length > 0) {
+        if (TaskWearBondage.checkIfWearingItem(C, "hand") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("hand")).length > 0) {
             itemAvail.push("hand");
         }
-        if (TaskWearBondage.checkIfWearingItem("leg") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("leg")).length > 0) {
+        if (TaskWearBondage.checkIfWearingItem(C, "leg") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("leg")).length > 0) {
             itemAvail.push("leg");
         }
-        if (TaskWearBondage.checkIfWearingItem("gag") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("gag")).length > 0) {
+        if (TaskWearBondage.checkIfWearingItem(C, "gag") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("gag")).length > 0) {
             itemAvail.push("gag");
         }
-        if (TaskWearBondage.checkIfWearingItem("chastity") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("chastity")).length > 0) {
+        if (TaskWearBondage.checkIfWearingItem(C, "chastity") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("chastity")).length > 0) {
             itemAvail.push("chastity");
         }
-        if (TaskWearBondage.checkIfWearingItem("toy") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("toy")).length > 0) {
+        if (TaskWearBondage.checkIfWearingItem(C, "toy") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("toy")).length > 0) {
             itemAvail.push("toy");
+        }
+        if (TaskWearBondage.checkIfWearingItem(C, "blindfold") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("blindfold")).length > 0) {
+            itemAvail.push("blindfold");
+        }
+        if (TaskWearBondage.checkIfWearingItem(C, "shock") || getCharacterFreeSlots(C, TaskWearBondage.getSlotPerBondageType("shock")).length > 0) {
+            itemAvail.push("shock");
         }
 
         return itemAvail;
@@ -249,6 +329,10 @@ export class TaskWearBondage extends TaskBase {
                 return ["ItemPelvis"];
             case "toy":
                 return ["ItemVulva", "ItemVulvaPiercings", "ItemButt"];
+            case "blindfold":
+                return ["ItemHead", "ItemHood"];
+            case "shock":
+                return ["ItemPelvis", "ItemVulva", "ItemButt", "ItemNipples", "ItemBreast", "ItemNeckAccessories", "ItemNeckRestraints"];
         }
     }
 

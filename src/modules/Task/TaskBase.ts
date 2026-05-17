@@ -44,6 +44,19 @@ export abstract class TaskBase {
 
     protected abstract updateProgress(): void;
 
+    // Static var shared between all task so we can do only one ChatRoomCharacterUpdate() for all taask.
+    // Needed for performance reason, specifically TaskWearBondage can have 7 concurrent task that can all add items in onTick().
+    // That way we can do only 1 update instead of 7.
+    private static needCharacterUpdate: boolean = false;
+    public static setNeedCharacterUpdate(value: boolean) {
+        this.needCharacterUpdate = value;
+    }
+    public static doPlayerCharacterUpdateIfNeeded() {
+        if (this.needCharacterUpdate) {
+            ChatRoomCharacterUpdate(Player);
+            this.needCharacterUpdate = false;
+        }
+    }
 
     public getFinishDescription(prefixStr: string): string {
         const finishCountLeftToDo = this.data.finishTotalNeeded - this.data.finishCurrentCount;

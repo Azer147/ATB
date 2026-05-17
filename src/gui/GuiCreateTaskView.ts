@@ -272,19 +272,25 @@ export class GuiCreateTaskView extends GuiViewBase {
         // Populate Wear type
         this.FIELD_WEAR_TYPE.options = [];
         if (this.tasksSettings.wearBondageTaskSettings.enableGag) {
-            this.FIELD_WEAR_TYPE.options.push({ value: "gag", label: "Gag / Mouth"});
+            this.FIELD_WEAR_TYPE.options.push({ value: "gag", label: "Gag"});
         }
         if (this.tasksSettings.wearBondageTaskSettings.enableHand) {
-            this.FIELD_WEAR_TYPE.options.push({ value: "hand", label: "Hands / Arms" });
+            this.FIELD_WEAR_TYPE.options.push({ value: "hand", label: "Hands / Arms Restraints" });
         }
         if (this.tasksSettings.wearBondageTaskSettings.enableLeg) {
-            this.FIELD_WEAR_TYPE.options.push({ value: "leg", label: "Legs / Feet" });
+            this.FIELD_WEAR_TYPE.options.push({ value: "leg", label: "Legs / Feet Restraints" });
         }
         if (this.tasksSettings.wearBondageTaskSettings.enableChastity) {
             this.FIELD_WEAR_TYPE.options.push({ value: "chastity", label: "Chastity" });
         }
         if (this.tasksSettings.wearBondageTaskSettings.enableToy) {
             this.FIELD_WEAR_TYPE.options.push({ value: "toy", label: "Toys / Vibrator" });
+        }
+        if (this.tasksSettings.wearBondageTaskSettings.enableBlindfold) {
+            this.FIELD_WEAR_TYPE.options.push({ value: "blindfold", label: "Blindfold" });
+        }
+        if (this.tasksSettings.wearBondageTaskSettings.enableShock) {
+            this.FIELD_WEAR_TYPE.options.push({ value: "shock", label: "Shock Device" });
         }
 
         // Populate Outfit Select

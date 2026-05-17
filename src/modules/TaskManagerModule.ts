@@ -151,6 +151,9 @@ export class TaskManagerModule extends ModuleBase {
             }
         }
 
+        // Do ChatRoomCharacterUpdate If any of the tasks needs it.
+        TaskBase.doPlayerCharacterUpdateIfNeeded();
+
         // remove task after
         this.removeTasks(taskIdToRemove);
     }
@@ -359,6 +362,10 @@ export class TaskManagerModule extends ModuleBase {
     startWearBondageTask(item: WearBondageType, finishType: FinishType, finishTotal: number,
                         enforce: boolean, successPts: number, failurePts: number,
                         gracePeriod: number, overwrite: boolean = false): boolean {
+        if (!TaskManagerModule.isWearBondageTypeEnabled(Player, item)) {
+            return false;
+        }
+
         // Case where the same task with same item already exist
         const sameTask = this.getActiveTaskByType({taskType: "wear_bondage", taskSubType: item});
         if (sameTask) {
@@ -407,6 +414,12 @@ export class TaskManagerModule extends ModuleBase {
                 return true;
             }
             if (itemToWear == "toy" && taskSettings.wearBondageTaskSettings.enableToy) {
+                return true;
+            }
+            if (itemToWear == "blindfold" && taskSettings.wearBondageTaskSettings.enableBlindfold) {
+                return true;
+            }
+            if (itemToWear == "shock" && taskSettings.wearBondageTaskSettings.enableShock) {
                 return true;
             }
         }

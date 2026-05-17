@@ -390,7 +390,7 @@ export class GuiTasksSettingsView extends GuiViewBase {
         };
         const FIELD_ENABLE_GAG: GuiFormField = {
             html_id: prefixId + "-enable-gag",
-            label: "Enable Gag Bondage/Restraints",
+            label: "Enable Gag Items",
             type: "checkbox",
             default_value: taskSetting.enableGag,
             onChange: (value: boolean) => {
@@ -400,7 +400,7 @@ export class GuiTasksSettingsView extends GuiViewBase {
         };
         const FIELD_ENABLE_CHASTITY: GuiFormField = {
             html_id: prefixId + "-enable-chastity",
-            label: "Enable Chastity Bondage/Restraints",
+            label: "Enable Chastity Items",
             type: "checkbox",
             default_value: taskSetting.enableChastity,
             onChange: (value: boolean) => {
@@ -410,11 +410,31 @@ export class GuiTasksSettingsView extends GuiViewBase {
         };
         const FIELD_ENABLE_TOY: GuiFormField = {
             html_id: prefixId + "-enable-toy",
-            label: "Enable Toy Bondage/Restraints",
+            label: "Enable Toys (vibe)",
             type: "checkbox",
             default_value: taskSetting.enableToy,
             onChange: (value: boolean) => {
                 taskSetting.enableToy = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_ENABLE_BLINDFOLD: GuiFormField = {
+            html_id: prefixId + "-enable-blindfold",
+            label: "Enable Blindfolds",
+            type: "checkbox",
+            default_value: taskSetting.enableBlindfold,
+            onChange: (value: boolean) => {
+                taskSetting.enableBlindfold = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_ENABLE_SHOCK: GuiFormField = {
+            html_id: prefixId + "-enable-shock",
+            label: "Enable Shock Devices",
+            type: "checkbox",
+            default_value: taskSetting.enableShock,
+            onChange: (value: boolean) => {
+                taskSetting.enableShock = value;
                 this.shouldSaveSetting = true;
             }
         };
@@ -432,17 +452,20 @@ export class GuiTasksSettingsView extends GuiViewBase {
         const bondageTaskEnableGag = GuiHelper.createFormField(FIELD_ENABLE_GAG);
         const bondageTaskEnableChastity = GuiHelper.createFormField(FIELD_ENABLE_CHASTITY);
         const bondageTaskEnableToy = GuiHelper.createFormField(FIELD_ENABLE_TOY);
+        const bondageTaskEnableBlindfold = GuiHelper.createFormField(FIELD_ENABLE_BLINDFOLD);
+        const bondageTaskEnableShock = GuiHelper.createFormField(FIELD_ENABLE_SHOCK);
 
 
         //const bondageRow3 = GuiHelper.createTwoElemRow(bondageTaskGracePeriod, bondageTaskDuration);
         const bondageRowEnable1 = GuiHelper.createTwoElemRow(bondageTaskEnableHand, bondageTaskEnableLeg);
         const bondageRowEnable2 = GuiHelper.createTwoElemRow(bondageTaskEnableGag, bondageTaskEnableChastity);
-        //const bondageRowEnable3 = GuiHelper.createTwoElemRow(bondageRowEnable1, );
+        const bondageRowEnable3 = GuiHelper.createTwoElemRow(bondageTaskEnableToy, bondageTaskEnableBlindfold);
 
         GuiHelper.createContentTitle(taskContent, this.STRINGS.CATEGORY_BONDAGE_ITEMS);
         taskContent.appendChild(bondageRowEnable1);
         taskContent.appendChild(bondageRowEnable2);
-        taskContent.appendChild(bondageTaskEnableToy);
+        taskContent.appendChild(bondageRowEnable3);
+        taskContent.appendChild(bondageTaskEnableShock);
 
         return taskMainCard;
     }

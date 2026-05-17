@@ -90,12 +90,12 @@ export class RandomEventsModule extends ModuleBase {
             // Special harsh case
             //CharacterFullRandomRestrain(Player, "ALL");
             console.log("RandomEventsModule: Add Restraint event triggered, will add 20 restraints");
-            addedItem = addRandomRestrain(Player, 20, undefined, true);
+            addedItem = addRandomRestrain(Player, 20, true, undefined, true);
         } else {
             //CharacterFullRandomRestrain(Player, "FEW");
             let nbToAdd = 2 + Math.floor(Math.random() * 4); // Add 2 to 5 restraints
             console.log("RandomEventsModule: Add Restraint event triggered, will add " + nbToAdd + " restraints");
-            addedItem = addRandomRestrain(Player, nbToAdd, undefined, true);
+            addedItem = addRandomRestrain(Player, nbToAdd, true, undefined, true);
         }
 	    //ChatRoomCharacterUpdate(Player);
         console.log("RandomEventsModule: " + addedItem.length + " added!");
