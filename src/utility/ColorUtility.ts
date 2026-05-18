@@ -26,13 +26,13 @@ export function smartReplaceItemColor(
 ): ItemColor | undefined {
     if (origColor && newColor && newColor !== "Default") {
         if (typeof origColor === "string") {
-            return smartReplaceSingleColor(origColor, newColor, sourceHexToReplace, tolerance);
+            return smartReplaceSingleColor(origColor, newColor, sourceHexToReplace, tolerance) as ItemColor;
         } else if (Array.isArray(origColor)) {
             let newColorList: string[] = [];
             for (let i=0; i < origColor.length; i++) {
                 newColorList.push(smartReplaceSingleColor(origColor[i], newColor, sourceHexToReplace, tolerance));
             }
-            return newColorList;
+            return newColorList as ItemColor;
         }
     }
     return origColor; // Default color

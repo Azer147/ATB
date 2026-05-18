@@ -53,7 +53,7 @@ export default class StorageManager {
     }
 
     static loadSettings() {
-        let parsedData = {};
+        let parsedData: any = {};
         if (Player.ExtensionSettings != undefined && Player.ExtensionSettings.ATB != undefined) {
             const parsed = LZString.decompressFromBase64(Player.ExtensionSettings.ATB);
             if (parsed) {
@@ -69,7 +69,7 @@ export default class StorageManager {
 
     // return a Deep copy of the default settings
     private static buildDefaultSettings(): CoreSettings {
-        return JSON.parse(JSON.stringify(DefaultCoreSettings));
+        return JSON.parse(JSON.stringify(DefaultCoreSettings)) as CoreSettings;
     }
 
     // Makes savedData (parsed json) conform to the structure of defaults, removing unknown properties and filling missing ones with default values

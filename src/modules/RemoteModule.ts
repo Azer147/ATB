@@ -80,7 +80,7 @@ export class RemoteModule extends ModuleBase {
             setTimeout(() => {
                 RemoteModule.boradcastAtbSettings(true);
             }, 5000);
-            next(args);
+            return next(args);
         }));
 
         // Receive ATB Data packets

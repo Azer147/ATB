@@ -38,7 +38,7 @@ export class RandomEventsModule extends ModuleBase {
             if (this.settings.enableTriggerOnRoomEntry) {
                 this.checkIfTriggerRandomEvent();
             }
-            next(args);
+            return next(args);
         }));
         // Trigger: Leaving a chat room
         this.hook.push(BC_SDK.hookFunction('ChatRoomAttemptLeave', 0, (args, next) => {

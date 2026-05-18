@@ -185,7 +185,7 @@ export function lockAllItems(C: Character, lockType: AssetLockType = "ExclusiveP
 		if (C.Appearance[i].Asset.AllowLock == true) {
 			let isAlreadyLocked: boolean = (C.Appearance[i].Property?.LockedBy != undefined);
 			if (!isAlreadyLocked) {
-				InventoryLock(C, C.Appearance[i], lockType, C.MemberNumber, false);
+				InventoryLock(C, C.Appearance[i], lockType, C, false);
 				changed = true;
 			}
 		}

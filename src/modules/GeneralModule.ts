@@ -31,7 +31,7 @@ export class GeneralModule extends ModuleBase {
 
     load(): void {
         // Draw ATB button
-        this.hook.push(BC_SDK.hookFunction('ChatRoomMenuDraw', 0, (args, next) => {
+        this.hook.push(BC_SDK.hookFunction('ChatRoomTopMenuSync', 0, (args, next) => {
             next(args);
 
             let btnColor = "White";
