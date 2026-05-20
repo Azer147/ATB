@@ -70,6 +70,32 @@ export function formatTimeMs(ms: number): string {
     }
 }
 
+// Copied from BC (CharacterIsNaked)
+export function isBodyPart(item: Item) {
+	if (item.Asset != null && !item.Asset.Group.AllowNone) {
+		return true;
+	}
+	return false;
+}
+export function isItem(item: Item) {
+	if (item.Asset != null && item.Asset.Group.Category != "Appearance") {
+		return true;
+	}
+	return false;
+}
+export function isCosplay(item: Item) {
+	if (item.Asset != null && (item.Asset.BodyCosplay || item.Asset.Group.BodyCosplay)) {
+		return true;
+	}
+	return false;
+}
+export function isClothe(item: Item) {
+	if (!isBodyPart(item) && !isItem(item) && !isCosplay(item)) {
+		return true;
+	}
+	return false;
+}
+
 // return a random shock device worn by the Character or null if not any.
 export function getAnyShockDeviceWorn(C: Character): Item | undefined {
 	const availShockItem: Item[] = [];

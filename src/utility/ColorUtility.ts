@@ -1,13 +1,16 @@
 // Tolerance should be consistent everywhere
+
+import { isBodyPart } from "./utility";
+
 // Define when two hue are similar enough to be considered the same group.
 const DEFAULT_HUE_TOLERANCE = 25;
 
 // TODO: placeholder - need redo
-export function createColorSquare(htmlId: string, hex: string, size: number = 20): HTMLDivElement {
+export function createColorRect(htmlId: string, hex: string, height: number = 20): HTMLDivElement {
     const square = document.createElement("div");
     square.id = htmlId;
     //square.style.width = `${size}px`;
-    square.style.height = `${size}px`;
+    square.style.height = `${height}px`;
     square.style.backgroundColor = hex;
     square.style.border = "1px solid #ccc";
     square.style.borderRadius = "4px";
@@ -71,6 +74,25 @@ export function smartReplaceSingleColor(
     // We only use the Hue of targetHex, and keep the original sat and light
     const targetHsl = hexToHsl(targetHex);
     return hslToHex(targetHsl.h, origHsl.s, origHsl.l);
+}
+
+
+export function extractCharacterOutfitColor(C: Character): string[] {
+    const allColors: string[] = [];
+
+    if (!C || !C.Appearance) return [];
+
+    for (const item of C.Appearance) {
+        if (!isBodyPart(item) && item.Color) {
+            // Some items have arrays of colors, some have a single string
+            if (Array.isArray(item.Color)) {
+                allColors.push(...item.Color);
+            } else if (typeof item.Color === "string") {
+                allColors.push(item.Color);
+            }
+        }
+    }
+    return extractMainColorGroup(allColors);
 }
 
 // Used by extractMainColorGroup to build the color groups

@@ -2,7 +2,8 @@ import { GuiHelper, GuiFormField } from "./GuiHelper";
 import GuiViewBase from "./GuiViewBase";
 import { getCharacterOutfitSettings, saveSettings } from "@/utility/CharacterWrapper";
 import { allOutfitList, extractOutfitDataFromCode, extractOutfitDataFromId, getOutfitSettingsFromId, OutfitId, OutfitsSettings, RawOutfit } from "@/models/OutfitSettings";
-import { createColorSquare, extractMainColorGroup, hslToHex, smartReplaceItemColor, smartReplaceSingleColor } from "@/utility/ColorUtility";
+import { createColorRect, extractCharacterOutfitColor, extractMainColorGroup, hslToHex, smartReplaceItemColor, smartReplaceSingleColor } from "@/utility/ColorUtility";
+import { isBodyPart } from "@/utility/utility";
 
 export class GuiOutfitEditorView extends GuiViewBase {
     private previewCanva: HTMLCanvasElement | null = null;
@@ -134,7 +135,7 @@ export class GuiOutfitEditorView extends GuiViewBase {
 
         CharacterResetFacialExpression(this.previewChar);
         CharacterRefresh(this.previewChar, false, false);
-        this.extractCharacterOutfitColor();
+        this.updateTargetColorSelect(this.previewChar);
     }
 
     private showOutfit(outfitItem: ServerItemBundle[]) {
@@ -153,26 +154,12 @@ export class GuiOutfitEditorView extends GuiViewBase {
             }
             CharacterRefresh(this.previewChar, false, false);
 
-            this.extractCharacterOutfitColor();
+            this.updateTargetColorSelect(this.previewChar);
         }
     }
 
-    private extractCharacterOutfitColor() {
-        const allColors: string[] = [];
-
-        if (!this.previewChar || !this.previewChar.Appearance) return ;
-
-        for (const item of this.previewChar.Appearance) {
-            if (item.Color) {
-                // Some items have arrays of colors, some have a single string
-                if (Array.isArray(item.Color)) {
-                    allColors.push(...item.Color);
-                } else if (typeof item.Color === "string") {
-                    allColors.push(item.Color);
-                }
-            }
-        }
-        const outfitColor = extractMainColorGroup(allColors);
+    private updateTargetColorSelect(C: Character) {
+        const outfitColor = extractCharacterOutfitColor(C);
 
         if (this.colorTargetSelect) {
             this.FIELD_COLOR_TARGET.options = [{ value: "Default", label: "All" }]; // Reset options
@@ -183,11 +170,11 @@ export class GuiOutfitEditorView extends GuiViewBase {
             this.colorTargetSelect.innerHTML = ""; // Clear previous field
             let select = GuiHelper.createFormField(this.FIELD_COLOR_TARGET);
             select.querySelector("select")?.addEventListener("change", () => {
-                const sourceColor = GuiHelper.getFormFieldValue(this.parent, this.FIELD_COLOR_TARGET) as string;
-                if (sourceColor && sourceColor !== "Default") {
-                    let elem = this.parent.querySelector("#atb-target-color-square") as HTMLElement | undefined;
+                const targetColor = GuiHelper.getFormFieldValue(this.parent, this.FIELD_COLOR_TARGET) as string;
+                if (targetColor && targetColor !== "Default") {
+                    let elem = this.parent.querySelector("#atb-target-color-rect") as HTMLElement | undefined;
                     if (elem) {
-                        elem.style.backgroundColor = sourceColor;
+                        elem.style.backgroundColor = targetColor;
                     }
                 }
             });
@@ -200,21 +187,23 @@ export class GuiOutfitEditorView extends GuiViewBase {
         if (!colorMainSlider) return;
         const newColor = hslToHex(parseInt(colorMainSlider.value), 1, 0.5);
 
-        let sourceColor = GuiHelper.getFormFieldValue(this.parent, this.FIELD_COLOR_TARGET) as string;
-        if (!sourceColor) {
-            sourceColor = "Default";
+        let targetColor = GuiHelper.getFormFieldValue(this.parent, this.FIELD_COLOR_TARGET) as string;
+        if (!targetColor) {
+            targetColor = "Default";
         }
 
         if (this.previewChar && newColor && newColor !== "Default") {
             for (let i = 0; i < this.previewChar.Appearance.length; i++) {
                 let item = this.previewChar.Appearance[i];
-                let customColor = smartReplaceItemColor(newColor, item.Color, sourceColor);
-                if (customColor && customColor !== "Default") {
-                    item.Color = customColor;
+                if (item.Color && !isBodyPart(item)) {
+                    let customColor = smartReplaceItemColor(newColor, item.Color, targetColor);
+                    if (customColor && customColor !== "Default") {
+                        item.Color = customColor;
+                    }
                 }
             }
             CharacterRefresh(this.previewChar, false, false);
-            this.extractCharacterOutfitColor();
+            this.updateTargetColorSelect(this.previewChar);
         }
     }
 
@@ -293,7 +282,7 @@ export class GuiOutfitEditorView extends GuiViewBase {
 
         // Select color
         const colorMain = document.createElement("div");
-        const colorMainSquare = createColorSquare("atb-main-color-square", "#ffffff", 20);
+        const colorMainRect = createColorRect("atb-main-color-rect", "#ffffff", 20);
         const colorMainSlider = document.createElement("input");
         colorMainSlider.id = "atb-main-color-range"; // should be a variable
         colorMainSlider.className = "atb-hue-slider";
@@ -302,17 +291,17 @@ export class GuiOutfitEditorView extends GuiViewBase {
         colorMainSlider.max = "360";
         colorMainSlider.onchange = () => {
             const hexValue = hslToHex(parseInt(colorMainSlider.value), 1, 0.5);
-            colorMainSquare.style.backgroundColor = hexValue;
+            colorMainRect.style.backgroundColor = hexValue;
         };
         colorMain.appendChild(colorMainSlider);
         form.appendChild(colorMain);
-        form.appendChild(colorMainSquare);
+        form.appendChild(colorMainRect);
 
         // Target color
         this.colorTargetSelect = document.createElement("div");
         this.colorTargetSelect.appendChild(GuiHelper.createFormField(this.FIELD_COLOR_TARGET));
         form.appendChild(this.colorTargetSelect);
-        form.appendChild(createColorSquare("atb-target-color-square", "#ffffff", 20));
+        form.appendChild(createColorRect("atb-target-color-rect", "#ffffff", 20));
 
         const changeColorBtn = document.createElement("button");
         changeColorBtn.className = "atb-main-btn";
@@ -371,6 +360,8 @@ export class GuiOutfitEditorView extends GuiViewBase {
         form.appendChild(applyToCharBtn);
 
         container.appendChild(form);
-        this.extractCharacterOutfitColor();
+        if (this.previewChar) {
+            this.updateTargetColorSelect(this.previewChar);
+        }
     }
 }

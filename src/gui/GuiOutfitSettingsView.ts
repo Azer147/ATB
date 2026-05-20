@@ -1,7 +1,9 @@
 import { GuiHelper, GuiFormField } from "./GuiHelper";
 import GuiViewBase from "./GuiViewBase";
 import { getCharacterOutfitSettings, saveSettings } from "@/utility/CharacterWrapper";
-import { allOutfitList, extractOutfitDataFromId, getOutfitSettingsFromId, OutfitId, OutfitsSettings, RawOutfit } from "@/models/OutfitSettings";
+import { allOutfitList, extractOutfitDataFromId, getOutfitSettingsFromId, getRawOutfitFromId, OutfitId, OutfitsSettings, RawOutfit } from "@/models/OutfitSettings";
+import { createColorRect, hexToHsl, hslToHex, smartReplaceItemColor } from "@/utility/ColorUtility";
+import { isBodyPart } from "@/utility/utility";
 
 export class GuiOutfitSettingsView extends GuiViewBase {
     private shouldSaveSetting: boolean = false;
@@ -116,6 +118,8 @@ export class GuiOutfitSettingsView extends GuiViewBase {
 
     private showOutfit(outfitId: OutfitId) {
         let outfitItem = extractOutfitDataFromId(outfitId);
+        const canCustomColor = this.settings.enableCustomColor && getRawOutfitFromId(outfitId)?.tags.includes("custom_color");
+
         if (this.previewChar) {
             CharacterReleaseTotal(this.previewChar, false);
             CharacterNaked(this.previewChar, false);
@@ -125,8 +129,16 @@ export class GuiOutfitSettingsView extends GuiViewBase {
                 let item = outfitItem[i];
 
                 let appliedItem = InventoryWear(this.previewChar, item.Name, item.Group, item.Color, item.Difficulty, undefined, item.Craft, false);
-                if (item.Property && appliedItem) {
-                    appliedItem.Property = item.Property;
+                if (appliedItem) {
+                    if (item.Property) {
+                        appliedItem.Property = item.Property;
+                    }
+                    if (canCustomColor && appliedItem.Color && !isBodyPart(appliedItem)) {
+                        let customColor = smartReplaceItemColor(this.settings.customColorHex, appliedItem.Color);
+                        if (customColor && customColor !== "Default") {
+                            appliedItem.Color = customColor;
+                        }
+                    }
                 }
             }
             CharacterRefresh(this.previewChar, false, false);
@@ -144,12 +156,58 @@ export class GuiOutfitSettingsView extends GuiViewBase {
         //const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
         //form.appendChild(helpSection);
 
+        //GuiHelper.createContentTitle(form, this.STRINGS.PAGE_TITLE, true);
+
+        const customColorCard = this.buildCustomColorCard();
+        if (customColorCard) form.appendChild(customColorCard);
+
         for (let i=0; i < allOutfitList.length; i++) {
             const outfitCard = this.buildOutfitCard(allOutfitList[i]);
             if (outfitCard) form.appendChild(outfitCard);
         }
 
         container.appendChild(form);
+    }
+
+    private buildCustomColorCard(): HTMLElement | undefined {
+        const FIELD_COLOR_ENABLE: GuiFormField = {
+            html_id: "atb-outfit-custom-color-enable",
+            label: "Enable Custom Outfit Color",
+            type: "checkbox",
+            default_value: this.settings.enableCustomColor,
+            onChange: (value: boolean) => {
+                this.settings.enableCustomColor = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+
+        const outfitTuple = GuiHelper.createFeatureToggleCard(FIELD_COLOR_ENABLE, true);
+        const outfitMainCard = outfitTuple.card;
+        const outfitContent = outfitTuple.contentArea;
+
+        //const baseHexValue = hslToHex(this.settings.customColorHue, 1, 0.5);
+        const baseHueValue = hexToHsl(this.settings.customColorHex)?.h || 0;
+
+        const colorMain = document.createElement("div");
+        const colorMainRect = createColorRect("atb-custom-color-rect", this.settings.customColorHex, 20);
+        const colorMainSlider = document.createElement("input");
+        colorMainSlider.id = "atb-custom-color-range"; // should be a variable
+        colorMainSlider.className = "atb-hue-slider";
+        colorMainSlider.type = "range";
+        //colorMainSlider.value = this.settings.customColorHue.toString();
+        colorMainSlider.min = "0";
+        colorMainSlider.max = "360";
+        colorMainSlider.value = baseHueValue.toString();
+        colorMainSlider.onchange = () => {
+            this.settings.customColorHex = hslToHex(parseInt(colorMainSlider.value), 1, 0.5);
+            colorMainRect.style.backgroundColor = this.settings.customColorHex;
+            this.shouldSaveSetting = true;
+        };
+        colorMain.appendChild(colorMainSlider);
+        outfitContent.appendChild(colorMain);
+        outfitContent.appendChild(colorMainRect);
+
+        return outfitMainCard;
     }
 
     private buildOutfitCard(outfitData: RawOutfit): HTMLElement | undefined {
@@ -190,15 +248,15 @@ export class GuiOutfitSettingsView extends GuiViewBase {
                 }
             };
 
-            const createTaskBtn = document.createElement("button");
-            createTaskBtn.className = "atb-main-btn";
-            createTaskBtn.innerText = this.STRINGS.BTN_SHOW;
-            createTaskBtn.onclick = () => {
+            const showOutfitBtn = document.createElement("button");
+            showOutfitBtn.className = "atb-main-btn";
+            showOutfitBtn.innerText = this.STRINGS.BTN_SHOW;
+            showOutfitBtn.onclick = () => {
                 this.showOutfit(outfitData.id);
             };
 
             // Build Main card
-            const outfitTuple = GuiHelper.createFeatureToggleCard(FIELD_ENABLE, true, createTaskBtn);
+            const outfitTuple = GuiHelper.createFeatureToggleCard(FIELD_ENABLE, true, showOutfitBtn);
             const outfitMainCard = outfitTuple.card;
             const outfitContent = outfitTuple.contentArea;
 
