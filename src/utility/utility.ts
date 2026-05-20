@@ -1,3 +1,5 @@
+import { isShockItem } from "./ItemUtility";
+
 export enum ChatColor {
     Red = "#ff5555",
 	LightRed = "#ff9999",
@@ -68,14 +70,37 @@ export function formatTimeMs(ms: number): string {
     }
 }
 
-export function triggerShock() {
-	console.log("ATB: triggerShock: TODO");
-	/*
-	PropertyShockPublishAction(C, Item, true);
-	StruggleProgressStruggleCount = 0;
-	StruggleProgress = 0;
-	DialogLeaveDueToItem = true;
-	*/
+// return a random shock device worn by the Character or null if not any.
+export function getAnyShockDeviceWorn(C: Character): Item | undefined {
+	const availShockItem: Item[] = [];
+	for (const item of C.Appearance) {
+		if (isShockItem(item)) {
+			availShockItem.push(item);
+		}
+	}
+
+	if (availShockItem.length > 1) {
+		const randList = CloneAndRandomizeList(availShockItem);
+		if (randList.length > 0) { // Just in case.. but it shouldn't be empty
+			return randList[0];
+		}
+	} else if (availShockItem.length == 1) {
+		return availShockItem[0];
+	}
+	return undefined;
+}
+
+// if shockDevice not provided, will try to find one worn by Character.
+export function triggerShock(C: Character, shockDevice: Item | undefined = undefined): boolean {
+	if (!shockDevice) {
+		shockDevice = getAnyShockDeviceWorn(C);
+	}
+
+	if (shockDevice) {
+		PropertyShockPublishAction(C, shockDevice, true);
+		return true;
+	}
+	return false;
 }
 
 export function getNameOrNickname(C: OtherCharacter | PlayerCharacter) {

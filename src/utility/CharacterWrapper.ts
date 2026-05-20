@@ -10,6 +10,7 @@ import ModuleManager from "./ModuleManager";
 import { RemoteModule } from "@/modules/RemoteModule";
 import { ChaoticMistressModule } from "@/modules/ChaoticMistressModule";
 import { OutfitsSettings } from "@/models/OutfitSettings";
+import { DeviousShocksSettings } from "@/models/DeviousShocksSettings";
 
 /**
  * Wrappers to handle most Character access between PlayerCharacter and OhterCharacter
@@ -27,6 +28,11 @@ export function getCharacterGeneralSettings(C: OtherCharacter | PlayerCharacter)
 export function getCharacterRandomEventsSettings(C: OtherCharacter | PlayerCharacter): RandomEventsSettings | undefined {
     if (C.IsPlayer()) return StorageManager.getRandomEventsSettings();
     if (C.ATB && C.ATB.RandomEventsModule) return C.ATB.RandomEventsModule;
+    return undefined;
+}
+export function getCharacterDeviousShocksSettings(C: OtherCharacter | PlayerCharacter): DeviousShocksSettings | undefined {
+    if (C.IsPlayer()) return StorageManager.getDeviousShocksSettings();
+    if (C.ATB && C.ATB.DeviousShocksModule) return C.ATB.DeviousShocksModule;
     return undefined;
 }
 export function getCharacterChaoticMistressSettings(C: OtherCharacter | PlayerCharacter): ChaoticMistressSettings | undefined {

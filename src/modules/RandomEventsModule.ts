@@ -14,8 +14,8 @@ export class RandomEventsModule extends ModuleBase {
     ];
 
     // Chance (temp while no settings)
-    CHANCE_EVENT: number = 50; // 50% chance to trigger an event
-    CHANCE_HARSH_EVENT: number = 10; // chance that event will use harsher variant
+    CHANCE_EVENT: number = 10; // 10% chance to trigger an event
+    CHANCE_HARSH_EVENT: number = 1; // chance that event will use harsher variant
 
     // AddLock event lock list
     simpleLockList: AssetLockType[] = ["ExclusivePadlock", "MetalPadlock"];
@@ -41,7 +41,8 @@ export class RandomEventsModule extends ModuleBase {
             return next(args);
         }));
         // Trigger: Leaving a chat room
-        this.hook.push(BC_SDK.hookFunction('ChatRoomAttemptLeave', 0, (args, next) => {
+        // Note: Priority Higher than DeviousShock
+        this.hook.push(BC_SDK.hookFunction('ChatRoomAttemptLeave', 1, (args, next) => {
             if (this.settings.enableTriggerOnRoomExit) {
                 if (this.checkIfTriggerRandomEvent()) {
                     // Cancel leaving the chat room if an event was triggered

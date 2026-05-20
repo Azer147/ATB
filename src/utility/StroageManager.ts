@@ -1,5 +1,6 @@
 import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
 import { allInternalfields, CoreSettings, DefaultCoreSettings } from "@/models/CoreSettings";
+import { DeviousShocksSettings } from "@/models/DeviousShocksSettings";
 import { GeneralSettings } from "@/models/GeneralSettings";
 import { OutfitsSettings } from "@/models/OutfitSettings";
 import { RandomEventsSettings } from "@/models/RandomEventsSettings";
@@ -20,6 +21,9 @@ export default class StorageManager {
     static getRandomEventsSettings(): RandomEventsSettings {
         return StorageManager.globalSettings.RandomEventsModule;
     }
+    static getDeviousShocksSettings(): DeviousShocksSettings {
+        return StorageManager.globalSettings.DeviousShocksModule;
+    }
     static getChaoticMistressSettings(): ChaoticMistressSettings {
         return StorageManager.globalSettings.ChaoticMistressModule;
     }
@@ -39,6 +43,7 @@ export default class StorageManager {
             Enable: this.getGlobalEnable(),
             GeneralModule: this.getGeneralSettings(),
             RandomEventsModule: this.getRandomEventsSettings(),
+            DeviousShocksModule: this.getDeviousShocksSettings(),
             ChaoticMistressModule: this.getChaoticMistressSettings(),
             TaskManagerModule: this.getTaskManagerSettings(),
             TasksSettings: this.getTasksSettings(),

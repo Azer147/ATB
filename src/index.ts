@@ -13,6 +13,7 @@ import { ChaoticMistressModule } from "./modules/ChaoticMistressModule";
 import { uiStyles } from "./gui/GuiStylesCss";
 import { GeneralModule } from "./modules/GeneralModule";
 import { RemoteModule } from "./modules/RemoteModule";
+import { DeviousShocksModule } from "./modules/DeviousShocksModule";
 
 
 export const BC_SDK: ModSDKModAPI = bcModSdk.registerMod({
@@ -51,6 +52,7 @@ function loadModules() {
     ModuleManager.registerModule(new GeneralModule());
     ModuleManager.registerModule(new RemoteModule());
     ModuleManager.registerModule(new RandomEventsModule());
+    ModuleManager.registerModule(new DeviousShocksModule());
     ModuleManager.registerModule(new TaskManagerModule());
     ModuleManager.registerModule(new ChaoticMistressModule());
     //ModuleManager.registerModule(new SleepModeModule());

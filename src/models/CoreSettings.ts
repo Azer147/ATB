@@ -1,4 +1,5 @@
 import { ChaoticMistressInternalfields, ChaoticMistressSettings, DefaultChaoticMistressSettings } from "./ChaoticMistressSettings";
+import { DefaultDeviousShocksSettings, DeviousShocksSettings } from "./DeviousShocksSettings";
 import { DefaultGeneralSettings, GeneralInternalfields, GeneralSettings } from "./GeneralSettings";
 import { DefaultOutfitSettings, OutfitsSettings } from "./OutfitSettings";
 import { DefaultRandomEventsSettings, RandomEventsSettings } from "./RandomEventsSettings";
@@ -10,6 +11,7 @@ export interface CoreSettings {
     Enable: boolean;
     GeneralModule: GeneralSettings;
     RandomEventsModule: RandomEventsSettings;
+    DeviousShocksModule: DeviousShocksSettings;
     ChaoticMistressModule: ChaoticMistressSettings;
     TaskManagerModule: TaskManagerSettings;
     TasksSettings: TasksSettings;
@@ -21,6 +23,7 @@ export const DefaultCoreSettings: CoreSettings = {
     Enable: true,
     GeneralModule: DefaultGeneralSettings,
     RandomEventsModule: DefaultRandomEventsSettings,
+    DeviousShocksModule: DefaultDeviousShocksSettings,
     ChaoticMistressModule: DefaultChaoticMistressSettings,
     TaskManagerModule: DefaultTaskManagerSettings,
     TasksSettings: DefaultTasksSettings,
