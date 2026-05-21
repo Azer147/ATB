@@ -1,5 +1,5 @@
 import { ModuleBase } from "./ModuleBase";
-import StorageManager from "@/utility/StroageManager";
+import StorageManager from "@/utility/StorageManager";
 import { BC_SDK } from "..";
 import { CoreSettings } from "@/models/CoreSettings";
 import { TaskData } from "@/models/TaskManagerSettings";

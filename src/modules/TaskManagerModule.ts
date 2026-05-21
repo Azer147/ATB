@@ -1,6 +1,6 @@
 import { ModuleBase } from "./ModuleBase";
 import { BC_SDK } from "../index";
-import StorageManager from "@/utility/StroageManager";
+import StorageManager from "@/utility/StorageManager";
 import { TaskCannotStartReason, TaskData, TaskManagerSettings } from "@/models/TaskManagerSettings";
 import { TaskBase } from "./Task/TaskBase";
 import { TaskWearBondage } from "./Task/TaskWearBondage";

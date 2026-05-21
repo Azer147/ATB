@@ -1,6 +1,6 @@
 import { ModuleBase } from "./ModuleBase";
 import { BC_SDK } from "../index";
-import StorageManager from "@/utility/StroageManager";
+import StorageManager from "@/utility/StorageManager";
 import { getNameOrNickname, sendActionMessage, shouldTriggerFromAveragePerHour, triggerShock } from "@/utility/utility";
 import { DeviousShocksSettings } from "@/models/DeviousShocksSettings";
 

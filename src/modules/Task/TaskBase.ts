@@ -2,7 +2,7 @@ import { TaskData } from "@/models/TaskManagerSettings";
 import ModuleManager from "@/utility/ModuleManager";
 import { ChaoticMistressModule } from "../ChaoticMistressModule";
 import { ChatColor, formatTimeMs, sendLocalMessage } from "@/utility/utility";
-import StorageManager from "@/utility/StroageManager";
+import StorageManager from "@/utility/StorageManager";
 
 export abstract class TaskBase {
     private SAVE_PERIOD_MS: number = 30 * 1000; // 30sec

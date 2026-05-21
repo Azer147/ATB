@@ -1,4 +1,4 @@
-import StorageManager from "@/utility/StroageManager";
+import StorageManager from "@/utility/StorageManager";
 
 export abstract class ModuleBase {
     moduleName: string;

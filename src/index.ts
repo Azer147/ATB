@@ -7,7 +7,7 @@ import ModuleManager from "./utility/ModuleManager";
 import { RandomEventsModule } from "./modules/RandomEventsModule";
 import { SleepModeModule } from "./modules/SleepModeModule";
 import SettingPageManager from "./utility/SettingPageManager";
-import StorageManager from "./utility/StroageManager";
+import StorageManager from "./utility/StorageManager";
 import { TaskManagerModule } from "./modules/TaskManagerModule";
 import { ChaoticMistressModule } from "./modules/ChaoticMistressModule";
 import { uiStyles } from "./gui/GuiStylesCss";

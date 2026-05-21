@@ -4,7 +4,7 @@ import { ChatColor, getBCXActiveCurseSlots, getNameOrNickname, isBodyPart, sendA
 import { randomizeExtendedItem } from "@/utility/ItemUtility";
 import { allOutfitList, extractOutfitDataFromId, getRawOutfitFromId, OutfitId, OutfitTag } from "@/models/OutfitSettings";
 import { smartReplaceItemColor } from "@/utility/ColorUtility";
-import StorageManager from "@/utility/StroageManager";
+import StorageManager from "@/utility/StorageManager";
 
 
 export class TaskWearOutfit extends TaskBase {

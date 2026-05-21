@@ -1,4 +1,4 @@
-import StorageManager from '@/utility/StroageManager';
+import StorageManager from '@/utility/StorageManager';
 import SettingBase from './SettingPageBase';
 import { GeneralSettings } from '@/models/GeneralSettings';
 

@@ -1,5 +1,5 @@
 import { GeneralSettings } from "@/models/GeneralSettings";
-import StorageManager from "./StroageManager";
+import StorageManager from "./StorageManager";
 import { RandomEventsSettings } from "@/models/RandomEventsSettings";
 import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
 import { TaskData, TaskManagerSettings } from "@/models/TaskManagerSettings";

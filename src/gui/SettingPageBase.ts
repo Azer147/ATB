@@ -1,5 +1,5 @@
 import SettingPageManager from "@/utility/SettingPageManager";
-import StorageManager from "@/utility/StroageManager";
+import StorageManager from "@/utility/StorageManager";
 
 export interface GenericSettingElement {
 	title: string;

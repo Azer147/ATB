@@ -3,7 +3,7 @@ import { BC_SDK } from "../index";
 import { ChatColor, CloneAndRandomizeList, getNbLockableItems, lockAllItems, lockAllItemsWithRandomPassword, sendActionMessage, sendLocalMessage } from "@/utility/utility";
 import { addRandomRestrain } from "@/utility/ItemUtility";
 import { RandomEventsSettings } from "@/models/RandomEventsSettings";
-import StorageManager from "@/utility/StroageManager";
+import StorageManager from "@/utility/StorageManager";
 
 export class RandomEventsModule extends ModuleBase {
     // List of all events that can be triggered

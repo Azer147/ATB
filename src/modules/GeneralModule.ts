@@ -1,6 +1,6 @@
 import { GeneralSettings } from "@/models/GeneralSettings";
 import { ModuleBase } from "./ModuleBase";
-import StorageManager from "@/utility/StroageManager";
+import StorageManager from "@/utility/StorageManager";
 import { BC_SDK } from "..";
 import { GuiMainView } from "@/gui/GuiMainView";
 import ModuleManager from "@/utility/ModuleManager";

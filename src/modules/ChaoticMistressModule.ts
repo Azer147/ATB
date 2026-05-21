@@ -1,6 +1,6 @@
 import { ModuleBase } from "./ModuleBase";
 import { BC_SDK } from "../index";
-import StorageManager from "@/utility/StroageManager";
+import StorageManager from "@/utility/StorageManager";
 import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
 import ModuleManager from "@/utility/ModuleManager";
 import { TaskManagerModule } from "./TaskManagerModule";

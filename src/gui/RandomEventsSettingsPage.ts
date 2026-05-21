@@ -1,7 +1,7 @@
 import { DefaultRandomEventsSettings, RandomEventsSettings } from '@/models/RandomEventsSettings';
 import SettingBase from './SettingPageBase';
 import ModuleManager from "@/utility/ModuleManager";
-import StorageManager from '@/utility/StroageManager';
+import StorageManager from '@/utility/StorageManager';
 
 export default class RandomEventsSettingsPage extends SettingBase {
     settings: RandomEventsSettings;
