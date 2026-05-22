@@ -8,6 +8,7 @@ import { getCharacterChaoticMistressSettings, getCharacterTasksSettings, saveSet
 import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
 import { allOutfitList, getRawOutfitFromId, OutfitId } from "@/models/OutfitSettings";
 import { TaskWearOutfit } from "@/modules/Task/TaskWearOutfit";
+import { TaskWearBondage } from "@/modules/Task/TaskWearBondage";
 
 export class GuiCreateTaskView extends GuiViewBase {
     //private form: HTMLElement;
@@ -272,25 +273,25 @@ export class GuiCreateTaskView extends GuiViewBase {
         // Populate Wear type
         this.FIELD_WEAR_TYPE.options = [];
         if (this.tasksSettings.wearBondageTaskSettings.enableGag) {
-            this.FIELD_WEAR_TYPE.options.push({ value: "gag", label: "Gag"});
+            this.FIELD_WEAR_TYPE.options.push({ value: "gag", label: TaskWearBondage.getNamePerBondageType("gag")});
         }
         if (this.tasksSettings.wearBondageTaskSettings.enableHand) {
-            this.FIELD_WEAR_TYPE.options.push({ value: "hand", label: "Hands / Arms Restraints" });
+            this.FIELD_WEAR_TYPE.options.push({ value: "hand", label: TaskWearBondage.getNamePerBondageType("hand") });
         }
         if (this.tasksSettings.wearBondageTaskSettings.enableLeg) {
-            this.FIELD_WEAR_TYPE.options.push({ value: "leg", label: "Legs / Feet Restraints" });
+            this.FIELD_WEAR_TYPE.options.push({ value: "leg", label: TaskWearBondage.getNamePerBondageType("leg") });
         }
         if (this.tasksSettings.wearBondageTaskSettings.enableChastity) {
-            this.FIELD_WEAR_TYPE.options.push({ value: "chastity", label: "Chastity" });
+            this.FIELD_WEAR_TYPE.options.push({ value: "chastity", label: TaskWearBondage.getNamePerBondageType("chastity") });
         }
         if (this.tasksSettings.wearBondageTaskSettings.enableToy) {
-            this.FIELD_WEAR_TYPE.options.push({ value: "toy", label: "Toys / Vibrator" });
+            this.FIELD_WEAR_TYPE.options.push({ value: "toy", label: TaskWearBondage.getNamePerBondageType("toy") });
         }
         if (this.tasksSettings.wearBondageTaskSettings.enableBlindfold) {
-            this.FIELD_WEAR_TYPE.options.push({ value: "blindfold", label: "Blindfold" });
+            this.FIELD_WEAR_TYPE.options.push({ value: "blindfold", label: TaskWearBondage.getNamePerBondageType("blindfold") });
         }
         if (this.tasksSettings.wearBondageTaskSettings.enableShock) {
-            this.FIELD_WEAR_TYPE.options.push({ value: "shock", label: "Shock Device" });
+            this.FIELD_WEAR_TYPE.options.push({ value: "shock", label: TaskWearBondage.getNamePerBondageType("shock") });
         }
 
         // Populate Outfit Select

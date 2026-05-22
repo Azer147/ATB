@@ -6,117 +6,72 @@ import { WearBondageType } from "@/models/TasksSettings";
 
 
 export class TaskWearBondage extends TaskBase {
-    TICK_PERIOD_MS: number = 5000; // 5sec
-    DEFAULT_GRACE_PERIOD_MS: number = 60000; // 60sec
-
-    lastChecked: number = 0;
-    isWearingItem: boolean = false;
-    lastTimeWearingItem: number = 0;
 
     constructor(data: TaskData) {
         super(data);
-        this.lastTimeWearingItem = Date.now();
 
-        // If player cannot equip it themselve, we handle it at the start of the task
-        // TODO: For charUnableToEquipItem, maybe put a chat message with button to ask Player if we should to equip random item
-        if (this.data.enforce || this.charUnableToEquipItem(this.data.itemToWear)) {
-            let itemToWear = this.data.itemToWear;
-            if (!itemToWear) {
-                // End the task (error)
-                console.warn("TaskWearBondage: Error: itemToWear is undefined.");
-                this.triggerTaskCompletion(false, true);
-                return;
-            }
-            this.enforceWear(itemToWear);
-        }
-    }
-
-    public getDescription(): string {
-        return this.data.description;
-    }
-
-    protected updateProgress() {
-        let progress = Math.floor((this.data.finishCurrentCount / this.data.finishTotalNeeded) * 100);
-        if (progress > 100) {
-            progress = 100;
-        }
-        else if (progress < 0) {
-            progress = 0;
-        }
-        if (this.isFinished()) {
-            this.data.progressPerc = 100;
-        } else {
-            this.data.progressPerc = progress;
-        }
-
-        let enforcedStr = this.data.enforce ? " (enforced)" : "";
-        this.data.description = `Wear ${this.data.itemToWear} ` + enforcedStr;
-    }
-
-
-    // Main task stuff
-    public onTick(currentTime: number): void {
-        super.onTick(currentTime);
-        if (this.isFinished()) {
+        // Specifics Task data Validation
+        let itemToWear = this.data.itemToWear;
+        if (!itemToWear) {
+            // End the task (error)
+            console.warn("TaskWearBondage: Error: itemToWear is undefined.");
+            this.triggerTaskCompletion(false, true);
             return;
         }
-        // Check if the player is wearing the item (this.data.itemToWear) and update progress accordingly
-        // If enforce is true and the player is not wearing the item, consider failing the task or applying a penalty
-        if (currentTime - this.lastChecked >= this.TICK_PERIOD_MS) { // Check every 5 seconds
-            this.updateProgress();
-            // Re-validate data just in case
-            let itemToWear = this.data.itemToWear;
-            let gracePeriodMs = this.data.gracePeriodMs ?? this.DEFAULT_GRACE_PERIOD_MS; // TODO: change for default value (from settings?)
-            if (!itemToWear) {
-                // End the task (error)
-                console.warn("TaskWearBondage: Error: itemToWear is undefined.");
-                this.triggerTaskCompletion(false, true);
-                return;
-            }
-
-            // Update internal variable
-            let isWearingBefore = this.isWearingItem;
-            this.isWearingItem = TaskWearBondage.checkIfWearingItem(Player, itemToWear);
-            this.lastChecked = currentTime;
-
-            // Check if task is finished
-            if (this.isFinishConditionComplete()) {
-                // End the task (success)
-                this.triggerTaskCompletion(true, false);
-                return;
-            }
-
-            if (this.isWearingItem) {
-                this.transgessionOccuring = false;
-                this.lastTimeWearingItem = currentTime;
-            }
-            else {
-                // Warning on transgression
-                this.transgessionOccuring = true;
-                if (this.isWearingItem != isWearingBefore) {
-                    sendLocalMessage("You need to wear "+ this.data.itemToWear + " or be punished!", ChatColor.Red);
-                }
-
-                // Handle transgression after grace period
-                if (currentTime - this.lastTimeWearingItem >= gracePeriodMs) {
-                    sendLocalMessage("You need to wear " + this.data.itemToWear + ", you received  " + this.data.badPtsOnFailure + " for transgression.", ChatColor.Red);
-                    // Add badPts
-                    this.notifyBadPtsChange(this.data.badPtsOnFailure);
-                    // Re-start grace period
-                    this.lastTimeWearingItem = currentTime;
-
-                    // If player cannot equip it themselve, we handle it after getting badPts
-                    if (this.data.enforce || this.charUnableToEquipItem(this.data.itemToWear)) {
-                        this.enforceWear(itemToWear);
-                    }
-                }
-            }
-        }
     }
+
+/**
+ * Specifics strings for UI/User
+ */
+
+    public getDescription(): string {
+        let enforcedStr = this.data.enforce ? " (enforced)" : "";
+        const deviceName = TaskWearBondage.getNamePerBondageType(this.data.itemToWear);
+        this.data.description = `Wear a ${deviceName} ` + enforcedStr;
+        return this.data.description;
+    }
+    protected handleTransgression() {
+        const deviceName = TaskWearBondage.getNamePerBondageType(this.data.itemToWear);
+        sendLocalMessage("You need to wear a " + deviceName + ", you received  " + this.data.badPtsOnFailure + " for transgression.", ChatColor.Red);
+    }
+    protected handleTransgressionWarning() {
+        const deviceName = TaskWearBondage.getNamePerBondageType(this.data.itemToWear);
+        sendLocalMessage("You need to wear a " + deviceName + " or be punished!", ChatColor.Red);
+    }
+
+    protected isCharUnableToDoTask(): boolean {
+        return Player.HasEffect("Block")
+    }
+
+    // Nothing todo
+    protected handlePeriodicEvent() {}
+    protected handleTaskFinishing() {}
+
+/**
+ * Core Task Functions
+ */
+
+    protected checkTaskIsRespected(): boolean {
+        if (!this.data.itemToWear) {
+            // End the task (error)
+            console.warn("TaskWearBondage: Error: itemToWear is undefined.");
+            this.triggerTaskCompletion(false, true);
+            return true;
+        }
+        return TaskWearBondage.checkIfWearingItem(Player, this.data.itemToWear);
+    }
+
 
     // Force Equip a Random items if checkIfWearingItem() return false
     // return true if an item was equiped
-    private enforceWear(itemToWear: WearBondageType): boolean {
+    protected enforceTask(): boolean {
+        const itemToWear = this.data.itemToWear
+        if (!itemToWear) {
+            // End the task (error)
+            console.warn("TaskWearBondage: Error: itemToWear is undefined.");
+            this.triggerTaskCompletion(false, true);
+            return true;
+        }
         if (TaskWearBondage.checkIfWearingItem(Player, itemToWear)) {
             return false;
         }
@@ -193,6 +148,11 @@ export class TaskWearBondage extends TaskBase {
         }
         return false;
     }
+
+
+/**
+ * Static Function, used by the task and externally, mainly to check task availability
+ */
 
     // Note: We want only items that have an effect, not just wearing in the slot
     private static checkIfWearingItem(C: OtherCharacter | PlayerCharacter, itemToWear: WearBondageType): boolean {
@@ -277,11 +237,6 @@ export class TaskWearBondage extends TaskBase {
         return effects;
     }
 
-    public charUnableToEquipItem(itemToWear: WearBondageType | undefined): boolean {
-        // TODO: improve it
-        return Player.HasEffect("Block")
-    }
-
     // Check What wear item is available (also used for taskCanStart check)
     public static getItemAvailibility(C: OtherCharacter | PlayerCharacter = Player): WearBondageType[] {
         let itemAvail: WearBondageType[] = [];
@@ -334,6 +289,26 @@ export class TaskWearBondage extends TaskBase {
             case "shock":
                 return ["ItemPelvis", "ItemVulva", "ItemButt", "ItemNipples", "ItemBreast", "ItemNeckAccessories", "ItemNeckRestraints"];
         }
+    }
+
+    public static getNamePerBondageType(itemToWear: WearBondageType | undefined): string {
+        switch (itemToWear) {
+            case "hand":
+                return "Hand/Arm Restraint";
+            case "leg":
+                return "Leg/Feet Restraint";
+            case "gag":
+                return "Gag";
+            case "chastity":
+                return "Chastity";
+            case "toy":
+                return "Toy (Vibe/Plug)";
+            case "blindfold":
+                return "Blindfold/Hood";
+            case "shock":
+                return "Shock Device";
+        }
+        return "Unknown device";
     }
 
 }
