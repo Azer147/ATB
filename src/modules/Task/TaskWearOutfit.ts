@@ -1,6 +1,6 @@
 import { TaskData } from "@/models/TaskManagerSettings";
 import { TaskBase } from "./TaskBase";
-import { ChatColor, getBCXActiveCurseSlots, getNameOrNickname, isBodyPart, isLscgCursedItemActive, sendActionMessage, sendLocalMessage, shouldTriggerFromAveragePerHour } from "@/utility/utility";
+import { ChatColor, getBCXActiveCurseSlots, getNameOrNickname, isBodyPart, isClothe, isItem, isLscgCursedItemActive, sendActionMessage, sendLocalMessage, shouldTriggerFromAveragePerHour } from "@/utility/utility";
 import { randomizeExtendedItem } from "@/utility/ItemUtility";
 import { allOutfitList, extractOutfitDataFromId, getRawOutfitFromId, OutfitId, OutfitTag } from "@/models/OutfitSettings";
 import { smartReplaceItemColor } from "@/utility/ColorUtility";
@@ -199,9 +199,9 @@ export class TaskWearOutfit extends TaskBase {
                     continue;
                 }
 
-                // Check Player is wearing item
+                // Check Player is wearing item (and not clothes/body part)
                 let worn = InventoryGet(Player, item.Group);
-                if (worn && worn.Asset.Name == item.Name) {
+                if (worn && worn.Asset.Name == item.Name && isItem(worn)) {
                     // TODO: only randomize some items (not all)
                     randomizeExtendedItem(Player, worn);
                 }
