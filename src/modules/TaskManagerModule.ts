@@ -4,7 +4,7 @@ import StorageManager from "@/utility/StorageManager";
 import { TaskCannotStartReason, TaskData, TaskManagerSettings } from "@/models/TaskManagerSettings";
 import { TaskBase } from "./Task/TaskBase";
 import { TaskWearBondage } from "./Task/TaskWearBondage";
-import { ChatColor, isCharacterLscgEffectsPreventOutfit, sendLocalMessage } from "@/utility/utility";
+import { ChatColor, isLscgEffectsPreventOutfit, sendLocalMessage } from "@/utility/utility";
 import { GuiMainView } from "@/gui/GuiMainView";
 import { FinishType, FullTaskType, getTaskTypeConstant, WearBondageType } from "@/models/TasksSettings";
 import { getCharacterTaskManagerSettings, getCharacterTasksSettings } from "@/utility/CharacterWrapper";
@@ -291,7 +291,7 @@ export class TaskManagerModule extends ModuleBase {
             const ts = getCharacterTasksSettings(C);
             if (ts && !ts.wearOutfitTaskSettings.enable) {
                 return "not_enabled";
-            } else if (isCharacterLscgEffectsPreventOutfit(C)) {
+            } else if (isLscgEffectsPreventOutfit(C)) {
                 return "not_available_lscg";
             } else if (TaskWearOutfit.getAvailableOutfit(C).length <= 0) {
                 return "not_available_outfit";

@@ -156,16 +156,23 @@ export function getBCXActiveCurseSlots(): AssetGroupName[] {
 	return (Object.keys(bcxCurses).filter(key => bcxCurses[key]?.active ?? false)) as AssetGroupName[];
 }
 
-export function isCharacterLscgEffectsPreventOutfit(C: OtherCharacter | PlayerCharacter) {
+export function isLscgEffectsPreventOutfit(C: OtherCharacter | PlayerCharacter) {
 	const lscgEffect = ["cursed-item", "polymorphed", "redressed"];
+	return isLscgEffectsActive(C, lscgEffect);
+}
+
+export function isLscgCursedItemActive(C: OtherCharacter | PlayerCharacter) {
+	const lscgEffect = ["cursed-item"];
+	return isLscgEffectsActive(C, lscgEffect);
+}
+
+export function isLscgEffectsActive(C: OtherCharacter | PlayerCharacter, lscgEffect: string[]) {
 	if (C.LSCG) {
 		// I know its ugly, but should work
 		try {
 			let haveEffect = C.LSCG?.StateModule?.states?.find((state) => {
-				//return state.type == "cursed-item"
 				return (state && lscgEffect.includes(state.type) && state.active);
 			});
-			//if (cursedstate && cursedstate.active) {
 			if (haveEffect) {
 				return true;
 			}

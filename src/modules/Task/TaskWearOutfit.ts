@@ -1,6 +1,6 @@
 import { TaskData } from "@/models/TaskManagerSettings";
 import { TaskBase } from "./TaskBase";
-import { ChatColor, getBCXActiveCurseSlots, getNameOrNickname, isBodyPart, sendActionMessage, sendLocalMessage, shouldTriggerFromAveragePerHour } from "@/utility/utility";
+import { ChatColor, getBCXActiveCurseSlots, getNameOrNickname, isBodyPart, isLscgCursedItemActive, sendActionMessage, sendLocalMessage, shouldTriggerFromAveragePerHour } from "@/utility/utility";
 import { randomizeExtendedItem } from "@/utility/ItemUtility";
 import { allOutfitList, extractOutfitDataFromId, getRawOutfitFromId, OutfitId, OutfitTag } from "@/models/OutfitSettings";
 import { smartReplaceItemColor } from "@/utility/ColorUtility";
@@ -140,9 +140,17 @@ export class TaskWearOutfit extends TaskBase {
     private applyOutfit(): void {
         // Try to reduce this call (probably expensive)
         this.activeBcxCurse = getBCXActiveCurseSlots();
+
+        // Special case: remove LSCG cursed-item if active
+        // Note: Task cannot start with cursed-item active,
+        //      so this is only necessary when cursed-item have been applied during the task.
+        if (isLscgCursedItemActive(Player)) {
+            CharacterNaked(Player, false);
+            CharacterReleaseTotal(Player, false);
+        }
+
         const enableCustomColor = StorageManager.getOutfitSettings().enableCustomColor && this.outfitTags.includes("custom_color");
         const customColorHex = StorageManager.getOutfitSettings().customColorHex;
-
         for (let i = 0; i < this.outfitItem.length; i++) {
             let item = this.outfitItem[i];
 
