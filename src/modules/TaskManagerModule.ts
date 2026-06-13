@@ -10,6 +10,7 @@ import { FinishType, FullTaskType, getTaskTypeConstant, WearBondageType } from "
 import { getCharacterTaskManagerSettings, getCharacterTasksSettings } from "@/utility/CharacterWrapper";
 import { OutfitId } from "@/models/OutfitSettings";
 import { TaskWearOutfit } from "./Task/TaskWearOutfit";
+import { TaskNaked } from "./Task/TaskNaked";
 
 export class TaskManagerModule extends ModuleBase {
     TICK_PERIOD_MS: number = 800; // 0.8sec
@@ -187,6 +188,17 @@ export class TaskManagerModule extends ModuleBase {
                 overwrite
             );
         }
+        else if (taskData.type == "naked") {
+            return this.startNakedTask(
+                taskData.finishType,
+                taskData.finishTotalNeeded,
+                taskData.enforce,
+                taskData.goodPtsOnSucces,
+                taskData.badPtsOnFailure,
+                taskData.gracePeriodMs,
+                overwrite
+            );
+        }
         return false;
     }
 
@@ -228,6 +240,7 @@ export class TaskManagerModule extends ModuleBase {
                 }
             }
             else {
+                // Ohter task type with no subtype
                 return true;
             }
         }
@@ -287,7 +300,7 @@ export class TaskManagerModule extends ModuleBase {
                 return "can_start";
             }
         }
-        if (type.taskType == "wear_outfit") {
+        else if (type.taskType == "wear_outfit") {
             const ts = getCharacterTasksSettings(C);
             if (ts && !ts.wearOutfitTaskSettings.enable) {
                 return "not_enabled";
@@ -295,6 +308,14 @@ export class TaskManagerModule extends ModuleBase {
                 return "not_available_lscg";
             } else if (TaskWearOutfit.getAvailableOutfit(C).length <= 0) {
                 return "not_available_outfit";
+            } else {
+                return "can_start";
+            }
+        }
+        else if (type.taskType == "naked") {
+            const ts = getCharacterTasksSettings(C);
+            if (ts && !ts.nakedTaskSettings.enable) {
+                return "not_enabled";
             } else {
                 return "can_start";
             }
@@ -316,8 +337,11 @@ export class TaskManagerModule extends ModuleBase {
                 if (taskData.type == "wear_bondage") {
                     task = new TaskWearBondage(taskData);
                 }
-                if (taskData.type == "wear_outfit") {
+                else if (taskData.type == "wear_outfit") {
                     task = new TaskWearOutfit(taskData);
+                }
+                else if (taskData.type == "naked") {
+                    task = new TaskNaked(taskData);
                 }
 
                 if (task) {
@@ -438,7 +462,7 @@ export class TaskManagerModule extends ModuleBase {
                 // on overwrite, force finish the same already active task with no pts reward
                 sameTask.triggerTaskCompletion(false, true);
             } else {
-                console.warn("ATB: startWearBondageTask: Cannot start task: task requirement not met or already running.");
+                console.warn("ATB: startWearOutfitTask: Cannot start task: task requirement not met or already running.");
                 return false;
             }
         }
@@ -460,6 +484,39 @@ export class TaskManagerModule extends ModuleBase {
             averageRandomExtPerHour: avgRandomExt
         }
         let task = new TaskWearOutfit(taskData);
+        this.startNewTask(task, taskData);
+        return true;
+    }
+
+    startNakedTask(finishType: FinishType, finishTotal: number,
+                        enforce: boolean, successPts: number, failurePts: number,
+                        gracePeriod: number, overwrite: boolean = false): boolean {
+        // Case where the same task with same item already exist
+        const sameTask = this.getActiveTaskByType({taskType: "naked"});
+        if (sameTask) {
+            if (overwrite) {
+                // on overwrite, force finish the same already active task with no pts reward
+                sameTask.triggerTaskCompletion(false, true);
+            } else {
+                console.warn("ATB: startNakedTask: Cannot start task: task requirement not met or already running.");
+                return false;
+            }
+        }
+
+        let taskData: TaskData = {
+            id: this.generateUniqueTaskId(),
+            type: "naked",
+            description: "",
+            finishType: finishType,
+            finishCurrentCount: 0,
+            finishTotalNeeded: finishTotal,
+            progressPerc: 0,
+            enforce: enforce,
+            goodPtsOnSucces: successPts,
+            badPtsOnFailure: failurePts,
+            gracePeriodMs: gracePeriod
+        }
+        let task = new TaskNaked(taskData);
         this.startNewTask(task, taskData);
         return true;
     }

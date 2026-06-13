@@ -5,7 +5,7 @@
 */
 
 // TODO: "outfit" | "activity" | "say" | "arousal" | "escape"
-export type TaskType = "wear_bondage" | "wear_outfit";
+export type TaskType = "wear_bondage" | "wear_outfit" | "naked";
 export type PunishementType = "full_bondage" | "harsh_outfit";
 
 // TODO: "orgasm_given" | "spank_given" | "date_time"
@@ -72,8 +72,6 @@ export interface WearBondageTaskSettings extends SingleTaskSettings {
 }
 
 export interface WearOutfitTaskSettings extends SingleTaskSettings {
-    baseGracePeriodMs: number; // in millisec
-
     averageRandomExtPerHour: number, // For Random Task
     chanceRemoveOnFinish: number, // For Random Task
     randomCanUseHarshOutfit: boolean // For Random Task
@@ -84,6 +82,7 @@ export interface TasksSettings {
     // Tasks
     wearBondageTaskSettings: WearBondageTaskSettings;
     wearOutfitTaskSettings: WearOutfitTaskSettings;
+    nakedTaskSettings: SingleTaskSettings;
 
     // Tasks Finish Condition
     taskFinishSettings: TaskFinishSettings;
@@ -119,6 +118,14 @@ export const DefaultTasksSettings: TasksSettings = {
         averageRandomExtPerHour: 20,
         chanceRemoveOnFinish: 50,
         randomCanUseHarshOutfit: false
+    },
+    nakedTaskSettings: {
+        enable: true,
+        randomWeight: 10,
+        baseDurationMs: 30 * 60 * 1000, // 30 min
+        baseGracePeriodMs: 45 * 1000, // 45sec
+        baseGoodPtsReward: 10,
+        baseBadPointsPenalty: 5,
     },
     taskFinishSettings: {
         randWeightDuration: 50,
@@ -178,6 +185,7 @@ export const FullTaskList: FullTaskType[] =
     {taskType: "wear_bondage", taskSubType: "blindfold"},
     {taskType: "wear_bondage", taskSubType: "shock"},
     {taskType: "wear_outfit"},
+    {taskType: "naked"},
 ];
 
 export const FullPunishementList: PunishementType[] =
@@ -197,6 +205,8 @@ export function getTaskTypeSetting(setting: TasksSettings, type: TaskType | Puni
             return setting.wearBondageTaskSettings;
         case "wear_outfit":
             return setting.wearOutfitTaskSettings;
+        case "naked":
+            return setting.nakedTaskSettings;
 
         // Punishements
         case "full_bondage":
@@ -214,6 +224,8 @@ export function getTaskTypeConstant(type: TaskType | PunishementType): TaskConst
             return WearBondageTaskConstants;
         case "wear_outfit":
             return WearOutfitTaskConstants;
+        case "naked":
+            return NakedTaskConstants;
 
         // Punishements
         case "full_bondage":
@@ -294,6 +306,13 @@ export const WearOutfitTaskConstants: TaskConstant = {
         {taskType: "wear_bondage", taskSubType: "toy"},
         {taskType: "wear_bondage", taskSubType: "blindfold"},
         {taskType: "wear_bondage", taskSubType: "shock"},
+        {taskType: "naked"},
+    ],
+}
+export const NakedTaskConstants: TaskConstant = {
+    name: "Naked",
+    incompatibleTasks: [
+        {taskType: "wear_outfit"},
     ],
 }
 
@@ -311,11 +330,18 @@ export const FullBondagePunishementConstants: TaskConstant = {
         {taskType: "wear_bondage", taskSubType: "blindfold"},
         {taskType: "wear_bondage", taskSubType: "shock"},
     ],
+    incompatibleTasks: [
+        {taskType: "wear_outfit"},
+    ],
 }
 export const HarshOutfitPunishementConstants: TaskConstant = {
     name: "Harsh Outfit",
 
     mandatoryTasks: [
         {taskType: "wear_outfit"},
-    ]
+    ],
+    incompatibleTasks: [
+        {taskType: "wear_bondage"},
+        {taskType: "naked"},
+    ],
 }

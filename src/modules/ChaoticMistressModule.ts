@@ -126,14 +126,18 @@ export class ChaoticMistressModule extends ModuleBase {
                 const randFinishNeeded = this.getRandomFinishCountOrDuration(baseFinishNeeded);
                 const failure = taskSetting.baseBadPointsPenalty;
                 const reward = ChaoticMistressModule.calculatePointsFromFinishCount(randFinishNeeded, baseFinishNeeded, taskSetting.baseGoodPtsReward, false);
+                const gracePeriod = taskSetting.baseGracePeriodMs;
 
                 if (selectedTask.taskType === "wear_bondage" && selectedTask.taskSubType) {
-                    const gracePeriod = this.tasksSettings.wearBondageTaskSettings.baseGracePeriodMs;
                     console.log(`ATB: triggerRandomTask: Selected ${selectedTask.taskType} wearType: ${selectedTask.taskSubType} finish type: ${selectedFinish} count: ${randFinishNeeded}`);
                     tm.startWearBondageTask(selectedTask.taskSubType, selectedFinish, randFinishNeeded, false, reward, failure, gracePeriod);
                 }
-                if (selectedTask.taskType === "wear_outfit") {
+                else if (selectedTask.taskType === "wear_outfit") {
                     this.startRandomWearOutfitTask(selectedFinish, randFinishNeeded, reward, failure);
+                }
+                else if (selectedTask.taskType === "naked") {
+                    console.log(`ATB: triggerRandomTask: Selected ${selectedTask.taskType} finish type: ${selectedFinish} count: ${randFinishNeeded}`);
+                    tm.startNakedTask(selectedFinish, randFinishNeeded, false, reward, failure, gracePeriod);
                 }
             }
         }

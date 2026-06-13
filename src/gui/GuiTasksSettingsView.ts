@@ -66,11 +66,13 @@ export class GuiTasksSettingsView extends GuiViewBase {
         const finishMainCard = this.buildTaskFinishCard();
         const bondageTaskMainCard = this.buildWearBondageTaskCard();
         const outfitTaskMainCard = this.buildWearOutfitTaskCard();
+        const nakedTaskMainCard = this.buildNakedTaskCard();
 
         // Final Assembly
         form.appendChild(finishMainCard);
         form.appendChild(bondageTaskMainCard);
         form.appendChild(outfitTaskMainCard);
+        form.appendChild(nakedTaskMainCard);
         this.parent.appendChild(form);
     }
 
@@ -541,4 +543,29 @@ export class GuiTasksSettingsView extends GuiViewBase {
         return taskMainCard;
     }
 
+    private buildNakedTaskCard(): HTMLElement {
+        const prefixId = "atb-task-naked";
+        const taskSetting = this.settings.nakedTaskSettings;
+        // Fields
+        const FIELD_ENABLE: GuiFormField = {
+            html_id: prefixId + "-enable",
+            label: "Enable Naked Task",
+            type: "checkbox",
+            default_value: taskSetting.enable,
+            onChange: (value: boolean) => {
+                taskSetting.enable = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+
+        // Build Main task card
+        const tuple = GuiHelper.createFeatureToggleCard(FIELD_ENABLE, true);
+        const taskMainCard = tuple.card;
+        const taskContent = tuple.contentArea;
+
+        // Append directly to taskContent
+        this.appendCommonTaskField(taskContent, prefixId, taskSetting);
+
+        return taskMainCard;
+    }
 }

@@ -30,7 +30,8 @@ export class GuiCreateTaskView extends GuiViewBase {
         type: "select",
         options: [
             { value: "wear_bondage", label: "Wear Restraint/Bondage" },
-            { value: "wear_outfit", label: "Wear Outfit" }
+            { value: "wear_outfit", label: "Wear Outfit" },
+            { value: "naked", label: "Stay Naked" }
         ]
     };
     private FIELD_FINISH_CONDITION: GuiFormField = {
@@ -169,6 +170,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     <br>
     Task <strong>Wear Bondage/Restraints:</strong> Player must wear specified restraints or get <strong>Bad Points penalty</strong>.
     Task <strong>Wear Outfit:</strong> Player will be forced to wear a restrictive outfit. Player will get <strong>Bad Points penalty</strong> if they try to remove it.
+    Task <strong>Stay Naked:</strong> Player will be forced to stay naked. Player will get <strong>Bad Points penalty</strong> if they try to wear anything.
     `;
 
     private HELP_WEAR_TASK_TEXT = `
@@ -335,7 +337,6 @@ export class GuiCreateTaskView extends GuiViewBase {
         // Trigger change when changing the task type select
         this.taskTypeSelect.querySelector("select")!.addEventListener("change", () => { this.changeTaskTypeFields() });
         this.fillDefaultValueForTaskTypeSelected(this.taskTypeSelect);
-        this.changeTaskTypeFields();
 
         // Finish condition select
         this.finishCondSelect = GuiHelper.createFormField(this.FIELD_FINISH_CONDITION);
@@ -388,9 +389,10 @@ export class GuiCreateTaskView extends GuiViewBase {
         form.appendChild(this.createTaskBtn);
         //this.form = form;
 
-        this.checkTaskCanStartAndUpdateUI();
         this.updateRewardPoints(form);
         this.parent.appendChild(form);
+
+        this.changeTaskTypeFields();
     }
 
 
@@ -452,10 +454,16 @@ export class GuiCreateTaskView extends GuiViewBase {
             const currentType = this.taskTypeSelect.querySelector("select")!.value as TaskType;
 
             if (currentType === "wear_bondage") {
+                this.specificTaskTypeFields.style.display = "flex";
                 this.addWearBondageTypeElem(this.specificTaskTypeFields);
             }
             if (currentType === "wear_outfit") {
+                this.specificTaskTypeFields.style.display = "flex";
                 this.addWearOutfitTypeElem(this.specificTaskTypeFields);
+            }
+            if (currentType === "naked") {
+                // Nothing specific to show for naked task
+                this.specificTaskTypeFields.style.display = "none";
             }
 
             this.checkTaskCanStartAndUpdateUI();
@@ -615,6 +623,10 @@ export class GuiCreateTaskView extends GuiViewBase {
             taskData.averageRandomExtPerHour = randomExtItem;
             taskData.removeOnFinish = removeOnFinish;
             // Pre-check
+            cannotStartReason = TaskManagerModule.isTaskCanStart(this.character, {taskType: taskType});
+        }
+        else if (taskType === "naked") {
+            // No specifc field for naked task
             cannotStartReason = TaskManagerModule.isTaskCanStart(this.character, {taskType: taskType});
         }
 
