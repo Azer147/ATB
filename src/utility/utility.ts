@@ -139,12 +139,12 @@ export function getNameOrNickname(C: OtherCharacter | PlayerCharacter) {
 // Copied from LSCG
 export function getBCXData(): any {
 	try {
-		const parsed = LZString.decompressFromBase64(Player.ExtensionSettings.BCX);
+		const parsed = LZString.decompressFromBase64(Player.ExtensionSettings.BCX.split(":")[1]);
 		if (parsed) {
 			let parsedData = JSON.parse(parsed);
 			return parsedData;
 		}
-		return (Player.ExtensionSettings.BCX.split(":")[1]);
+		return undefined;
 	}
 	catch (e) { return undefined; }
 }
