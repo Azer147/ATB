@@ -5,7 +5,7 @@
 */
 
 // TODO: "outfit" | "activity" | "say" | "arousal" | "escape"
-export type TaskType = "wear_bondage" | "wear_outfit" | "naked";
+export type TaskType = "wear_bondage" | "wear_outfit" | "naked" | "nickname";
 export type PunishementType = "full_bondage" | "harsh_outfit";
 
 // TODO: "orgasm_given" | "spank_given" | "date_time"
@@ -83,6 +83,7 @@ export interface TasksSettings {
     wearBondageTaskSettings: WearBondageTaskSettings;
     wearOutfitTaskSettings: WearOutfitTaskSettings;
     nakedTaskSettings: SingleTaskSettings;
+    nicknameTaskSettings: SingleTaskSettings;
 
     // Tasks Finish Condition
     taskFinishSettings: TaskFinishSettings;
@@ -122,6 +123,14 @@ export const DefaultTasksSettings: TasksSettings = {
     nakedTaskSettings: {
         enable: true,
         randomWeight: 10,
+        baseDurationMs: 30 * 60 * 1000, // 30 min
+        baseGracePeriodMs: 45 * 1000, // 45sec
+        baseGoodPtsReward: 10,
+        baseBadPointsPenalty: 5,
+    },
+    nicknameTaskSettings: {
+        enable: true,
+        randomWeight: 0, // not available for random tasks
         baseDurationMs: 30 * 60 * 1000, // 30 min
         baseGracePeriodMs: 45 * 1000, // 45sec
         baseGoodPtsReward: 10,
@@ -186,6 +195,7 @@ export const FullTaskList: FullTaskType[] =
     {taskType: "wear_bondage", taskSubType: "shock"},
     {taskType: "wear_outfit"},
     {taskType: "naked"},
+    {taskType: "nickname"}
 ];
 
 export const FullPunishementList: PunishementType[] =
@@ -207,6 +217,8 @@ export function getTaskTypeSetting(setting: TasksSettings, type: TaskType | Puni
             return setting.wearOutfitTaskSettings;
         case "naked":
             return setting.nakedTaskSettings;
+        case "nickname":
+            return setting.nicknameTaskSettings;
 
         // Punishements
         case "full_bondage":
@@ -226,6 +238,8 @@ export function getTaskTypeConstant(type: TaskType | PunishementType): TaskConst
             return WearOutfitTaskConstants;
         case "naked":
             return NakedTaskConstants;
+        case "nickname":
+            return NicknameTaskConstants;
 
         // Punishements
         case "full_bondage":
@@ -314,6 +328,9 @@ export const NakedTaskConstants: TaskConstant = {
     incompatibleTasks: [
         {taskType: "wear_outfit"},
     ],
+}
+export const NicknameTaskConstants: TaskConstant = {
+    name: "Nickname Control",
 }
 
 export const FullBondagePunishementConstants: TaskConstant = {

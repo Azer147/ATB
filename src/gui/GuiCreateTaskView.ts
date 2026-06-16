@@ -9,6 +9,7 @@ import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
 import { allOutfitList, getRawOutfitFromId, OutfitId } from "@/models/OutfitSettings";
 import { TaskWearOutfit } from "@/modules/Task/TaskWearOutfit";
 import { TaskWearBondage } from "@/modules/Task/TaskWearBondage";
+import { checkNicknameValidity } from "@/utility/utility";
 
 export class GuiCreateTaskView extends GuiViewBase {
     //private form: HTMLElement;
@@ -31,7 +32,8 @@ export class GuiCreateTaskView extends GuiViewBase {
         options: [
             { value: "wear_bondage", label: "Wear Restraint/Bondage" },
             { value: "wear_outfit", label: "Wear Outfit" },
-            { value: "naked", label: "Stay Naked" }
+            { value: "naked", label: "Stay Naked" },
+            { value: "nickname", label: "Nickname Control" }
         ]
     };
     private FIELD_FINISH_CONDITION: GuiFormField = {
@@ -160,6 +162,17 @@ export class GuiCreateTaskView extends GuiViewBase {
         max_value: 30
     };
 
+    // Nickname Control specifics
+    private FIELD_NICKNAME: GuiFormField = {
+        html_id: "atb-create-task-nickname",
+        label: "New Nickname",
+        description: "The nickname that the player must use.",
+        type: "text",
+        default_value: "",
+        max_length: 20
+    };
+
+
     private HELP_BASE_TASK_TEXT = `
     New Tasks can be created freely by the Player or Someone else (based on access settings).<br>
     - Tasks award <strong>Good Points (GP)</strong> on completion and <strong>Bad Points (BP)</strong> on failure or transgression.<br>
@@ -171,6 +184,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     Task <strong>Wear Bondage/Restraints:</strong> Player must wear specified restraints or get <strong>Bad Points penalty</strong>.
     Task <strong>Wear Outfit:</strong> Player will be forced to wear a restrictive outfit. Player will get <strong>Bad Points penalty</strong> if they try to remove it.
     Task <strong>Stay Naked:</strong> Player will be forced to stay naked. Player will get <strong>Bad Points penalty</strong> if they try to wear anything.
+    Task <strong>Nickname Control:</strong> Player will be forced to use a specific nickname. Player will get <strong>Bad Points penalty</strong> if they don't have the correct nickname.
     `;
 
     private HELP_WEAR_TASK_TEXT = `
@@ -247,6 +261,9 @@ export class GuiCreateTaskView extends GuiViewBase {
 
         // outfit specifc
         this.FIELD_RANDOMIZE_EXT.default_value = this.tasksSettings.wearOutfitTaskSettings.averageRandomExtPerHour;
+
+        // Nickname specific
+        this.FIELD_NICKNAME.default_value = this.character.Nickname ?? this.character.Name;
 
         // filter disabled options
         if (this.FIELD_TASK_TYPE.options && this.FIELD_TASK_TYPE.options.length > 0) {
@@ -465,6 +482,11 @@ export class GuiCreateTaskView extends GuiViewBase {
                 // Nothing specific to show for naked task
                 this.specificTaskTypeFields.style.display = "none";
             }
+            if (currentType === "nickname") {
+                this.specificTaskTypeFields.style.display = "flex";
+                const nickname = GuiHelper.createFormField(this.FIELD_NICKNAME);
+                this.specificTaskTypeFields.appendChild(nickname);
+            }
 
             this.checkTaskCanStartAndUpdateUI();
         }
@@ -606,6 +628,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         let created = false;
         let cannotStartReason: TaskCannotStartReason = "unknown";
         let retryFunction;
+        let invalidData: string | null = null;
         if (taskType === "wear_bondage") {
             // Complete task's specific value
             const itemToWear = GuiHelper.getFormFieldValue(container, this.FIELD_WEAR_TYPE) as WearBondageType;
@@ -613,7 +636,7 @@ export class GuiCreateTaskView extends GuiViewBase {
             // Pre-check
             cannotStartReason = TaskManagerModule.isTaskCanStart(this.character, {taskType: taskType, taskSubType: itemToWear});
         }
-       else if (taskType === "wear_outfit") {
+        else if (taskType === "wear_outfit") {
             // Complete task's specific value
             const outfitId = GuiHelper.getFormFieldValue(container, this.FIELD_OUTFIT_ID) as OutfitId;
             const randomExtItem = GuiHelper.getFormFieldValue(container, this.FIELD_RANDOMIZE_EXT) as number;
@@ -625,8 +648,19 @@ export class GuiCreateTaskView extends GuiViewBase {
             // Pre-check
             cannotStartReason = TaskManagerModule.isTaskCanStart(this.character, {taskType: taskType});
         }
-        else if (taskType === "naked") {
-            // No specifc field for naked task
+        else if (taskType === "nickname") {
+            const nickname = GuiHelper.getFormFieldValue(container, this.FIELD_NICKNAME) as string;
+            invalidData = checkNicknameValidity(this.character, nickname);
+            if (invalidData) {
+                cannotStartReason = "invalid_data";
+            }
+            else {
+                taskData.nickname = nickname;
+                cannotStartReason = TaskManagerModule.isTaskCanStart(this.character, {taskType: taskType});
+            }
+        }
+        else {
+            // Other task types with no specific fields (naked)
             cannotStartReason = TaskManagerModule.isTaskCanStart(this.character, {taskType: taskType});
         }
 
@@ -644,6 +678,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         // - Task not enabled in settings
         // - Task/SubType not avaible or blocked
         // - Task already active (=> dialog to confirm override)
+        // - Invalid Data (input fields)
 
         // Update button style
         if (created) {
@@ -652,7 +687,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         } else {
             this.createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN_FAILED;
             this.createTaskBtn.classList.add("failed");
-            this.showErrorDialog(cannotStartReason, retryFunction);
+            this.showErrorDialog(cannotStartReason, retryFunction, invalidData);
         }
         this.createTaskBtn.disabled = true;
         setTimeout(() => {
@@ -743,9 +778,13 @@ export class GuiCreateTaskView extends GuiViewBase {
     }
 
     // TODO: html id should be a static (const) variable
-    private showErrorDialog(cannotStartReason: TaskCannotStartReason, onOverwrite: () => void) {
+    private showErrorDialog(cannotStartReason: TaskCannotStartReason, onOverwrite: () => void, invalidData: string | null = null) {
         const mainContainer = document.getElementById("atb-overlay-container")!;
         let errorString = getTaskCannotStartReasonToString(cannotStartReason);
+
+        if (cannotStartReason === "invalid_data" && invalidData !== null) {
+            errorString = `Invalid Data: ${invalidData}`;
+        }
 
         if (cannotStartReason === "overwrite_only") {
             errorString += "<br>Do you want to overwrite the existing task with the new parameters?<br>(this will restart the timer)";

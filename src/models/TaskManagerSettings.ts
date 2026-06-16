@@ -1,9 +1,9 @@
 import { OutfitId } from "./OutfitSettings";
 import { FinishType, TaskType, WearBondageType } from "./TasksSettings";
 
-export type TaskCannotStartReason = "unknown" | "not_enabled" | "not_available"
+export type TaskCannotStartReason = "unknown" | "invalid_data" | "not_enabled" | "not_available"
             | "not_available_same_task" | "not_available_incompatible" | "not_available_apply_item"
-            | "not_available_outfit" | "not_available_lscg"
+            | "not_available_outfit" | "not_available_lscg" | "not_available_bcx_rule"
             | "overwrite_only" | "can_start";
 
 // Data for each task
@@ -38,6 +38,10 @@ export interface TaskData {
     outfitId?: OutfitId;
     removeOnFinish?: boolean;
     averageRandomExtPerHour?: number;
+
+    // "nickname" specifics
+    nickname?: string;
+    original_nickname?: string; // Original nickname to restore
 }
 
 // Data for the TaskManagerModule
@@ -57,6 +61,8 @@ export const TaskManagerInternalfields = ["activeTasks"];
 // return string to be used in html (can contain html code)
 export function getTaskCannotStartReasonToString(reason: TaskCannotStartReason): string {
     switch (reason) {
+        case "invalid_data":
+            return "The provided data for the task is invalid.";
         case "not_enabled":
             return "The selected task is disabled in settings.";
         case "not_available":
@@ -71,6 +77,8 @@ export function getTaskCannotStartReasonToString(reason: TaskCannotStartReason):
             return "The selected task cannot be started, cannot find an applicable outfit (not enabled or blocked)";
         case "not_available_lscg":
             return "The selected task cannot be started, an LSCG Magic/Curse/Effect is active.";
+        case "not_available_bcx_rule":
+            return "The selected task cannot be started, a BCX rule is preventing it.";
         case "overwrite_only":
             return "The same task type is already active, but it can be overwrited.";
         case "can_start":

@@ -156,6 +156,12 @@ export function getBCXActiveCurseSlots(): AssetGroupName[] {
 	return (Object.keys(bcxCurses).filter(key => bcxCurses[key]?.active ?? false)) as AssetGroupName[];
 }
 
+export function getBCXActiveRules(): string[] {
+	let bcxRules = getBCXData()?.conditions?.rules?.conditions;
+	if (!bcxRules) return [];
+	return (Object.keys(bcxRules).filter(key => bcxRules[key]?.active ?? false)) as string[];
+}
+
 export function isLscgEffectsPreventOutfit(C: OtherCharacter | PlayerCharacter) {
 	const lscgEffect = ["cursed-item", "polymorphed", "redressed"];
 	return isLscgEffectsActive(C, lscgEffect);
@@ -318,3 +324,21 @@ export function setItemDifficulty(C: Character, difficulty: number) {
 	ChatRoomCharacterUpdate(Player);
 }
 */
+
+export function checkNicknameValidity(C: Character, nickname: string): string | null {
+	// Based on BC's
+	//type NicknameStatus = "NicknameTooLong" | "NicknameTooShort" | "NicknameInvalidChars" | "NicknameLocked";
+
+	const nickValidity = CharacterValidateNickname(C, nickname);
+	switch (nickValidity) {
+		case "NicknameTooLong":
+			return "Nickname is too long. Maximum length is 20 characters.";
+		case "NicknameTooShort":
+			return "Nickname is too short. Minimum length is 1 characters.";
+		case "NicknameInvalidChars":
+			return "Nickname contains invalid characters.";
+		default:
+			return null; // Valid nickname
+	}
+	return null; // Valid nickname
+}

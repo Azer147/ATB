@@ -16,6 +16,9 @@ export interface GuiFormField {
     // for select type
     options?: {value: string, label: string}[];
 
+    // for text
+    max_length?: number;
+
     // optional for checkbox
     // true to make the checkbox padding bigger to align with an input/select on the same row
     useInputPadding?: boolean;
@@ -70,7 +73,7 @@ export class GuiHelper {
             case "select":
                 return this.createSelect(field.html_id, field.label, field.description, field.options ?? [], field.onChange);
             case "text":
-                return this.createTextInput(field.html_id, field.label, field.description, field.default_value as string, field.onChange);
+                return this.createTextInput(field.html_id, field.label, field.description, field.default_value as string, field.max_length, field.onChange);
             case "display-text":
                 return this.createTextDisplay(field.html_id, field.label, field.usePrimaryColor);
             default:
@@ -210,7 +213,7 @@ export class GuiHelper {
         return wrapper;
     }
 
-    public static createTextInput(htmlId: string, labelText: string, description: string | undefined, defaultValue: string, onChange?: (value: string) => void): HTMLDivElement {
+    public static createTextInput(htmlId: string, labelText: string, description: string | undefined, defaultValue: string, maxLength: number | undefined, onChange?: (value: string) => void): HTMLDivElement {
         const wrapper = document.createElement("div");
         wrapper.className = "atb-form-group";
 
@@ -227,6 +230,10 @@ export class GuiHelper {
         input.className = "atb-form-input";
         input.type = "text";
         input.value = defaultValue.toString();
+
+        if (maxLength !== undefined) {
+            input.maxLength = maxLength;
+        }
 
         if (onChange) {
             input.addEventListener("change", () => {

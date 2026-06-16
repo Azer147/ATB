@@ -67,19 +67,21 @@ export class GuiTasksSettingsView extends GuiViewBase {
         const bondageTaskMainCard = this.buildWearBondageTaskCard();
         const outfitTaskMainCard = this.buildWearOutfitTaskCard();
         const nakedTaskMainCard = this.buildNakedTaskCard();
+        const nicknameTaskMainCard = this.buildNicknameTaskCard();
 
         // Final Assembly
         form.appendChild(finishMainCard);
         form.appendChild(bondageTaskMainCard);
         form.appendChild(outfitTaskMainCard);
         form.appendChild(nakedTaskMainCard);
+        form.appendChild(nicknameTaskMainCard);
         this.parent.appendChild(form);
     }
 
     // Handle all fields common to all tasks
     // Namely: randomWeight, baseDurationMs, baseGracePeriodMs,
     //          baseGoodPtsReward, baseBadPointsPenalty
-    private appendCommonTaskField(container: HTMLElement, prefixId: string, taskSetting: SingleTaskSettings) {
+    private appendCommonTaskField(container: HTMLElement, prefixId: string, taskSetting: SingleTaskSettings, disableRandom: boolean = false) {
         const FIELD_WEIGHT: GuiFormField = {
             html_id: prefixId + "-weight",
             label: "Weight of Event for random Tasks (0 - 1000)",
@@ -141,13 +143,21 @@ export class GuiTasksSettingsView extends GuiViewBase {
             }
         };
 
-        const bondageTaskWeight = GuiHelper.createFormField(FIELD_WEIGHT);
+        let bondageTaskWeight: HTMLElement | undefined = undefined;
+        if (!disableRandom) {
+            bondageTaskWeight = GuiHelper.createFormField(FIELD_WEIGHT);
+        }
         const bondageTaskDuration = GuiHelper.createFormField(FIELD_DURATION);
         const bondageTaskReward = GuiHelper.createFormField(FIELD_REWARD);
         const bondageTaskPenalty = GuiHelper.createFormField(FIELD_PENALTY);
         const bondageTaskGracePeriod = GuiHelper.createFormField(FIELD_GRACE_PERIOD);
 
-        const bondageRow1 = GuiHelper.createTwoElemRow(bondageTaskWeight, bondageTaskDuration);
+        let bondageRow1;
+        if (disableRandom) {
+            bondageRow1 = GuiHelper.createTwoElemRow(bondageTaskDuration, undefined);
+        } else {
+            bondageRow1 = GuiHelper.createTwoElemRow(bondageTaskWeight, bondageTaskDuration);
+        }
         const bondageRowPts = GuiHelper.createTwoElemRow(bondageTaskReward, bondageTaskPenalty);
 
         container.appendChild(bondageRow1);
@@ -565,6 +575,32 @@ export class GuiTasksSettingsView extends GuiViewBase {
 
         // Append directly to taskContent
         this.appendCommonTaskField(taskContent, prefixId, taskSetting);
+
+        return taskMainCard;
+    }
+
+    private buildNicknameTaskCard(): HTMLElement {
+        const prefixId = "atb-task-nickname";
+        const taskSetting = this.settings.nicknameTaskSettings;
+        // Fields
+        const FIELD_ENABLE: GuiFormField = {
+            html_id: prefixId + "-enable",
+            label: "Enable Nickname Control Task",
+            type: "checkbox",
+            default_value: taskSetting.enable,
+            onChange: (value: boolean) => {
+                taskSetting.enable = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+
+        // Build Main task card
+        const tuple = GuiHelper.createFeatureToggleCard(FIELD_ENABLE, true);
+        const taskMainCard = tuple.card;
+        const taskContent = tuple.contentArea;
+
+        // Append directly to taskContent
+        this.appendCommonTaskField(taskContent, prefixId, taskSetting, true);
 
         return taskMainCard;
     }

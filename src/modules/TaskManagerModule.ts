@@ -11,6 +11,7 @@ import { getCharacterTaskManagerSettings, getCharacterTasksSettings } from "@/ut
 import { OutfitId } from "@/models/OutfitSettings";
 import { TaskWearOutfit } from "./Task/TaskWearOutfit";
 import { TaskNaked } from "./Task/TaskNaked";
+import { TaskNicknameControl } from "./Task/TaskNicknameControl";
 
 export class TaskManagerModule extends ModuleBase {
     TICK_PERIOD_MS: number = 800; // 0.8sec
@@ -199,6 +200,18 @@ export class TaskManagerModule extends ModuleBase {
                 overwrite
             );
         }
+        else if (taskData.type == "nickname" && taskData.nickname) {
+            return this.startNicknameTask(
+                taskData.nickname,
+                taskData.finishType,
+                taskData.finishTotalNeeded,
+                taskData.enforce,
+                taskData.goodPtsOnSucces,
+                taskData.badPtsOnFailure,
+                taskData.gracePeriodMs,
+                overwrite
+            );
+        }
         return false;
     }
 
@@ -320,6 +333,16 @@ export class TaskManagerModule extends ModuleBase {
                 return "can_start";
             }
         }
+        else if (type.taskType == "nickname") {
+            const ts = getCharacterTasksSettings(C);
+            if (ts && !ts.nicknameTaskSettings.enable) {
+                return "not_enabled";
+            } else if (TaskNicknameControl.checkTaskPrevented(C)) {
+                return "not_available_bcx_rule";
+            } else {
+                return "can_start";
+            }
+        }
         return "unknown";
     }
 
@@ -342,6 +365,9 @@ export class TaskManagerModule extends ModuleBase {
                 }
                 else if (taskData.type == "naked") {
                     task = new TaskNaked(taskData);
+                }
+                else if (taskData.type == "nickname") {
+                    task = new TaskNicknameControl(taskData);
                 }
 
                 if (task) {
@@ -517,6 +543,41 @@ export class TaskManagerModule extends ModuleBase {
             gracePeriodMs: gracePeriod
         }
         let task = new TaskNaked(taskData);
+        this.startNewTask(task, taskData);
+        return true;
+    }
+
+    startNicknameTask(nickname: string, finishType: FinishType, finishTotal: number,
+                        enforce: boolean, successPts: number, failurePts: number,
+                        gracePeriod: number, overwrite: boolean = false): boolean {
+        // Case where the same task with same item already exist
+        const sameTask = this.getActiveTaskByType({taskType: "nickname"});
+        if (sameTask) {
+            if (overwrite) {
+                // on overwrite, force finish the same already active task with no pts reward
+                sameTask.triggerTaskCompletion(false, true);
+            } else {
+                console.warn("ATB: startNicknameTask: Cannot start task: task requirement not met or already running.");
+                return false;
+            }
+        }
+
+        let taskData: TaskData = {
+            id: this.generateUniqueTaskId(),
+            type: "nickname",
+            description: "",
+            finishType: finishType,
+            finishCurrentCount: 0,
+            finishTotalNeeded: finishTotal,
+            progressPerc: 0,
+            enforce: enforce,
+            goodPtsOnSucces: successPts,
+            badPtsOnFailure: failurePts,
+            gracePeriodMs: gracePeriod,
+            nickname: nickname,
+            original_nickname: Player.Nickname
+        }
+        let task = new TaskNicknameControl(taskData);
         this.startNewTask(task, taskData);
         return true;
     }
