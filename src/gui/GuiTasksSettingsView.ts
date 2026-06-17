@@ -68,6 +68,7 @@ export class GuiTasksSettingsView extends GuiViewBase {
         const outfitTaskMainCard = this.buildWearOutfitTaskCard();
         const nakedTaskMainCard = this.buildNakedTaskCard();
         const nicknameTaskMainCard = this.buildNicknameTaskCard();
+        const poseTaskMainCard = this.buildPoseTaskCard();
 
         // Final Assembly
         form.appendChild(finishMainCard);
@@ -75,6 +76,7 @@ export class GuiTasksSettingsView extends GuiViewBase {
         form.appendChild(outfitTaskMainCard);
         form.appendChild(nakedTaskMainCard);
         form.appendChild(nicknameTaskMainCard);
+        form.appendChild(poseTaskMainCard);
         this.parent.appendChild(form);
     }
 
@@ -601,6 +603,48 @@ export class GuiTasksSettingsView extends GuiViewBase {
 
         // Append directly to taskContent
         this.appendCommonTaskField(taskContent, prefixId, taskSetting, true);
+
+        return taskMainCard;
+    }
+
+    private buildPoseTaskCard(): HTMLElement {
+        const prefixId = "atb-task-pose";
+        const taskSetting = this.settings.poseTaskSettings;
+        // Fields
+        const FIELD_ENABLE: GuiFormField = {
+            html_id: prefixId + "-enable",
+            label: "Enable Pose Control Task",
+            type: "checkbox",
+            default_value: taskSetting.enable,
+            onChange: (value: boolean) => {
+                taskSetting.enable = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_AVG_RANDOM_POSE: GuiFormField = {
+            html_id: prefixId + "-random-ext",
+            label: "Randomize Items Option (Average Per Hour)",
+            description: "Average number of random pose change per hour. (0-60) (0 to disable)",
+            type: "number",
+            min_value: 0,
+            max_value: 60,
+            default_value: taskSetting.averageRandomPosePerHour,
+            onChange: (value: number) => {
+                taskSetting.averageRandomPosePerHour = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+
+        // Build Main task card
+        const tuple = GuiHelper.createFeatureToggleCard(FIELD_ENABLE, true);
+        const taskMainCard = tuple.card;
+        const taskContent = tuple.contentArea;
+
+        // Append directly to taskContent
+        this.appendCommonTaskField(taskContent, prefixId, taskSetting);
+
+        const avgRandomPerHour = GuiHelper.createFormField(FIELD_AVG_RANDOM_POSE);
+        taskContent.appendChild(avgRandomPerHour);
 
         return taskMainCard;
     }

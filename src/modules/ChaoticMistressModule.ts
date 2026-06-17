@@ -139,6 +139,10 @@ export class ChaoticMistressModule extends ModuleBase {
                     console.log(`ATB: triggerRandomTask: Selected ${selectedTask.taskType} finish type: ${selectedFinish} count: ${randFinishNeeded}`);
                     tm.startNakedTask(selectedFinish, randFinishNeeded, false, reward, failure, gracePeriod);
                 }
+                else if (selectedTask.taskType === "pose") {
+                    console.log(`ATB: triggerRandomTask: Selected ${selectedTask.taskType} finish type: ${selectedFinish} count: ${randFinishNeeded}`);
+                    tm.startPoseTask("random", "random", this.tasksSettings.poseTaskSettings.averageRandomPosePerHour, selectedFinish, randFinishNeeded, false, reward, failure, gracePeriod);
+                }
                 // "nickname" is not available for random task for now (would need something to generate good random nickname)
             }
         }

@@ -1,7 +1,7 @@
 import { TaskManagerModule } from "@/modules/TaskManagerModule";
 import { getTaskCannotStartReasonToString, TaskCannotStartReason, TaskData } from "@/models/TaskManagerSettings";
 import { GuiHelper, GuiFormField } from "./GuiHelper";
-import { FinishType, FullTaskType, getFinishTypeSetting, getTaskTypeSetting, TasksSettings, TaskType, WearBondageType } from "@/models/TasksSettings";
+import { FinishType, FullTaskType, getFinishTypeSetting, getTaskTypeSetting, PoseLowerSelection, PoseUpperSelection, TasksSettings, TaskType, WearBondageType } from "@/models/TasksSettings";
 import { ChaoticMistressModule } from "@/modules/ChaoticMistressModule";
 import GuiViewBase from "./GuiViewBase";
 import { getCharacterChaoticMistressSettings, getCharacterTasksSettings, saveSettings, startTaskforCharacter } from "@/utility/CharacterWrapper";
@@ -10,6 +10,7 @@ import { allOutfitList, getRawOutfitFromId, OutfitId } from "@/models/OutfitSett
 import { TaskWearOutfit } from "@/modules/Task/TaskWearOutfit";
 import { TaskWearBondage } from "@/modules/Task/TaskWearBondage";
 import { checkNicknameValidity } from "@/utility/utility";
+import { TaskPoseControl } from "@/modules/Task/TaskPoseControl";
 
 export class GuiCreateTaskView extends GuiViewBase {
     //private form: HTMLElement;
@@ -33,7 +34,8 @@ export class GuiCreateTaskView extends GuiViewBase {
             { value: "wear_bondage", label: "Wear Restraint/Bondage" },
             { value: "wear_outfit", label: "Wear Outfit" },
             { value: "naked", label: "Stay Naked" },
-            { value: "nickname", label: "Nickname Control" }
+            { value: "nickname", label: "Nickname Control" },
+            { value: "pose", label: "Pose Control" }
         ]
     };
     private FIELD_FINISH_CONDITION: GuiFormField = {
@@ -172,6 +174,29 @@ export class GuiCreateTaskView extends GuiViewBase {
         max_length: 20
     };
 
+    // Pose Control specifics
+    private FIELD_POSE_UPPER: GuiFormField = {
+        html_id: "atb-create-task-pose-upper",
+        label: "Upper Pose",
+        type: "select",
+        options: [] // Will be filled on build
+    };
+    private FIELD_POSE_LOWER: GuiFormField = {
+        html_id: "atb-create-task-pose-lower",
+        label: "Lower Pose",
+        type: "select",
+        options: [] // Will be filled on build
+    };
+    private FIELD_AVG_RANDOM_POSE: GuiFormField = {
+        html_id: "atb-create-task-avg-random-pose",
+        label: "Random Pose Change (average per hour)",
+        description: "Randomly change the Pose needed. Higher number means it will happen more frequently. (0 to disable)",
+        type: "number",
+        default_value: 15, // placeholder
+        min_value: 0,
+        max_value: 60
+    };
+
 
     private HELP_BASE_TASK_TEXT = `
     New Tasks can be created freely by the Player or Someone else (based on access settings).<br>
@@ -181,10 +206,11 @@ export class GuiCreateTaskView extends GuiViewBase {
     - If the same task is already <strong>active</strong> and not enforced, you can overwrite it, this will remove the current active task and create this new task.
     However, the current active task will not yield any reward and the progress will be lost.<br>
     <br>
-    Task <strong>Wear Bondage/Restraints:</strong> Player must wear specified restraints or get <strong>Bad Points penalty</strong>.
-    Task <strong>Wear Outfit:</strong> Player will be forced to wear a restrictive outfit. Player will get <strong>Bad Points penalty</strong> if they try to remove it.
-    Task <strong>Stay Naked:</strong> Player will be forced to stay naked. Player will get <strong>Bad Points penalty</strong> if they try to wear anything.
-    Task <strong>Nickname Control:</strong> Player will be forced to use a specific nickname. Player will get <strong>Bad Points penalty</strong> if they don't have the correct nickname.
+    <br>Task <strong>Wear Bondage/Restraints:</strong> Player must wear specified restraints or get <strong>Bad Points penalty</strong>.
+    <br>Task <strong>Wear Outfit:</strong> Player will be forced to wear a restrictive outfit. Player will get <strong>Bad Points penalty</strong> if they try to remove it.
+    <br>Task <strong>Stay Naked:</strong> Player will be forced to stay naked. Player will get <strong>Bad Points penalty</strong> if they try to wear anything.
+    <br>Task <strong>Nickname Control:</strong> Player will be forced to use a specific nickname. Player will get <strong>Bad Points penalty</strong> if they don't have the correct nickname.
+    <br>Task <strong>Pose Control:</strong> Player will be forced to use a specific Pose. Player will get <strong>Bad Points penalty</strong> if they don't have the correct Pose.
     `;
 
     private HELP_WEAR_TASK_TEXT = `
@@ -321,6 +347,19 @@ export class GuiCreateTaskView extends GuiViewBase {
             if (outfitData) {
                 this.FIELD_OUTFIT_ID.options.push({value: outfitData.id, label: outfitData.name})
             }
+        }
+
+        // Populate Pose specifcs
+        this.FIELD_AVG_RANDOM_POSE.default_value = this.tasksSettings.poseTaskSettings.averageRandomPosePerHour;
+        this.FIELD_POSE_UPPER.options = [];
+        this.FIELD_POSE_LOWER.options = [];
+        const availUpperPose = TaskPoseControl.getAvailableUpperPose(this.character, true);
+        const availLowerPose = TaskPoseControl.getAvailableLowerPose(this.character, true);
+        for (const pose of availUpperPose) {
+            this.FIELD_POSE_UPPER.options.push({ value: pose, label: TaskPoseControl.getNameForPose(pose) });
+        }
+        for (const pose of availLowerPose) {
+            this.FIELD_POSE_LOWER.options.push({ value: pose, label: TaskPoseControl.getNameForPose(pose) });
         }
     }
 
@@ -487,6 +526,10 @@ export class GuiCreateTaskView extends GuiViewBase {
                 const nickname = GuiHelper.createFormField(this.FIELD_NICKNAME);
                 this.specificTaskTypeFields.appendChild(nickname);
             }
+            if (currentType === "pose") {
+                this.specificTaskTypeFields.style.display = "flex";
+                this.addPoseTypeElem(this.specificTaskTypeFields);
+            }
 
             this.checkTaskCanStartAndUpdateUI();
         }
@@ -522,6 +565,22 @@ export class GuiCreateTaskView extends GuiViewBase {
         const row = GuiHelper.createTwoElemRow(randomExtItem, removeOnFinish);
         container.appendChild(row);
         container.appendChild(outfitIdSelect);
+    }
+
+    private addPoseTypeElem(container: HTMLElement) {
+        /*this.addGroupTitleAndHelp(container,
+            this.STRINGS.TASK_TYPE_WEAR_OUTFIT_TITLE,
+            this.STRINGS.HELP_WEAR_OUTFIT_TITLE,
+            this.HELP_WEAR_OUTFIT_TEXT
+        );*/
+
+        // Final assembly
+        const poseUpper = GuiHelper.createFormField(this.FIELD_POSE_UPPER);
+        const poseLower = GuiHelper.createFormField(this.FIELD_POSE_LOWER);
+        const avgRandomPose = GuiHelper.createFormField(this.FIELD_AVG_RANDOM_POSE);
+        const row = GuiHelper.createTwoElemRow(poseUpper, poseLower);
+        container.appendChild(row);
+        container.appendChild(avgRandomPose);
     }
 
 
@@ -650,12 +709,29 @@ export class GuiCreateTaskView extends GuiViewBase {
         }
         else if (taskType === "nickname") {
             const nickname = GuiHelper.getFormFieldValue(container, this.FIELD_NICKNAME) as string;
+            // Check Nickname is valid
             invalidData = checkNicknameValidity(this.character, nickname);
             if (invalidData) {
                 cannotStartReason = "invalid_data";
             }
             else {
                 taskData.nickname = nickname;
+                cannotStartReason = TaskManagerModule.isTaskCanStart(this.character, {taskType: taskType});
+            }
+        }
+        else if (taskType === "pose") {
+            const poseUpper = GuiHelper.getFormFieldValue(container, this.FIELD_POSE_UPPER) as PoseUpperSelection;
+            const poseLower = GuiHelper.getFormFieldValue(container, this.FIELD_POSE_LOWER) as PoseLowerSelection;
+            const avgRandomPose = GuiHelper.getFormFieldValue(container, this.FIELD_AVG_RANDOM_POSE) as number;
+            // Check pose are valid/available
+            invalidData = TaskPoseControl.isSelectedPoseValid(this.character, poseUpper, poseLower);
+            if (invalidData) {
+                cannotStartReason = "invalid_data";
+            }
+            else {
+                taskData.selected_upper_pose = poseUpper;
+                taskData.selected_lower_pose = poseLower;
+                taskData.averageRandomPosePerHour = avgRandomPose;
                 cannotStartReason = TaskManagerModule.isTaskCanStart(this.character, {taskType: taskType});
             }
         }

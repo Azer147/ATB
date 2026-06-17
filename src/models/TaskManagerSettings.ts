@@ -1,5 +1,5 @@
 import { OutfitId } from "./OutfitSettings";
-import { FinishType, TaskType, WearBondageType } from "./TasksSettings";
+import { FinishType, PoseLowerSelection, PoseUpperSelection, TaskType, WearBondageType } from "./TasksSettings";
 
 export type TaskCannotStartReason = "unknown" | "invalid_data" | "not_enabled" | "not_available"
             | "not_available_same_task" | "not_available_incompatible" | "not_available_apply_item"
@@ -42,6 +42,12 @@ export interface TaskData {
     // "nickname" specifics
     nickname?: string;
     original_nickname?: string; // Original nickname to restore
+
+    // "pose" specifics
+    target_pose?: AssetPoseName[];
+    selected_upper_pose?: PoseUpperSelection;
+    selected_lower_pose?: PoseLowerSelection;
+    averageRandomPosePerHour?: number;
 }
 
 // Data for the TaskManagerModule

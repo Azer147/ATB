@@ -5,7 +5,7 @@
 */
 
 // TODO: "outfit" | "activity" | "say" | "arousal" | "escape"
-export type TaskType = "wear_bondage" | "wear_outfit" | "naked" | "nickname";
+export type TaskType = "wear_bondage" | "wear_outfit" | "naked" | "nickname" | "pose";
 export type PunishementType = "full_bondage" | "harsh_outfit";
 
 // TODO: "orgasm_given" | "spank_given" | "date_time"
@@ -22,6 +22,12 @@ export interface FullTaskType {
     // EndConditionType ?
 }
 
+
+// Specifcs types for task "pose"
+// Category BodyUpper
+export type PoseUpperSelection = 'BaseUpper' | 'BackBoxTie' | 'BackCuffs' | 'BackElbowTouch' | 'OverTheHead' | 'Yoked' | "random" | "free";
+// Category BodyLower
+export type PoseLowerSelection = 'BaseLower' | 'Kneel' | 'KneelingSpread' | 'LegsClosed' | "random" | "free";
 
 /*
 ********** Task/Punish/Finish Settings **********
@@ -77,6 +83,10 @@ export interface WearOutfitTaskSettings extends SingleTaskSettings {
     randomCanUseHarshOutfit: boolean // For Random Task
 }
 
+export interface PoseTaskSettings extends SingleTaskSettings {
+    averageRandomPosePerHour: number, // For Random Task / Default value
+}
+
 // Data for the TaskManagerModule
 export interface TasksSettings {
     // Tasks
@@ -84,6 +94,7 @@ export interface TasksSettings {
     wearOutfitTaskSettings: WearOutfitTaskSettings;
     nakedTaskSettings: SingleTaskSettings;
     nicknameTaskSettings: SingleTaskSettings;
+    poseTaskSettings: PoseTaskSettings;
 
     // Tasks Finish Condition
     taskFinishSettings: TaskFinishSettings;
@@ -131,10 +142,19 @@ export const DefaultTasksSettings: TasksSettings = {
     nicknameTaskSettings: {
         enable: true,
         randomWeight: 0, // not available for random tasks
-        baseDurationMs: 30 * 60 * 1000, // 30 min
-        baseGracePeriodMs: 45 * 1000, // 45sec
+        baseDurationMs: 120 * 60 * 1000, // 120 min
+        baseGracePeriodMs: 90 * 1000, // 90sec
         baseGoodPtsReward: 10,
-        baseBadPointsPenalty: 5,
+        baseBadPointsPenalty: 20,
+    },
+    poseTaskSettings: {
+        enable: true,
+        randomWeight: 5,
+        baseDurationMs: 30 * 60 * 1000, // 30 min
+        baseGracePeriodMs: 60 * 1000, // 60sec
+        baseGoodPtsReward: 20,
+        baseBadPointsPenalty: 1,
+        averageRandomPosePerHour: 15,
     },
     taskFinishSettings: {
         randWeightDuration: 50,
@@ -195,7 +215,8 @@ export const FullTaskList: FullTaskType[] =
     {taskType: "wear_bondage", taskSubType: "shock"},
     {taskType: "wear_outfit"},
     {taskType: "naked"},
-    {taskType: "nickname"}
+    {taskType: "nickname"},
+    {taskType: "pose"}
 ];
 
 export const FullPunishementList: PunishementType[] =
@@ -219,6 +240,8 @@ export function getTaskTypeSetting(setting: TasksSettings, type: TaskType | Puni
             return setting.nakedTaskSettings;
         case "nickname":
             return setting.nicknameTaskSettings;
+        case "pose":
+            return setting.poseTaskSettings;
 
         // Punishements
         case "full_bondage":
@@ -240,6 +263,8 @@ export function getTaskTypeConstant(type: TaskType | PunishementType): TaskConst
             return NakedTaskConstants;
         case "nickname":
             return NicknameTaskConstants;
+        case "pose":
+            return PoseTaskConstants;
 
         // Punishements
         case "full_bondage":
@@ -331,6 +356,9 @@ export const NakedTaskConstants: TaskConstant = {
 }
 export const NicknameTaskConstants: TaskConstant = {
     name: "Nickname Control",
+}
+export const PoseTaskConstants: TaskConstant = {
+    name: "Pose Control",
 }
 
 export const FullBondagePunishementConstants: TaskConstant = {

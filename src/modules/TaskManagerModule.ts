@@ -6,12 +6,13 @@ import { TaskBase } from "./Task/TaskBase";
 import { TaskWearBondage } from "./Task/TaskWearBondage";
 import { ChatColor, isLscgEffectsPreventOutfit, sendLocalMessage } from "@/utility/utility";
 import { GuiMainView } from "@/gui/GuiMainView";
-import { FinishType, FullTaskType, getTaskTypeConstant, WearBondageType } from "@/models/TasksSettings";
+import { FinishType, FullTaskType, getTaskTypeConstant, PoseLowerSelection, PoseUpperSelection, WearBondageType } from "@/models/TasksSettings";
 import { getCharacterTaskManagerSettings, getCharacterTasksSettings } from "@/utility/CharacterWrapper";
 import { OutfitId } from "@/models/OutfitSettings";
 import { TaskWearOutfit } from "./Task/TaskWearOutfit";
 import { TaskNaked } from "./Task/TaskNaked";
 import { TaskNicknameControl } from "./Task/TaskNicknameControl";
+import { TaskPoseControl } from "./Task/TaskPoseControl";
 
 export class TaskManagerModule extends ModuleBase {
     TICK_PERIOD_MS: number = 800; // 0.8sec
@@ -212,6 +213,21 @@ export class TaskManagerModule extends ModuleBase {
                 overwrite
             );
         }
+        else if (taskData.type == "pose" && taskData.averageRandomPosePerHour != undefined
+            && taskData.selected_upper_pose && taskData.selected_lower_pose) {
+            return this.startPoseTask(
+                taskData.selected_upper_pose,
+                taskData.selected_lower_pose,
+                taskData.averageRandomPosePerHour,
+                taskData.finishType,
+                taskData.finishTotalNeeded,
+                taskData.enforce,
+                taskData.goodPtsOnSucces,
+                taskData.badPtsOnFailure,
+                taskData.gracePeriodMs,
+                overwrite
+            );
+        }
         return false;
     }
 
@@ -343,6 +359,16 @@ export class TaskManagerModule extends ModuleBase {
                 return "can_start";
             }
         }
+        else if (type.taskType == "pose") {
+            const ts = getCharacterTasksSettings(C);
+            if (ts && !ts.poseTaskSettings.enable) {
+                return "not_enabled";
+            /*} else if (TaskPoseControl.checkTaskPrevented(C)) {
+                return "not_available_bcx_rule";
+            */} else {
+                return "can_start";
+            }
+        }
         return "unknown";
     }
 
@@ -368,6 +394,9 @@ export class TaskManagerModule extends ModuleBase {
                 }
                 else if (taskData.type == "nickname") {
                     task = new TaskNicknameControl(taskData);
+                }
+                else if (taskData.type == "pose") {
+                    task = new TaskPoseControl(taskData);
                 }
 
                 if (task) {
@@ -582,4 +611,40 @@ export class TaskManagerModule extends ModuleBase {
         return true;
     }
 
+    startPoseTask(selected_upper_pose: PoseUpperSelection, selected_lower_pose: PoseLowerSelection, averageRandomPosePerHour: number, finishType: FinishType, finishTotal: number,
+                        enforce: boolean, successPts: number, failurePts: number,
+                        gracePeriod: number, overwrite: boolean = false): boolean {
+        // Case where the same task with same item already exist
+        const sameTask = this.getActiveTaskByType({taskType: "pose"});
+        if (sameTask) {
+            if (overwrite) {
+                // on overwrite, force finish the same already active task with no pts reward
+                sameTask.triggerTaskCompletion(false, true);
+            } else {
+                console.warn("ATB: startPoseTask: Cannot start task: task requirement not met or already running.");
+                return false;
+            }
+        }
+
+        let taskData: TaskData = {
+            id: this.generateUniqueTaskId(),
+            type: "pose",
+            description: "",
+            finishType: finishType,
+            finishCurrentCount: 0,
+            finishTotalNeeded: finishTotal,
+            progressPerc: 0,
+            enforce: enforce,
+            goodPtsOnSucces: successPts,
+            badPtsOnFailure: failurePts,
+            gracePeriodMs: gracePeriod,
+            target_pose: [], // filled later
+            selected_upper_pose: selected_upper_pose,
+            selected_lower_pose: selected_lower_pose,
+            averageRandomPosePerHour: averageRandomPosePerHour
+        }
+        let task = new TaskPoseControl(taskData);
+        this.startNewTask(task, taskData);
+        return true;
+    }
 }
