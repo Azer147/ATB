@@ -107,7 +107,7 @@ export class RemoteModule extends ModuleBase {
             type: "request_settings",
             target: targetMemberNumber,
             reply: true
-        });
+        }, targetMemberNumber);
         return promise;
     }
 
@@ -116,9 +116,10 @@ export class RemoteModule extends ModuleBase {
         RemoteModule.sendData({
             req_id: req_id,
             type: "sync_settings",
+            target: undefined,
             settings: publicSettings,
             reply: replyRequested
-        });
+        }, null);
     }
 
     public static requestApplyOtherCharacterSettings(targetMemberNumber: number, setting: CoreSettings) {
@@ -130,7 +131,7 @@ export class RemoteModule extends ModuleBase {
             target: targetMemberNumber,
             newSettings: setting
             //reply: true
-        });
+        }, targetMemberNumber);
         //return promise;
     }
 
@@ -144,7 +145,7 @@ export class RemoteModule extends ModuleBase {
             taskData: taskData,
             overwrite: overwrite
             //reply: true
-        });
+        }, targetMemberNumber);
         //return promise;
     }
 
@@ -158,7 +159,7 @@ export class RemoteModule extends ModuleBase {
             punishtype: punishtype,
             duration: duration
             //reply: true
-        });
+        }, targetMemberNumber);
         //return promise;
     }
 
@@ -171,7 +172,7 @@ export class RemoteModule extends ModuleBase {
             target: targetMemberNumber,
             taskId: taskId,
             //reply: true
-        });
+        }, targetMemberNumber);
         //return promise;
     }
 
@@ -242,6 +243,7 @@ export class RemoteModule extends ModuleBase {
                         break;
                     case "request_settings":
                         // Send back setting with the same req_id
+                        // TODO: send back only to req sender ?
                         RemoteModule.boradcastAtbSettings(false, msg.req_id);
                         break;
                     case "apply_settings":
@@ -249,14 +251,17 @@ export class RemoteModule extends ModuleBase {
                         break;
                     case "start_task":
                         startTaskforCharacter(Player, msg.taskData, msg.overwrite);
+                        // TODO: improve boradcastAtbSettings efficiency (maybe only send to target ?)
                         RemoteModule.boradcastAtbSettings(false); // Re-send new settings
                         break;
                     case "start_punishement":
                         startPunishementforCharacter(Player, msg.punishtype, msg.duration);
+                        // TODO: improve boradcastAtbSettings efficiency (maybe only send to target ?)
                         RemoteModule.boradcastAtbSettings(false); // Re-send new settings
                         break;
                     case "skip_task":
                         skipTaskforCharacter(Player, msg.taskId);
+                        // TODO: improve boradcastAtbSettings efficiency (maybe only send to target ?)
                         RemoteModule.boradcastAtbSettings(false); // Re-send new settings
                         break;
                 }

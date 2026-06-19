@@ -26,7 +26,7 @@ export function sendActionMessage(message: string): void {
 
 export function sendLocalMessage(message: string, color: ChatColor | undefined = undefined): void {
 	// DEBUG: Also send public action (to remove later)
-	sendActionMessage(message);
+	sendActionMessage(getNameOrNickname(Player) + " => " + message);
 
 	let formattedMessage = message;
 	if (color != undefined) {
