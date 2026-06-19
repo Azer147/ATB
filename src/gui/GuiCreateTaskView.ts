@@ -1,7 +1,7 @@
 import { TaskManagerModule } from "@/modules/TaskManagerModule";
 import { getTaskCannotStartReasonToString, TaskCannotStartReason, TaskData } from "@/models/TaskManagerSettings";
 import { GuiHelper, GuiFormField } from "./GuiHelper";
-import { FinishType, FullTaskType, getFinishTypeSetting, getTaskTypeSetting, PoseLowerSelection, PoseUpperSelection, TasksSettings, TaskType, WearBondageType } from "@/models/TasksSettings";
+import { FinishType, FullTaskType, getFinishTypeSetting, getTaskTypeSetting, PoseLowerSelection, PoseUpperSelection, RoomControlType, TasksSettings, TaskType, WearBondageType } from "@/models/TasksSettings";
 import { ChaoticMistressModule } from "@/modules/ChaoticMistressModule";
 import GuiViewBase from "./GuiViewBase";
 import { getCharacterChaoticMistressSettings, getCharacterTasksSettings, saveSettings, startTaskforCharacter } from "@/utility/CharacterWrapper";
@@ -11,6 +11,7 @@ import { TaskWearOutfit } from "@/modules/Task/TaskWearOutfit";
 import { TaskWearBondage } from "@/modules/Task/TaskWearBondage";
 import { checkNicknameValidity } from "@/utility/utility";
 import { TaskPoseControl } from "@/modules/Task/TaskPoseControl";
+import { TaskRoomControl } from "@/modules/Task/TaskRoomControl";
 
 export class GuiCreateTaskView extends GuiViewBase {
     //private form: HTMLElement;
@@ -35,7 +36,8 @@ export class GuiCreateTaskView extends GuiViewBase {
             { value: "wear_outfit", label: "Wear Outfit" },
             { value: "naked", label: "Stay Naked" },
             { value: "nickname", label: "Nickname Control" },
-            { value: "pose", label: "Pose Control" }
+            { value: "pose", label: "Pose Control" },
+            { value: "room_control", label: "Room Control" }
         ]
     };
     private FIELD_FINISH_CONDITION: GuiFormField = {
@@ -195,6 +197,51 @@ export class GuiCreateTaskView extends GuiViewBase {
         default_value: 15, // placeholder
         min_value: 0,
         max_value: 60
+    };
+
+    // Room Control specifics
+    private FIELD_ROOM_NAME: GuiFormField = {
+        html_id: "atb-create-task-room-name",
+        label: "Word required in Room Name (Empty to disable)",
+        description: "Room used need to have this word in the Room Name. (Leave empty to disable)",
+        type: "text",
+        default_value: "",
+        max_length: 20
+    };
+    private FIELD_ROOM_NAME_USE_DESC: GuiFormField = {
+        html_id: "atb-create-task-room-name-use-desc",
+        label: "Word required in Name OR Description",
+        description: "If enabled, Word is required in Room Name or Description, if disabled, Word is required in Room Name only.",
+        type: "checkbox",
+        useInputPadding: true, // makes it align correctly with input fields on the same row
+        default_value: true,
+    };
+    private FIELD_ROOM_TYPE: GuiFormField = {
+        html_id: "atb-create-task-room-type",
+        label: "Room Type Requirement",
+        type: "select",
+        options: [
+            { value: "free", label: "Free" },
+            { value: "public_only", label: "Public Only" },
+            { value: "private_only", label: "Private Only" }
+        ]
+    };
+    private FIELD_ROOM_USE_MAX_TIME: GuiFormField = {
+        html_id: "atb-create-task-room-use-max-time",
+        label: "Enable Room Max Time Requirement",
+        description: "Force the player to change room periodically",
+        type: "checkbox",
+        useInputPadding: true, // makes it align correctly with input fields on the same row
+        default_value: false,
+    };
+    private FIELD_ROOM_MAX_TIME: GuiFormField = {
+        html_id: "atb-create-task-room-max-time",
+        label: "Room Max Time Allowed (minutes)",
+        description: "How long the Player can stay in the same room before getting a penalty",
+        type: "number",
+        default_value: 15,
+        min_value: 10,
+        max_value: 120
     };
 
 
@@ -530,6 +577,10 @@ export class GuiCreateTaskView extends GuiViewBase {
                 this.specificTaskTypeFields.style.display = "flex";
                 this.addPoseTypeElem(this.specificTaskTypeFields);
             }
+            if (currentType === "room_control") {
+                this.specificTaskTypeFields.style.display = "flex";
+                this.addRoomControlTypeElem(this.specificTaskTypeFields);
+            }
 
             this.checkTaskCanStartAndUpdateUI();
         }
@@ -581,6 +632,26 @@ export class GuiCreateTaskView extends GuiViewBase {
         const row = GuiHelper.createTwoElemRow(poseUpper, poseLower);
         container.appendChild(row);
         container.appendChild(avgRandomPose);
+    }
+
+    private addRoomControlTypeElem(container: HTMLElement) {
+        /*this.addGroupTitleAndHelp(container,
+            this.STRINGS.TASK_TYPE_WEAR_OUTFIT_TITLE,
+            this.STRINGS.HELP_WEAR_OUTFIT_TITLE,
+            this.HELP_WEAR_OUTFIT_TEXT
+        );*/
+
+        // Final assembly
+        const roomName = GuiHelper.createFormField(this.FIELD_ROOM_NAME);
+        const roomNameReqUseDesc = GuiHelper.createFormField(this.FIELD_ROOM_NAME_USE_DESC);
+        const roomType = GuiHelper.createFormField(this.FIELD_ROOM_TYPE);
+        const roomUseMaxTime = GuiHelper.createFormField(this.FIELD_ROOM_USE_MAX_TIME);
+        const roomMaxTime = GuiHelper.createFormField(this.FIELD_ROOM_MAX_TIME);
+        const rowName = GuiHelper.createTwoElemRow(roomName, roomNameReqUseDesc);
+        const rowTime = GuiHelper.createTwoElemRow(roomUseMaxTime, roomMaxTime);
+        container.appendChild(rowName);
+        container.appendChild(roomType);
+        container.appendChild(rowTime);
     }
 
 
@@ -732,6 +803,26 @@ export class GuiCreateTaskView extends GuiViewBase {
                 taskData.selected_upper_pose = poseUpper;
                 taskData.selected_lower_pose = poseLower;
                 taskData.averageRandomPosePerHour = avgRandomPose;
+                cannotStartReason = TaskManagerModule.isTaskCanStart(this.character, {taskType: taskType});
+            }
+        }
+        else if (taskType === "room_control") {
+            const roomName = GuiHelper.getFormFieldValue(container, this.FIELD_ROOM_NAME) as string;
+            const roomNameUseDesc = GuiHelper.getFormFieldValue(container, this.FIELD_ROOM_NAME_USE_DESC) as boolean;
+            const roomType = GuiHelper.getFormFieldValue(container, this.FIELD_ROOM_TYPE) as RoomControlType;
+            const roomUseMaxTime = GuiHelper.getFormFieldValue(container, this.FIELD_ROOM_USE_MAX_TIME) as boolean;
+            const roomMaxTime = GuiHelper.getFormFieldValue(container, this.FIELD_ROOM_MAX_TIME) as number;
+
+            invalidData = TaskRoomControl.dataValidation(roomName, roomType, roomUseMaxTime, roomMaxTime, gracePeriodMs);
+            if (invalidData) {
+                cannotStartReason = "invalid_data";
+            }
+            else {
+                taskData.roomNameReq = roomName;
+                taskData.roomNameReqSearchDesc = roomNameUseDesc;
+                taskData.roomTypeReq = roomType;
+                taskData.roomUseMaxMinutesReq = roomUseMaxTime;
+                taskData.roomMaxMinutesReq = roomMaxTime;
                 cannotStartReason = TaskManagerModule.isTaskCanStart(this.character, {taskType: taskType});
             }
         }

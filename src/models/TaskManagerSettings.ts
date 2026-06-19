@@ -1,5 +1,5 @@
 import { OutfitId } from "./OutfitSettings";
-import { FinishType, PoseLowerSelection, PoseUpperSelection, TaskType, WearBondageType } from "./TasksSettings";
+import { FinishType, PoseLowerSelection, PoseUpperSelection, RoomControlType, TaskType, WearBondageType } from "./TasksSettings";
 
 export type TaskCannotStartReason = "unknown" | "invalid_data" | "not_enabled" | "not_available"
             | "not_available_same_task" | "not_available_incompatible" | "not_available_apply_item"
@@ -48,6 +48,13 @@ export interface TaskData {
     selected_upper_pose?: PoseUpperSelection;
     selected_lower_pose?: PoseLowerSelection;
     averageRandomPosePerHour?: number;
+
+    // "room_control" specifics
+    roomNameReq?: string;
+    roomNameReqSearchDesc?: boolean; // If should Also search in room description for roomNameReq
+    roomTypeReq?: RoomControlType;
+    roomUseMaxMinutesReq?: boolean;
+    roomMaxMinutesReq?: number; // Maximum time in a room (in minutes)
 }
 
 // Data for the TaskManagerModule

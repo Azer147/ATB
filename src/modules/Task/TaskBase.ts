@@ -14,7 +14,7 @@ export abstract class TaskBase {
     // Main Task Process Variable
     private lastChecked: number = 0;
     private isTaskRespected: boolean = false;
-    private lastTimeTaskRespected: number = 0;
+    protected lastTimeTaskRespected: number = 0;
     protected TICK_PERIOD_MS: number = 5000; // 5sec
 
     // Internal variable for settings saving (shared between all task)
@@ -282,6 +282,7 @@ export abstract class TaskBase {
             TaskBase.shouldSave = true;
         }
     }
+    public onPlayerEnterRoom() {}
 
     public getFinishDescription(prefixStr: string): string {
         const finishCountLeftToDo = this.data.finishTotalNeeded - this.data.finishCurrentCount;

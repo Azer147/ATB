@@ -69,6 +69,7 @@ export class GuiTasksSettingsView extends GuiViewBase {
         const nakedTaskMainCard = this.buildNakedTaskCard();
         const nicknameTaskMainCard = this.buildNicknameTaskCard();
         const poseTaskMainCard = this.buildPoseTaskCard();
+        const roomControlTaskMainCard = this.buildRoomControlTaskCard();
 
         // Final Assembly
         form.appendChild(finishMainCard);
@@ -77,6 +78,7 @@ export class GuiTasksSettingsView extends GuiViewBase {
         form.appendChild(nakedTaskMainCard);
         form.appendChild(nicknameTaskMainCard);
         form.appendChild(poseTaskMainCard);
+        form.appendChild(roomControlTaskMainCard);
         this.parent.appendChild(form);
     }
 
@@ -644,6 +646,48 @@ export class GuiTasksSettingsView extends GuiViewBase {
         this.appendCommonTaskField(taskContent, prefixId, taskSetting);
 
         const avgRandomPerHour = GuiHelper.createFormField(FIELD_AVG_RANDOM_POSE);
+        taskContent.appendChild(avgRandomPerHour);
+
+        return taskMainCard;
+    }
+
+    private buildRoomControlTaskCard(): HTMLElement {
+        const prefixId = "atb-task-room-control";
+        const taskSetting = this.settings.roomControlTaskSettings;
+        // Fields
+        const FIELD_ENABLE: GuiFormField = {
+            html_id: prefixId + "-enable",
+            label: "Enable Room Control Task",
+            type: "checkbox",
+            default_value: taskSetting.enable,
+            onChange: (value: boolean) => {
+                taskSetting.enable = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_AVG_ROOM_CHANGE: GuiFormField = {
+            html_id: prefixId + "-change",
+            label: "Maximum time in a room (minutes)",
+            description: "Player will get a penalty if they stay in the same room for too long. (10-120 minutes)",
+            type: "number",
+            min_value: 10,
+            max_value: 120,
+            default_value: taskSetting.roomMaxMinutesReq,
+            onChange: (value: number) => {
+                taskSetting.roomMaxMinutesReq = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+
+        // Build Main task card
+        const tuple = GuiHelper.createFeatureToggleCard(FIELD_ENABLE, true);
+        const taskMainCard = tuple.card;
+        const taskContent = tuple.contentArea;
+
+        // Append directly to taskContent
+        this.appendCommonTaskField(taskContent, prefixId, taskSetting);
+
+        const avgRandomPerHour = GuiHelper.createFormField(FIELD_AVG_ROOM_CHANGE);
         taskContent.appendChild(avgRandomPerHour);
 
         return taskMainCard;

@@ -6,13 +6,14 @@ import { TaskBase } from "./Task/TaskBase";
 import { TaskWearBondage } from "./Task/TaskWearBondage";
 import { ChatColor, isLscgEffectsPreventOutfit, sendLocalMessage } from "@/utility/utility";
 import { GuiMainView } from "@/gui/GuiMainView";
-import { FinishType, FullTaskType, getTaskTypeConstant, PoseLowerSelection, PoseUpperSelection, WearBondageType } from "@/models/TasksSettings";
+import { FinishType, FullTaskType, getTaskTypeConstant, PoseLowerSelection, PoseUpperSelection, RoomControlType, WearBondageType } from "@/models/TasksSettings";
 import { getCharacterTaskManagerSettings, getCharacterTasksSettings } from "@/utility/CharacterWrapper";
 import { OutfitId } from "@/models/OutfitSettings";
 import { TaskWearOutfit } from "./Task/TaskWearOutfit";
 import { TaskNaked } from "./Task/TaskNaked";
 import { TaskNicknameControl } from "./Task/TaskNicknameControl";
 import { TaskPoseControl } from "./Task/TaskPoseControl";
+import { TaskRoomControl } from "./Task/TaskRoomControl";
 
 export class TaskManagerModule extends ModuleBase {
     TICK_PERIOD_MS: number = 800; // 0.8sec
@@ -92,6 +93,12 @@ export class TaskManagerModule extends ModuleBase {
                 this.dispatchSpankedEvent();
             }
         }));
+
+        // Entering a room
+        this.hook.push(BC_SDK.hookFunction('ChatRoomSync', 0, (args, next) => {
+            this.dispatchEnterRoomEvent();
+            return next(args);
+        }));
     }
 
     unload(): void {
@@ -116,6 +123,11 @@ export class TaskManagerModule extends ModuleBase {
     private dispatchSpankedEvent() {
         this.activeTaskList.forEach((task) => {
             task.onPlayerSpanked();
+        });
+    }
+    private dispatchEnterRoomEvent() {
+        this.activeTaskList.forEach((task) => {
+            task.onPlayerEnterRoom();
         });
     }
 
@@ -219,6 +231,24 @@ export class TaskManagerModule extends ModuleBase {
                 taskData.selected_upper_pose,
                 taskData.selected_lower_pose,
                 taskData.averageRandomPosePerHour,
+                taskData.finishType,
+                taskData.finishTotalNeeded,
+                taskData.enforce,
+                taskData.goodPtsOnSucces,
+                taskData.badPtsOnFailure,
+                taskData.gracePeriodMs,
+                overwrite
+            );
+        }
+        else if (taskData.type == "room_control" && taskData.roomNameReqSearchDesc != undefined
+            && taskData.roomUseMaxMinutesReq!= undefined && taskData.roomMaxMinutesReq != undefined
+        ) {
+            return this.startRoomControlTask(
+                taskData.roomNameReq,
+                taskData.roomNameReqSearchDesc,
+                taskData.roomTypeReq,
+                taskData.roomUseMaxMinutesReq,
+                taskData.roomMaxMinutesReq,
                 taskData.finishType,
                 taskData.finishTotalNeeded,
                 taskData.enforce,
@@ -369,6 +399,16 @@ export class TaskManagerModule extends ModuleBase {
                 return "can_start";
             }
         }
+        else if (type.taskType == "room_control") {
+            const ts = getCharacterTasksSettings(C);
+            if (ts && !ts.roomControlTaskSettings.enable) {
+                return "not_enabled";
+            /*} else if (TaskPoseControl.checkTaskPrevented(C)) {
+                return "not_available_bcx_rule";
+            */} else {
+                return "can_start";
+            }
+        }
         return "unknown";
     }
 
@@ -397,6 +437,9 @@ export class TaskManagerModule extends ModuleBase {
                 }
                 else if (taskData.type == "pose") {
                     task = new TaskPoseControl(taskData);
+                }
+                else if (taskData.type == "room_control") {
+                    task = new TaskRoomControl(taskData);
                 }
 
                 if (task) {
@@ -644,6 +687,46 @@ export class TaskManagerModule extends ModuleBase {
             averageRandomPosePerHour: averageRandomPosePerHour
         }
         let task = new TaskPoseControl(taskData);
+        this.startNewTask(task, taskData);
+        return true;
+    }
+
+    startRoomControlTask(roomNameReq: string | undefined, roomNameReqSearchDesc: boolean, roomTypeReq: RoomControlType | undefined,
+                        roomUseMaxMinutesReq: boolean, roomMaxMinutesReq: number,
+                        finishType: FinishType, finishTotal: number,
+                        enforce: boolean, successPts: number, failurePts: number,
+                        gracePeriod: number, overwrite: boolean = false): boolean {
+        // Case where the same task with same item already exist
+        const sameTask = this.getActiveTaskByType({taskType: "room_control"});
+        if (sameTask) {
+            if (overwrite) {
+                // on overwrite, force finish the same already active task with no pts reward
+                sameTask.triggerTaskCompletion(false, true);
+            } else {
+                console.warn("ATB: startRoomControlTask: Cannot start task: task requirement not met or already running.");
+                return false;
+            }
+        }
+
+        let taskData: TaskData = {
+            id: this.generateUniqueTaskId(),
+            type: "room_control",
+            description: "",
+            finishType: finishType,
+            finishCurrentCount: 0,
+            finishTotalNeeded: finishTotal,
+            progressPerc: 0,
+            enforce: enforce,
+            goodPtsOnSucces: successPts,
+            badPtsOnFailure: failurePts,
+            gracePeriodMs: gracePeriod,
+            roomNameReq: roomNameReq,
+            roomNameReqSearchDesc: roomNameReqSearchDesc,
+            roomTypeReq: roomTypeReq,
+            roomUseMaxMinutesReq: roomUseMaxMinutesReq,
+            roomMaxMinutesReq: roomMaxMinutesReq
+        }
+        let task = new TaskRoomControl(taskData);
         this.startNewTask(task, taskData);
         return true;
     }

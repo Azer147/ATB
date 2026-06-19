@@ -143,6 +143,7 @@ export class ChaoticMistressModule extends ModuleBase {
                     console.log(`ATB: triggerRandomTask: Selected ${selectedTask.taskType} finish type: ${selectedFinish} count: ${randFinishNeeded}`);
                     tm.startPoseTask("random", "random", this.tasksSettings.poseTaskSettings.averageRandomPosePerHour, selectedFinish, randFinishNeeded, false, reward, failure, gracePeriod);
                 }
+                // "room_control" not avaible for random task (todo: make it available for Max Time only?)
                 // "nickname" is not available for random task for now (would need something to generate good random nickname)
             }
         }
