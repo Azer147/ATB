@@ -116,6 +116,11 @@ export class TaskRoomControl extends TaskBase {
         sendLocalMessage(`Room Requirements not respected: ${this.lastTransgressionStr}, you have ${timeToComply} to comply or get a penalty!`, ChatColor.Red);
     }
 
+    protected override handleFirstTick(): void {
+        // Override handleFirstTick and do nothing
+        // This is to avoid handleFirstTick() calling enforceTask(), for this task we want to avoid a sudden auto-change room.
+    }
+
     protected isCharUnableToDoTask(): boolean {
         // Is in ChatRoom & cannot leave
         if (ChatRoomData) {

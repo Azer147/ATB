@@ -12,6 +12,7 @@ export abstract class TaskBase {
     private transgessionOccuring: boolean = false;
 
     // Main Task Process Variable
+    private firstTickDone: boolean = false;
     private lastChecked: number = 0;
     private isTaskRespected: boolean = false;
     protected lastTimeTaskRespected: number = 0;
@@ -44,11 +45,6 @@ export abstract class TaskBase {
 
         // Internal var init
         this.lastTimeTaskRespected = Date.now();
-
-        // On new task: Force the task if player unable to comply
-        if (this.data.enforce || this.isCharUnableToDoTask()) {
-            this.enforceTask();
-        }
     }
 
 
@@ -184,11 +180,26 @@ export abstract class TaskBase {
         }
     }
 
+    protected handleFirstTick(): void {
+        // On new task: Force the task if player unable to comply
+        if (this.data.enforce || this.isCharUnableToDoTask()) {
+            this.enforceTask();
+        }
+    }
+
     // Called every onTick.
     // Check if the player complying with the taks and update progress accordingly.
     // If enforce is true and the player is not complying, applying a penalty and force the task rule on the player.
     protected mainTaskProcess(currentTime: number) {
+        // Handle First run
+        if (!this.firstTickDone) {
+            this.firstTickDone = true;
+            this.handleFirstTick();
+        }
+
         // Update internal variable
+        // Note: keep this before isFinishConditionComplete
+        //      cuz some Task can trigger finish within checkTaskIsRespected() (TODO: maybe change this?)
         let isTaskRespectedBefore = this.isTaskRespected;
         this.isTaskRespected = this.checkTaskIsRespected();
         this.lastChecked = currentTime;
