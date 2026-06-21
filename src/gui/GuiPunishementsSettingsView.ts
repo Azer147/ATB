@@ -60,10 +60,14 @@ export class GuiPunishementsSettingsView extends GuiViewBase {
 
         const fullBondageCard = this.buildFullBondageCard();
         const harshOutfitCard = this.buildHarshOutfitCard();
+        const dollCard = this.buildDollCard();
+        const droneCard = this.buildDroneCard();
 
         // Final Assembly
         form.appendChild(fullBondageCard);
         form.appendChild(harshOutfitCard);
+        form.appendChild(dollCard);
+        form.appendChild(droneCard);
         this.parent.appendChild(form);
     }
 
@@ -115,6 +119,56 @@ export class GuiPunishementsSettingsView extends GuiViewBase {
         this.appendCommonPunishField(bondagePunishContent, prefixId, punishSettings);
 
         return bondagePunishMainCard;
+    }
+
+    private buildDollCard(): HTMLElement {
+        let prefixId = "atb-punish-doll";
+        let punishSettings = this.settings.dollPunishmentSettings;
+        // Fields
+        const FIELD_ENABLE: GuiFormField = {
+            html_id: prefixId + "-enable",
+            label: "Enable Doll Play Punishements",
+            type: "checkbox",
+            default_value: punishSettings.enable,
+            onChange: (value: boolean) => {
+                punishSettings.enable = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+
+        // Build Main card
+        const punishTuple = GuiHelper.createFeatureToggleCard(FIELD_ENABLE, true);
+        const punishMainCard = punishTuple.card;
+        const punishContent = punishTuple.contentArea;
+
+        this.appendCommonPunishField(punishContent, prefixId, punishSettings);
+
+        return punishMainCard;
+    }
+
+    private buildDroneCard(): HTMLElement {
+        let prefixId = "atb-punish-drone";
+        let punishSettings = this.settings.dollPunishmentSettings;
+        // Fields
+        const FIELD_ENABLE: GuiFormField = {
+            html_id: prefixId + "-enable",
+            label: "Enable Drone Play Punishements",
+            type: "checkbox",
+            default_value: punishSettings.enable,
+            onChange: (value: boolean) => {
+                punishSettings.enable = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+
+        // Build Main card
+        const punishTuple = GuiHelper.createFeatureToggleCard(FIELD_ENABLE, true);
+        const punishMainCard = punishTuple.card;
+        const punishContent = punishTuple.contentArea;
+
+        this.appendCommonPunishField(punishContent, prefixId, punishSettings);
+
+        return punishMainCard;
     }
 
 

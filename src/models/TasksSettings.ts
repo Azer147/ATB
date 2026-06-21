@@ -1,12 +1,11 @@
 
-
 /*
 ********** Types **********
 */
 
 // TODO: "outfit" | "activity" | "say" | "arousal" | "escape"
 export type TaskType = "wear_bondage" | "wear_outfit" | "naked" | "nickname" | "pose" | "room_control";
-export type PunishementType = "full_bondage" | "harsh_outfit";
+export type PunishementType = "full_bondage" | "harsh_outfit" | "doll" | "drone";
 
 // TODO: "orgasm_given" | "spank_given" | "date_time"
 export type FinishType = "duration" | "orgasm" | "orgasm_ruined" | "orgasm_resisted" | "spank";
@@ -112,6 +111,8 @@ export interface TasksSettings {
     // Punishments
     fullBondagePunishmentSettings: SinglePunishmentSettings;
     harshOutfitPunishmentSettings: SinglePunishmentSettings;
+    dollPunishmentSettings: SinglePunishmentSettings;
+    dronePunishmentSettings: SinglePunishmentSettings;
 }
 
 export const DefaultTasksSettings: TasksSettings = {
@@ -205,16 +206,34 @@ export const DefaultTasksSettings: TasksSettings = {
         baseGracePeriodMs: 15 * 1000, // 15 sec
         baseGoodPtsReward: 20,
         baseBadPointsPenalty: 5,
-        baseBadPtsReduction: 30,
+        baseBadPtsReduction: 20,
     },
     harshOutfitPunishmentSettings: {
         enable: true,
         randomWeight: 10,
         baseDurationMs: 30 * 60 * 1000, // 30 min
         baseGracePeriodMs: 15 * 1000, // 15 sec
-        baseGoodPtsReward: 20,
+        baseGoodPtsReward: 30,
         baseBadPointsPenalty: 5,
         baseBadPtsReduction: 30,
+    },
+    dollPunishmentSettings: {
+        enable: true,
+        randomWeight: 5,
+        baseDurationMs: 30 * 60 * 1000, // 30 min
+        baseGracePeriodMs: 60 * 1000, // 60 sec
+        baseGoodPtsReward: 20,
+        baseBadPointsPenalty: 3,
+        baseBadPtsReduction: 40,
+    },
+    dronePunishmentSettings: {
+        enable: true,
+        randomWeight: 5,
+        baseDurationMs: 30 * 60 * 1000, // 30 min
+        baseGracePeriodMs: 60 * 1000, // 60 sec
+        baseGoodPtsReward: 30,
+        baseBadPointsPenalty: 1,
+        baseBadPtsReduction: 50,
     }
 }
 
@@ -242,7 +261,9 @@ export const FullTaskList: FullTaskType[] =
 export const FullPunishementList: PunishementType[] =
 [
     "full_bondage",
-    "harsh_outfit"
+    "harsh_outfit",
+    "doll",
+    "drone"
 ];
 
 export const FullFinishList: FinishType[] =
@@ -270,6 +291,10 @@ export function getTaskTypeSetting(setting: TasksSettings, type: TaskType | Puni
             return setting.fullBondagePunishmentSettings;
         case "harsh_outfit":
             return setting.harshOutfitPunishmentSettings;
+        case "doll":
+            return setting.dollPunishmentSettings;
+        case "drone":
+            return setting.dronePunishmentSettings;
     }
     return undefined;
 }
@@ -295,6 +320,10 @@ export function getTaskTypeConstant(type: TaskType | PunishementType): TaskConst
             return FullBondagePunishementConstants;
         case "harsh_outfit":
             return HarshOutfitPunishementConstants;
+        case "doll":
+            return DollPunishementConstants;
+        case "drone":
+            return DronePunishementConstants;
     }
     return undefined;
 }
@@ -411,6 +440,37 @@ export const HarshOutfitPunishementConstants: TaskConstant = {
 
     mandatoryTasks: [
         {taskType: "wear_outfit"},
+    ],
+    incompatibleTasks: [
+        {taskType: "wear_bondage"},
+        {taskType: "naked"},
+    ],
+}
+export const DollPunishementConstants: TaskConstant = {
+    name: "Doll Play",
+
+    mandatoryTasks: [
+        {taskType: "wear_outfit"},
+    ],
+    optionalTasks: [
+        {taskType: "nickname"},
+        {taskType: "room_control"},
+    ],
+    incompatibleTasks: [
+        {taskType: "wear_bondage"},
+        {taskType: "naked"},
+    ],
+}
+export const DronePunishementConstants: TaskConstant = {
+    name: "Drone Play",
+
+    mandatoryTasks: [
+        {taskType: "wear_outfit"},
+    ],
+    optionalTasks: [
+        {taskType: "nickname"},
+        {taskType: "pose"},
+        {taskType: "room_control"},
     ],
     incompatibleTasks: [
         {taskType: "wear_bondage"},

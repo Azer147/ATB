@@ -100,6 +100,26 @@ export class GuiChaoticMistressView extends GuiViewBase {
                     startPunishementforCharacter(this.character, "harsh_outfit", duration);
                 }
             });
+            this.punishementList.push({
+                name: "Doll Play",
+                setting: this.tasksSettings.dollPunishmentSettings,
+                checkAvailable: () => {
+                    return ChaoticMistressModule.getAvailablePunishements().includes("doll");
+                },
+                onStart: (duration: number) => {
+                    startPunishementforCharacter(this.character, "doll", duration);
+                }
+            });
+            this.punishementList.push({
+                name: "Drone Play",
+                setting: this.tasksSettings.dronePunishmentSettings,
+                checkAvailable: () => {
+                    return ChaoticMistressModule.getAvailablePunishements().includes("drone");
+                },
+                onStart: (duration: number) => {
+                    startPunishementforCharacter(this.character, "drone", duration);
+                }
+            });
         }
     }
 

@@ -4,7 +4,7 @@ import StorageManager from "@/utility/StorageManager";
 import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
 import ModuleManager from "@/utility/ModuleManager";
 import { TaskManagerModule } from "./TaskManagerModule";
-import { FinishType, FullFinishList, FullPunishementList, FullTaskList, FullTaskType, getFinishTypeSetting, getTaskTypeConstant, getTaskTypeSetting, PunishementType, SingleTaskSettings, TasksSettings, TaskType } from "@/models/TasksSettings";
+import { FinishType, FullFinishList, FullPunishementList, FullTaskList, FullTaskType, getFinishTypeSetting, getTaskTypeConstant, getTaskTypeSetting, PunishementType, RoomControlType, SingleTaskSettings, TasksSettings, TaskType } from "@/models/TasksSettings";
 import { ChatColor, CloneAndRandomizeList, sendLocalMessage, shouldTriggerFromAveragePerHour } from "@/utility/utility";
 import { TaskCannotStartReason } from "@/models/TaskManagerSettings";
 import { allOutfitList, getOutfitSettingsFromId, OutfitId, OutfitTag, RawOutfit } from "@/models/OutfitSettings";
@@ -312,6 +312,12 @@ export class ChaoticMistressModule extends ModuleBase {
             if (type === "harsh_outfit") {
                 return cm.startHarshOutfitPunishment(duration);
             }
+            if (type === "doll") {
+                return cm.startDollPunishment(duration);
+            }
+            if (type === "drone") {
+                return cm.startDronePunishment(duration);
+            }
         }
         return false;
     }
@@ -323,8 +329,7 @@ export class ChaoticMistressModule extends ModuleBase {
             const badPtsReduction = ChaoticMistressModule.calculatePointsFromFinishCount(duration, punishSetting.baseDurationMs, punishSetting.baseBadPtsReduction, true);
             const penalty = punishSetting.baseBadPointsPenalty;
             const reward = punishSetting.baseGoodPtsReward;
-            //const grace = this.tasksSettings.wearBondageTaskSettings.baseGracePeriodMs;
-            const grace = 15000;
+            const grace = punishSetting.baseGracePeriodMs;
 
             console.log(`ATB: startFullBondagePunishment: Starting with duration: ${duration}`);
             sendLocalMessage("Starting Full Bondage Punishement", ChatColor.Purple);
@@ -352,8 +357,7 @@ export class ChaoticMistressModule extends ModuleBase {
             const badPtsReduction = ChaoticMistressModule.calculatePointsFromFinishCount(duration, punishSetting.baseDurationMs, punishSetting.baseBadPtsReduction, true);
             const penalty = punishSetting.baseBadPointsPenalty;
             const reward = punishSetting.baseGoodPtsReward;
-            //const grace = this.tasksSettings.wearBondageTaskSettings.baseGracePeriodMs;
-            const grace = 15000;
+            const grace = punishSetting.baseGracePeriodMs;
             const avgRandomExt = this.tasksSettings.wearOutfitTaskSettings.averageRandomExtPerHour;
 
             const selectedOutfit = this.selectRandomOutfit(["harsh"], []); // only harsh outfit
@@ -365,6 +369,98 @@ export class ChaoticMistressModule extends ModuleBase {
             sendLocalMessage("Starting Harsh Outfit Punishement", ChatColor.Purple);
 
             tm.startWearOutfitTask(selectedOutfit, "duration", duration, true, reward, penalty, grace, true, avgRandomExt, true);
+
+            // TODO: check retrun and return false if needed
+            this.modifyBadPts(-badPtsReduction);
+
+            return true;
+        }
+        return false;
+    }
+
+    startDollPunishment(duration: number): boolean {
+        const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
+        if (tm) {
+            const punishSetting = this.tasksSettings.dollPunishmentSettings;
+            const badPtsReduction = ChaoticMistressModule.calculatePointsFromFinishCount(duration, punishSetting.baseDurationMs, punishSetting.baseBadPtsReduction, true);
+            const penalty = punishSetting.baseBadPointsPenalty;
+            const reward = punishSetting.baseGoodPtsReward;
+            const grace = punishSetting.baseGracePeriodMs;
+            // Outfit variable
+            const outfitAvgRandomExt = this.tasksSettings.wearOutfitTaskSettings.averageRandomExtPerHour;
+
+            // Nickname varible
+            const newNickname = "DOLL-" + Player.MemberNumber;
+
+            // Room Control variable
+            const roomNameReq = "doll";
+            const roomNameReqUseSearch = true;
+            const roomtypeReq: RoomControlType = "free";
+            let roomMaxMinutesReq = this.tasksSettings.roomControlTaskSettings.roomMaxMinutesReq;
+            let roomUseMaxMinutesReq = true;
+            if (roomMaxMinutesReq < 15) {
+                roomMaxMinutesReq = 15;
+            }
+
+            const selectedOutfit = this.selectRandomOutfit(["doll"], []); // only doll outfit
+            if (!selectedOutfit) {
+                return false;
+            }
+
+            console.log(`ATB: startDollPunishment: Starting with duration: ${duration} and outfit: ${selectedOutfit}`);
+            sendLocalMessage("Starting Doll Punishement", ChatColor.Purple);
+
+            tm.startWearOutfitTask(selectedOutfit, "duration", duration, true, reward, penalty, grace, true, outfitAvgRandomExt, true);
+            tm.startNicknameTask(newNickname, "duration", duration, true, reward, penalty, grace, true);
+            tm.startRoomControlTask(roomNameReq, roomNameReqUseSearch, roomtypeReq, roomUseMaxMinutesReq, roomMaxMinutesReq, "duration", duration, true, reward, penalty, grace, true);
+
+            // TODO: check retrun and return false if needed
+            this.modifyBadPts(-badPtsReduction);
+
+            return true;
+        }
+        return false;
+    }
+
+    startDronePunishment(duration: number): boolean {
+        const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
+        if (tm) {
+            const punishSetting = this.tasksSettings.dronePunishmentSettings;
+            const badPtsReduction = ChaoticMistressModule.calculatePointsFromFinishCount(duration, punishSetting.baseDurationMs, punishSetting.baseBadPtsReduction, true);
+            const penalty = punishSetting.baseBadPointsPenalty;
+            const reward = punishSetting.baseGoodPtsReward;
+            const grace = punishSetting.baseGracePeriodMs;
+            // Outfit variable
+            const outfitAvgRandomExt = this.tasksSettings.wearOutfitTaskSettings.averageRandomExtPerHour;
+
+            // Nickname varible
+            const newNickname = "DRONE-" + Player.MemberNumber;
+
+            // Pose variable
+            const poseAvgRandom = this.tasksSettings.poseTaskSettings.averageRandomPosePerHour;
+
+            // Room Control variable
+            const roomNameReq = "";
+            const roomNameReqUseSearch = true;
+            const roomtypeReq: RoomControlType = "public_only";
+            let roomMaxMinutesReq = this.tasksSettings.roomControlTaskSettings.roomMaxMinutesReq;
+            let roomUseMaxMinutesReq = true;
+            if (roomMaxMinutesReq < 10 || roomMaxMinutesReq > 20) {
+                roomMaxMinutesReq = 10;
+            }
+
+            const selectedOutfit = this.selectRandomOutfit(["drone"], []); // only drone outfit
+            if (!selectedOutfit) {
+                return false;
+            }
+
+            console.log(`ATB: startDronePunishment: Starting with duration: ${duration} and outfit: ${selectedOutfit}`);
+            sendLocalMessage("Starting Drone Punishement", ChatColor.Purple);
+
+            tm.startWearOutfitTask(selectedOutfit, "duration", duration, true, reward, penalty, grace, true, outfitAvgRandomExt, true);
+            tm.startNicknameTask(newNickname, "duration", duration, true, reward, penalty, grace, true);
+            tm.startPoseTask("random", "random", poseAvgRandom, "duration", duration, true, reward, penalty, grace, true);
+            tm.startRoomControlTask(roomNameReq, roomNameReqUseSearch, roomtypeReq, roomUseMaxMinutesReq, roomMaxMinutesReq, "duration", duration, true, reward, penalty, grace, true);
 
             // TODO: check retrun and return false if needed
             this.modifyBadPts(-badPtsReduction);
