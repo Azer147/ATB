@@ -4,6 +4,7 @@ import { DeviousShocksSettings } from "@/models/DeviousShocksSettings";
 import { GeneralSettings } from "@/models/GeneralSettings";
 import { OutfitsSettings } from "@/models/OutfitSettings";
 import { RandomEventsSettings } from "@/models/RandomEventsSettings";
+import { isCharHaveRemoteAccessOnTarget, RemoteAccessSettings } from "@/models/RemoteAccessSettings";
 import { TaskManagerSettings } from "@/models/TaskManagerSettings";
 import { TasksSettings } from "@/models/TasksSettings";
 
@@ -36,9 +37,11 @@ export default class StorageManager {
     static getOutfitSettings(): OutfitsSettings {
         return StorageManager.globalSettings.OutfitsSettings;
     }
+    static getRemoteAccessSettings(): RemoteAccessSettings {
+        return StorageManager.globalSettings.RemoteAccessSettings;
+    }
 
     static getPublicSettings(): CoreSettings {
-        // TODO: Select settings based on remote Access settings
         const publicSettings: CoreSettings = {
             Enable: this.getGlobalEnable(),
             GeneralModule: this.getGeneralSettings(),
@@ -48,6 +51,7 @@ export default class StorageManager {
             TaskManagerModule: this.getTaskManagerSettings(),
             TasksSettings: this.getTasksSettings(),
             OutfitsSettings: this.getOutfitSettings(),
+            RemoteAccessSettings: this.getRemoteAccessSettings()
         }
         return publicSettings;
     }
@@ -90,7 +94,53 @@ export default class StorageManager {
 
     // Apply settings received, use mergeSettings
     // Also prevent applying internal settings that shouldn't modified from an external source
-    public static applyExternalSettingsToPlayer(newSettings: CoreSettings) {
+    public static applyExternalSettingsToPlayer(sender: number, newSettings: CoreSettings) {
+        // Ignore all internal fields that shouldn't be changed
+        const ignoredKeys = Object.assign([], allInternalfields);
+
+        // Ignore everything sender does not have access based on RemoteAccessSettings
+        const remoteAccessSettings = StorageManager.getRemoteAccessSettings();
+        if (remoteAccessSettings) {
+            if (!isCharHaveRemoteAccessOnTarget(sender, Player, remoteAccessSettings.taskSettingsPermission)) {
+                ignoredKeys.push("wearBondageTaskSettings");
+                ignoredKeys.push("wearOutfitTaskSettings");
+                ignoredKeys.push("nakedTaskSettings");
+                ignoredKeys.push("nicknameTaskSettings");
+                ignoredKeys.push("poseTaskSettings");
+                ignoredKeys.push("roomControlTaskSettings");
+                ignoredKeys.push("taskFinishSettings");
+            }
+            if (!isCharHaveRemoteAccessOnTarget(sender, Player, remoteAccessSettings.punishementSettingsPermission)) {
+                ignoredKeys.push("fullBondagePunishmentSettings");
+                ignoredKeys.push("harshOutfitPunishmentSettings");
+                ignoredKeys.push("dollPunishmentSettings");
+                ignoredKeys.push("dronePunishmentSettings");
+            }
+            if (!isCharHaveRemoteAccessOnTarget(sender, Player, remoteAccessSettings.chaoticMistressSettingsPermission)) {
+                ignoredKeys.push("ChaoticMistressModule");
+            }
+            if (!isCharHaveRemoteAccessOnTarget(sender, Player, remoteAccessSettings.randomEventSettingsPermission)) {
+                ignoredKeys.push("RandomEventsModule");
+            }
+            if (!isCharHaveRemoteAccessOnTarget(sender, Player, remoteAccessSettings.outfitSettingsPermission)) {
+                ignoredKeys.push("OutfitsSettings");
+            }
+            if (!isCharHaveRemoteAccessOnTarget(sender, Player, remoteAccessSettings.remoteAccessSettingsPermission)) {
+                ignoredKeys.push("RemoteAccessSettings");
+            }
+
+            // TODO
+            /*if (!isCharHaveRemoteAccessOnTarget(sender, Player, remoteAccessSettings.harshSettingsPermission)) {
+                ignoredKeys.push("");
+            }
+            if (!isCharHaveRemoteAccessOnTarget(sender, Player, remoteAccessSettings.lockSettingsPermission)) {
+                ignoredKeys.push("");
+            }
+            if (!isCharHaveRemoteAccessOnTarget(sender, Player, remoteAccessSettings.fullLockSettingsPermission)) {
+                ignoredKeys.push("");
+            }*/
+        }
+
         StorageManager.mergeSettings(StorageManager.globalSettings, newSettings, allInternalfields);
     }
 

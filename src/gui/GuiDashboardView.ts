@@ -4,6 +4,7 @@ import { GuiHelper } from "./GuiHelper";
 import { formatTimeMs } from "@/utility/utility";
 import GuiViewBase from "./GuiViewBase";
 import { getCharacterActiveTaskById, getCharacterChaoticMistressSettings, getCharacterTaskManagerSettings, skipTaskforCharacter } from "@/utility/CharacterWrapper";
+import { isPlayerHaveRemoteAccess } from "@/models/RemoteAccessSettings";
 
 export default class GuiDashboardView extends GuiViewBase {
     private STRINGS = {
@@ -240,7 +241,7 @@ export default class GuiDashboardView extends GuiViewBase {
     }
 
     private updateSkipBtn(task: TaskData, skipBtn: HTMLButtonElement) {
-        if (task.enforce) {
+        if (task.enforce || !isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings.editTaskPermission)) {
             skipBtn.disabled = true;
             skipBtn.innerText = `${this.STRINGS.LOCKED}`;
         } else if (task.progressPerc >= 100) {

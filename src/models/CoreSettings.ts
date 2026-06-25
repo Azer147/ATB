@@ -3,6 +3,7 @@ import { DefaultDeviousShocksSettings, DeviousShocksSettings } from "./DeviousSh
 import { DefaultGeneralSettings, GeneralInternalfields, GeneralSettings } from "./GeneralSettings";
 import { DefaultOutfitSettings, OutfitsSettings } from "./OutfitSettings";
 import { DefaultRandomEventsSettings, RandomEventsSettings } from "./RandomEventsSettings";
+import { DefaultRemoteAccessSettings, RemoteAccessSettings } from "./RemoteAccessSettings";
 import { SleepControlSettings } from "./SleepControlSettings";
 import { DefaultTaskManagerSettings, TaskManagerInternalfields, TaskManagerSettings } from "./TaskManagerSettings";
 import { DefaultTasksSettings, TasksSettings } from "./TasksSettings";
@@ -16,6 +17,7 @@ export interface CoreSettings {
     TaskManagerModule: TaskManagerSettings;
     TasksSettings: TasksSettings;
     OutfitsSettings: OutfitsSettings;
+    RemoteAccessSettings: RemoteAccessSettings;
     //SleepControlModule: SleepControlSettings;
 }
 
@@ -28,6 +30,7 @@ export const DefaultCoreSettings: CoreSettings = {
     TaskManagerModule: DefaultTaskManagerSettings,
     TasksSettings: DefaultTasksSettings,
     OutfitsSettings: DefaultOutfitSettings,
+    RemoteAccessSettings: DefaultRemoteAccessSettings,
     //SleepControlModule: DefaultSleepControlSettings
 }
 

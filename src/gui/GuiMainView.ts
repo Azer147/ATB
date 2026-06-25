@@ -9,9 +9,11 @@ import { GuiTasksSettingsView } from "./GuiTasksSettingsView";
 import GuiViewBase from "./GuiViewBase";
 import { GuiOutfitSettingsView } from "./GuiOutfitSettingsView";
 import { GuiOutfitEditorView } from "./GuiOutfitEditorView";
+import { GuiRemoteAccessSettingsView } from "./GuiRemoteAccessSettingsView";
+import { isPlayerHaveRemoteAccess } from "@/models/RemoteAccessSettings";
 
 type TabName = "Dashboard" | "Create Task" | "Chaotic Mistress" | "Random Events" | "Tasks Settings" | "Punishements Settings"
-             | "Outfit Settings" | "Outfit Editor" | "Debug";
+             | "Outfit Settings" | "Outfit Editor" | "Remote Access Settings" | "Debug";
 
 export interface TabConfig {
     render: (parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter) => GuiViewBase | undefined;
@@ -28,16 +30,30 @@ export class GuiMainView {
 
     private static readonly tabRegistry: Record<TabName, TabConfig> = {
         "Dashboard": {render: (parent, C) => { return new GuiDashboardView(parent, C) as GuiViewBase; }},
-        "Create Task": {render: (parent, C) => { return new GuiCreateTaskView(parent, C) as GuiViewBase; }},
-        "Chaotic Mistress": {render: (parent, C) => { return new GuiChaoticMistressView(parent, C) as GuiViewBase; }},
-        "Random Events": {render: (parent, C) => { return new GuiRandomEventsView(parent, C) as GuiViewBase; }},
-        "Tasks Settings": {render: (parent, C) => { return new GuiTasksSettingsView(parent, C) as GuiViewBase; }},
-        "Punishements Settings": {render: (parent, C) => { return new GuiPunishementsSettingsView(parent, C) as GuiViewBase; }},
-        "Outfit Settings": {render: (parent, C) => { return new GuiOutfitSettingsView(parent, C) as GuiViewBase; }},
+        "Create Task": {render: (parent, C) => { return new GuiCreateTaskView(parent, C) as GuiViewBase; },
+                showCondition: (C) => {
+                    return (isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.createTaskPermission)
+                            || isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.editTaskPermission));
+                }},
+        "Chaotic Mistress": {render: (parent, C) => { return new GuiChaoticMistressView(parent, C) as GuiViewBase; },
+                showCondition: (C) => {
+                    return (isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.chaoticMistressSettingsPermission)
+                            || isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.useEnforcedPermission));
+                }},
+        "Random Events": {render: (parent, C) => { return new GuiRandomEventsView(parent, C) as GuiViewBase; },
+                showCondition: (C) => {return (isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.randomEventSettingsPermission));}},
+        "Tasks Settings": {render: (parent, C) => { return new GuiTasksSettingsView(parent, C) as GuiViewBase; },
+                showCondition: (C) => {return (isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.taskSettingsPermission));}},
+        "Punishements Settings": {render: (parent, C) => { return new GuiPunishementsSettingsView(parent, C) as GuiViewBase; },
+                showCondition: (C) => {return (isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.punishementSettingsPermission));}},
+        "Outfit Settings": {render: (parent, C) => { return new GuiOutfitSettingsView(parent, C) as GuiViewBase; },
+                showCondition: (C) => {return (isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.outfitSettingsPermission));}},
         "Outfit Editor": {render: (parent, C) => { return new GuiOutfitEditorView(parent, C) as GuiViewBase; },
-                        showCondition: (C) => { return C.IsPlayer()}},
+                showCondition: (C) => { return C.IsPlayer()}},
+        "Remote Access Settings": {render: (parent, C) => { return new GuiRemoteAccessSettingsView(parent, C) as GuiViewBase; },
+                showCondition: (C) => {return (isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.remoteAccessSettingsPermission));}},
         "Debug": {render: (parent, C) => { return new GuiDebugView(parent, C) as GuiViewBase; },
-                    showCondition: (C) => { return C.IsPlayer()}},
+                showCondition: (C) => { return C.IsPlayer()}},
     };
 
     public static toggleUi(C: OtherCharacter | PlayerCharacter) {

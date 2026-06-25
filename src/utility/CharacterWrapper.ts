@@ -11,6 +11,7 @@ import { RemoteModule } from "@/modules/RemoteModule";
 import { ChaoticMistressModule } from "@/modules/ChaoticMistressModule";
 import { OutfitsSettings } from "@/models/OutfitSettings";
 import { DeviousShocksSettings } from "@/models/DeviousShocksSettings";
+import { RemoteAccessSettings } from "@/models/RemoteAccessSettings";
 
 /**
  * Wrappers to handle most Character access between PlayerCharacter and OhterCharacter
@@ -53,6 +54,11 @@ export function getCharacterTasksSettings(C: OtherCharacter | PlayerCharacter): 
 export function getCharacterOutfitSettings(C: OtherCharacter | PlayerCharacter): OutfitsSettings | undefined {
     if (C.IsPlayer()) return StorageManager.getOutfitSettings();
     if (C.ATB && C.ATB.OutfitsSettings) return C.ATB.OutfitsSettings;
+    return undefined;
+}
+export function getCharacterRemoteAccessSettings(C: OtherCharacter | PlayerCharacter): RemoteAccessSettings | undefined {
+    if (C.IsPlayer()) return StorageManager.getRemoteAccessSettings();
+    if (C.ATB && C.ATB.RemoteAccessSettings) return C.ATB.RemoteAccessSettings;
     return undefined;
 }
 export function saveSettings(C: OtherCharacter | PlayerCharacter) {

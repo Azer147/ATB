@@ -12,6 +12,7 @@ import { TaskWearBondage } from "@/modules/Task/TaskWearBondage";
 import { checkNicknameValidity } from "@/utility/utility";
 import { TaskPoseControl } from "@/modules/Task/TaskPoseControl";
 import { TaskRoomControl } from "@/modules/Task/TaskRoomControl";
+import { isPlayerHaveRemoteAccess } from "@/models/RemoteAccessSettings";
 
 export class GuiCreateTaskView extends GuiViewBase {
     //private form: HTMLElement;
@@ -56,6 +57,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         type: "checkbox",
         useInputPadding: true, // makes it align correctly with input fields on the same row
         default_value: false,
+        disable: !isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.useEnforcedPermission)
     };
     private FIELD_REWARD_INPUT: GuiFormField = {
         html_id: "atb-create-task-reward",
@@ -470,6 +472,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         this.createTaskBtn.className = "atb-main-btn";
         this.createTaskBtn.style.marginTop = "10px";
         this.createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN;
+        this.createTaskBtn.disabled = !isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.createTaskPermission);
         this.createTaskBtn.onclick = () => {
             this.onClickCreateTask(form);
         };

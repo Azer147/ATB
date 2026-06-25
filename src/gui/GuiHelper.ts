@@ -26,6 +26,9 @@ export interface GuiFormField {
     // optional for displayText
     usePrimaryColor?: boolean;
 
+    // optional: assume false if not filled
+    disable?: boolean,
+
     onChange?: (value: any) => void;
 }
 
@@ -67,13 +70,18 @@ export class GuiHelper {
     public static createFormField(field: GuiFormField): HTMLElement {
         switch (field.type) {
             case "number":
-                return this.createNumberInput(field.html_id, field.label, field.description, field.default_value as number, field.min_value ?? 0, field.max_value ?? 10000, field.onChange);
+                const minValue = field.min_value ?? 0;
+                const defaultNumValue = typeof field.default_value === "number" ? field.default_value : 0;
+                return this.createNumberInput(field.html_id, field.label, field.description, defaultNumValue, minValue, field.max_value ?? 10000, field.disable ?? false, field.onChange);
             case "checkbox":
-                return this.createCheckbox(field.html_id, field.label, field.description, field.default_value as boolean, field.useInputPadding ?? false, field.onChange);
+                const defaultBoolValue = typeof field.default_value === "boolean" ? field.default_value : false;
+                return this.createCheckbox(field.html_id, field.label, field.description, defaultBoolValue, field.useInputPadding ?? false, field.disable ?? false, field.onChange);
             case "select":
-                return this.createSelect(field.html_id, field.label, field.description, field.options ?? [], field.onChange);
+                const defaultSelectValue = typeof field.default_value === "string" ? field.default_value : "";
+                return this.createSelect(field.html_id, field.label, field.description, defaultSelectValue, field.options ?? [], field.disable ?? false, field.onChange);
             case "text":
-                return this.createTextInput(field.html_id, field.label, field.description, field.default_value as string, field.max_length, field.onChange);
+                const defaultTextValue = typeof field.default_value === "string" ? field.default_value : "";
+                return this.createTextInput(field.html_id, field.label, field.description, defaultTextValue, field.max_length, field.disable ?? false, field.onChange);
             case "display-text":
                 return this.createTextDisplay(field.html_id, field.label, field.usePrimaryColor);
             default:
@@ -108,7 +116,7 @@ export class GuiHelper {
         }
     }
 
-    public static createCheckbox(htmlId: string, labelText: string, description: string | undefined, defaultValue: boolean, useInputPadding: boolean, onChange?: (value: boolean) => void): HTMLElement {
+    public static createCheckbox(htmlId: string, labelText: string, description: string | undefined, defaultValue: boolean, useInputPadding: boolean, disable: boolean, onChange?: (value: boolean) => void): HTMLElement {
         const checkboxWrapper = document.createElement("label");
         checkboxWrapper.className = "atb-checkbox-label";
 
@@ -122,7 +130,8 @@ export class GuiHelper {
         checkboxInput.type = "checkbox";
         checkboxInput.className = "atb-form-checkbox";
         checkboxInput.checked = defaultValue;
-        if (onChange) {
+        checkboxInput.disabled = disable;
+        if (!disable && onChange) {
             checkboxInput.addEventListener("change", () => onChange(checkboxInput.checked));
         }
 
@@ -141,7 +150,7 @@ export class GuiHelper {
         return checkboxWrapper;
     }
 
-    public static createNumberInput(htmlId: string, labelText: string, description: string | undefined, defaultValue: number, min: number, max: number, onChange?: (value: number) => void): HTMLDivElement {
+    public static createNumberInput(htmlId: string, labelText: string, description: string | undefined, defaultValue: number, min: number, max: number, disable: boolean, onChange?: (value: number) => void): HTMLDivElement {
         const wrapper = document.createElement("div");
         wrapper.className = "atb-form-group";
 
@@ -160,11 +169,12 @@ export class GuiHelper {
         input.value = defaultValue.toString();
         input.min = min.toString();
         input.max = max.toString();
+        input.disabled = disable;
         if (!Number.isInteger(min) || !Number.isInteger(max) || !Number.isInteger(defaultValue)) {
             input.step = "0.1";
         }
 
-        if (onChange) {
+        if (!disable && onChange) {
             input.addEventListener("change", () => {
                 let value = parseFloat(input.value);
                 if (value < min) {
@@ -181,7 +191,7 @@ export class GuiHelper {
         return wrapper;
     }
 
-    public static createSelect(htmlId: string, labelText: string, description: string | undefined, options: {value: string, label: string}[], onChange?: (value: string) => void): HTMLDivElement {
+    public static createSelect(htmlId: string, labelText: string, description: string | undefined, defaultValue: string, options: {value: string, label: string}[], disable: boolean, onChange?: (value: string) => void): HTMLDivElement {
         const wrapper = document.createElement("div");
         wrapper.className = "atb-form-group";
 
@@ -197,14 +207,24 @@ export class GuiHelper {
         select.className = "atb-form-input";
         select.id = htmlId;
 
+        let isDefaultValueValid = false;
         options.forEach(opt => {
             const optionEl = document.createElement("option");
             optionEl.value = opt.value;
             optionEl.innerText = opt.label;
             select.appendChild(optionEl);
+
+            // Also check if default value exist in options
+            if (defaultValue == opt.value) isDefaultValueValid = true;
         });
 
-        if (onChange) {
+        if (isDefaultValueValid) {
+            select.value = defaultValue;
+        }
+
+        select.disabled = disable;
+
+        if (!disable && onChange) {
             select.addEventListener("change", () => onChange(select.value));
         }
 
@@ -213,7 +233,7 @@ export class GuiHelper {
         return wrapper;
     }
 
-    public static createTextInput(htmlId: string, labelText: string, description: string | undefined, defaultValue: string, maxLength: number | undefined, onChange?: (value: string) => void): HTMLDivElement {
+    public static createTextInput(htmlId: string, labelText: string, description: string | undefined, defaultValue: string, maxLength: number | undefined, disable: boolean, onChange?: (value: string) => void): HTMLDivElement {
         const wrapper = document.createElement("div");
         wrapper.className = "atb-form-group";
 
@@ -230,12 +250,13 @@ export class GuiHelper {
         input.className = "atb-form-input";
         input.type = "text";
         input.value = defaultValue.toString();
+        input.disabled = disable;
 
         if (maxLength !== undefined) {
             input.maxLength = maxLength;
         }
 
-        if (onChange) {
+        if (!disable && onChange) {
             input.addEventListener("change", () => {
                 onChange(input.value)
             });
@@ -475,7 +496,7 @@ export class GuiHelper {
         const headerLeft = document.createElement("div");
         headerLeft.style.display = "flex";
         headerLeft.style.alignItems = "center";
-        headerLeft.style.gap = "30px";
+        headerLeft.style.gap = "15px";
 
         // Expand/Collapse Icon (+/-)
         const expandIcon = document.createElement("span");
@@ -485,13 +506,15 @@ export class GuiHelper {
         expandIcon.style.color = "var(--atb-text-muted)";
         expandIcon.style.userSelect = "none";
         expandIcon.style.display = useContentArea ? "inline-block" : "none"; // Hide if no content
+        expandIcon.style.paddingLeft = "5px";
+        expandIcon.style.paddingRight = "5px";
         expandIcon.innerText = isExpanded ? "-" : "+";
 
         // The Main Checkbox
         let checkboxInput;
         let checkboxWrapper: HTMLElement;
         if (field.type == "checkbox") {
-            checkboxWrapper = this.createCheckbox(field.html_id, field.label, field.description, isEnabled, false);
+            checkboxWrapper = this.createCheckbox(field.html_id, field.label, field.description, isEnabled, false, field.disable ?? false);
             checkboxInput = checkboxWrapper.querySelector("input") as HTMLInputElement;
         } else { // display-text
             checkboxWrapper = document.createElement("div");

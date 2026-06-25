@@ -4,8 +4,9 @@ import { BC_SDK } from "..";
 import { CoreSettings } from "@/models/CoreSettings";
 import { TaskData } from "@/models/TaskManagerSettings";
 import { PunishementType } from "@/models/TasksSettings";
-import { skipTaskforCharacter, startPunishementforCharacter, startTaskforCharacter } from "@/utility/CharacterWrapper";
+import { getCharacterRemoteAccessSettings, skipTaskforCharacter, startPunishementforCharacter, startTaskforCharacter } from "@/utility/CharacterWrapper";
 import { GuiMainView } from "@/gui/GuiMainView";
+import { isCharHaveRemoteAccessOnTarget } from "@/models/RemoteAccessSettings";
 
 export interface AtbDataRequest<T = any> {
     reqId: number;
@@ -234,6 +235,8 @@ export class RemoteModule extends ModuleBase {
             let C = ChatRoomGetCharacter(data.Sender) as OtherCharacter;
             var msg = (data.Dictionary[0] as any).data as AtbMessage;
 
+            const remoteAccessSettings = StorageManager.getRemoteAccessSettings();
+
             // playerIsTarget is also true if target not specified
             const playerIsTarget = (!msg.target || msg.target == Player.MemberNumber);
             if (data.Sender != Player.MemberNumber && playerIsTarget) {
@@ -247,19 +250,34 @@ export class RemoteModule extends ModuleBase {
                         RemoteModule.boradcastAtbSettings(false, msg.req_id);
                         break;
                     case "apply_settings":
-                        StorageManager.applyExternalSettingsToPlayer(msg.newSettings);
+                        StorageManager.applyExternalSettingsToPlayer(data.Sender, msg.newSettings);
                         break;
                     case "start_task":
+                        // Check Player allow Sender to create task (RemoteAccessSettings)
+                        if (remoteAccessSettings && !isCharHaveRemoteAccessOnTarget(data.Sender, Player, remoteAccessSettings.createTaskPermission)) {
+                            console.warn("ATB: received start_task remote request from sender="+data.Sender+" that is not allowed based on the Player RemoteAccessSettings. This request will be ignored.");
+                            return;
+                        }
                         startTaskforCharacter(Player, msg.taskData, msg.overwrite);
                         // TODO: improve boradcastAtbSettings efficiency (maybe only send to target ?)
                         RemoteModule.boradcastAtbSettings(false); // Re-send new settings
                         break;
                     case "start_punishement":
+                        // Check Player allow Sender to start punishement (RemoteAccessSettings)
+                        if (remoteAccessSettings && !isCharHaveRemoteAccessOnTarget(data.Sender, Player, remoteAccessSettings.useEnforcedPermission)) {
+                            console.warn("ATB: received start_punishement remote request from sender="+data.Sender+" that is not allowed based on the Player RemoteAccessSettings. This request will be ignored.");
+                            return;
+                        }
                         startPunishementforCharacter(Player, msg.punishtype, msg.duration);
                         // TODO: improve boradcastAtbSettings efficiency (maybe only send to target ?)
                         RemoteModule.boradcastAtbSettings(false); // Re-send new settings
                         break;
                     case "skip_task":
+                        // Check Player allow Sender to start skip a task (RemoteAccessSettings)
+                        if (remoteAccessSettings && !isCharHaveRemoteAccessOnTarget(data.Sender, Player, remoteAccessSettings.editTaskPermission)) {
+                            console.warn("ATB: received skip_task remote request from sender="+data.Sender+" that is not allowed based on the Player RemoteAccessSettings. This request will be ignored.");
+                            return;
+                        }
                         skipTaskforCharacter(Player, msg.taskId);
                         // TODO: improve boradcastAtbSettings efficiency (maybe only send to target ?)
                         RemoteModule.boradcastAtbSettings(false); // Re-send new settings

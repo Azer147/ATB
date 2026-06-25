@@ -4,6 +4,7 @@ import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
 import { ChaoticMistressModule } from "@/modules/ChaoticMistressModule";
 import GuiViewBase from "./GuiViewBase";
 import { getCharacterChaoticMistressSettings, getCharacterTasksSettings, saveSettings, startPunishementforCharacter } from "@/utility/CharacterWrapper";
+import { isPlayerHaveRemoteAccess } from "@/models/RemoteAccessSettings";
 
 
 export interface GuiPunishmentCardConfig {
@@ -49,7 +50,8 @@ export class GuiChaoticMistressView extends GuiViewBase {
         BAD_POINTS: "Bad Points (BP)",
 
         START_TASK: "Start Task",
-        NOT_AVAILABLE: "Not Available"
+        NOT_AVAILABLE: "Not Available",
+        NO_PERMISSION: "No Permission"
     };
 
 
@@ -154,11 +156,13 @@ export class GuiChaoticMistressView extends GuiViewBase {
     }
 
     private buildPointsSystemCard(container: HTMLElement): HTMLElement {
+        const haveSettingsAccess = isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.chaoticMistressSettingsPermission);
         // Fields
         const FIELD_ENABLE: GuiFormField = {
             html_id: "atb-chaotic-pts-system-enable",
             label: "Enable Points System (Recommended)",
             type: "checkbox",
+            disable: !haveSettingsAccess,
             default_value: this.settings.enablePointsSystem,
             onChange: (value: boolean) => {
                 this.settings.enablePointsSystem = value;
@@ -171,6 +175,7 @@ export class GuiChaoticMistressView extends GuiViewBase {
             type: "number",
             min_value: 0,
             max_value: 1000,
+            disable: !haveSettingsAccess,
             default_value: this.settings.forcedPunishementThreshold,
             onChange: (value: number) => {
                 this.settings.forcedPunishementThreshold = value;
@@ -191,11 +196,13 @@ export class GuiChaoticMistressView extends GuiViewBase {
     }
 
     private buildRandomTaskCard(): HTMLElement {
+        const haveSettingsAccess = isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.chaoticMistressSettingsPermission);
         // Fields
         const FIELD_ENABLE: GuiFormField = {
             html_id: "atb-chaotic-random-task-enable",
             label: "Enable Random Tasks",
             type: "checkbox",
+            disable: !haveSettingsAccess,
             default_value: this.settings.enableRandomTasks,
             onChange: (value: boolean) => {
                 this.settings.enableRandomTasks = value;
@@ -208,6 +215,7 @@ export class GuiChaoticMistressView extends GuiViewBase {
             type: "number",
             min_value: 0.1,
             max_value: 15.0,
+            disable: !haveSettingsAccess,
             default_value: this.settings.averageNewTaskPerHour,
             onChange: (value: number) => {
                 this.settings.averageNewTaskPerHour = value;
@@ -220,6 +228,7 @@ export class GuiChaoticMistressView extends GuiViewBase {
             type: "number",
             min_value: 5,
             max_value: 1000,
+            disable: !haveSettingsAccess,
             default_value: this.settings.minRandomFinishNeeded,
             onChange: (value: number) => {
                 this.settings.minRandomFinishNeeded = value;
@@ -232,6 +241,7 @@ export class GuiChaoticMistressView extends GuiViewBase {
             type: "number",
             min_value: 5,
             max_value: 1000,
+            disable: !haveSettingsAccess,
             default_value: this.settings.maxRandomFinishNeeded,
             onChange: (value: number) => {
                 this.settings.maxRandomFinishNeeded = value;
@@ -244,6 +254,7 @@ export class GuiChaoticMistressView extends GuiViewBase {
             type: "number",
             min_value: 0,
             max_value: 100,
+            disable: !haveSettingsAccess,
             default_value: this.settings.weightUsePunishAsTask,
             onChange: (value: number) => {
                 this.settings.weightUsePunishAsTask = value;
@@ -323,6 +334,7 @@ export class GuiChaoticMistressView extends GuiViewBase {
     }
 
     public createPunishmentCard(config: GuiPunishmentCardConfig): HTMLDivElement {
+        const havePunishAccess = isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.useEnforcedPermission);
         // Main Card Container
         // TODO: Make generic function for cards
         const card = document.createElement("div");
@@ -368,6 +380,7 @@ export class GuiChaoticMistressView extends GuiViewBase {
             Math.floor(config.setting.baseDurationMs / (1000 * 60)),
             5,
             10000,
+            !havePunishAccess,
             (newVal) => {
                 currentDurationMinutes = newVal;
                 updatePointsText(currentDurationMinutes); // Update points immediately
@@ -383,11 +396,15 @@ export class GuiChaoticMistressView extends GuiViewBase {
         startBtn.innerText = this.STRINGS.START_TASK;
 
         // Handle Disabled State
-        if (!config.checkAvailable()) {
+        if (!havePunishAccess || !config.checkAvailable()) {
             startBtn.disabled = true;
             startBtn.style.opacity = "0.5";
             startBtn.style.cursor = "not-allowed";
-            startBtn.innerText = this.STRINGS.NOT_AVAILABLE;
+            if (!havePunishAccess) {
+                startBtn.innerText = this.STRINGS.NO_PERMISSION;
+            } else {
+                startBtn.innerText = this.STRINGS.NOT_AVAILABLE;
+            }
         }
 
         startBtn.onclick = () => {
