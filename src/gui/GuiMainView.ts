@@ -24,6 +24,7 @@ export class GuiMainView {
     private static updateInterval: number;
     private static container: HTMLDivElement | null = null;
     private static contentArea: HTMLDivElement | null = null;
+    private static sideBar: HTMLDivElement | undefined;
     private static currentTab: TabName = "Dashboard";
     private static currentTabView: GuiViewBase | undefined;
     private static currentMemberNumber: number | undefined;
@@ -98,6 +99,9 @@ export class GuiMainView {
     // Re-build the current page (needed to update correctly settings fields if C.ATB has been updated)
     // Only do something if Gui is showing and Character match current Character
     public static doFullUpdate(C: OtherCharacter | PlayerCharacter) {
+        if (this.sideBar) {
+            this.updateSideBarContent(C, this.sideBar);
+        }
         if (this.container && C.MemberNumber == this.currentMemberNumber) {
             this.changeCurrentPage(C, this.currentTab);
         }
@@ -108,8 +112,14 @@ export class GuiMainView {
         if (this.currentTabView) this.currentTabView.unload();
         this.currentTabView = undefined;
 
+        // Check C have Access to tabName (needed in case of update)
+        const tab = this.tabRegistry[tabName];
+        if (tab && tab.showCondition && tab.showCondition(C)) {
+            this.currentTab = tabName;
+        } else {
+            this.currentTab = "Dashboard"; // Default to Dashboard else
+        }
         // Render new page
-        this.currentTab = tabName;
         this.renderCurrentPage(C);
     }
 
@@ -119,6 +129,9 @@ export class GuiMainView {
         const renderer = this.tabRegistry[this.currentTab];
         if (renderer) {
             this.currentTabView = this.tabRegistry[this.currentTab].render(this.contentArea, C);
+        }
+        if (this.sideBar) {
+            this.updateSidebarStyles(this.sideBar);
         }
     }
 
@@ -188,11 +201,21 @@ export class GuiMainView {
         this.contentArea = document.createElement("div");
         this.contentArea.className = "atb-content-area";
 
-        const sidebar = document.createElement("div");
-        sidebar.className = "atb-sidebar";
+        this.sideBar = document.createElement("div");
+        this.sideBar.className = "atb-sidebar";
+        this.updateSideBarContent(C, this?.sideBar);
 
+        bodyWrapper.appendChild(this.sideBar);
+        bodyWrapper.appendChild(this.contentArea);
+        this.container.appendChild(bodyWrapper);
+
+        this.renderCurrentPage(C);
+    }
+
+    private static updateSideBarContent(C: OtherCharacter | PlayerCharacter, sidebar: HTMLDivElement) {
         const tabNames = Object.keys(this.tabRegistry) as TabName[];
 
+        sidebar.innerHTML = "";
         tabNames.forEach(tabName => {
             // Hide tab depending of showCondition
             const tabConfig = this.tabRegistry[tabName];
@@ -207,18 +230,10 @@ export class GuiMainView {
 
             btn.onclick = () => {
                 this.changeCurrentPage(C, tabName);
-                this.updateSidebarStyles(sidebar);
              };
 
             sidebar.appendChild(btn);
         });
-
-        bodyWrapper.appendChild(sidebar);
-        bodyWrapper.appendChild(this.contentArea);
-        this.container.appendChild(bodyWrapper);
-
-        this.renderCurrentPage(C);
-        this.updateSidebarStyles(sidebar);
     }
 
     private static updateSidebarStyles(sidebar: HTMLDivElement) {
