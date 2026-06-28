@@ -67,6 +67,7 @@ module.exports = (env, argv) => {
             new webpack.DefinePlugin({
                 __DEV__: JSON.stringify(true),
                 __DEV_BASE_PATH__: JSON.stringify(process.env.DEV_BASE_PATH || ""),
+                __ATB_VERSION__: JSON.stringify(require('./package.json').version)
             }),
             new CopyPlugin({
                 patterns: [

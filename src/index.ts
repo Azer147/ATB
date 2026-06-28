@@ -15,11 +15,15 @@ import { GeneralModule } from "./modules/GeneralModule";
 import { RemoteModule } from "./modules/RemoteModule";
 import { DeviousShocksModule } from "./modules/DeviousShocksModule";
 
+declare const __ATB_VERSION__: string;
+export function getAtbVersion(): string {
+    return __ATB_VERSION__;
+}
 
 export const BC_SDK: ModSDKModAPI = bcModSdk.registerMod({
     name: "ATB",
     fullName: "Azer Toy Box",
-    version: "0.0.1",
+    version: getAtbVersion(),
     repository: "https://github.com/Azer147"
 });
 
@@ -35,7 +39,7 @@ function load() {
                 setupBcExtensionSetting();
 			}
     });
-    console.log("ATB loaded !");
+    console.log("ATB loaded! - Version: " + getAtbVersion());
 }
 
 function test() {

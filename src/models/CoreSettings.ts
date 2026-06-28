@@ -1,3 +1,4 @@
+import { getAtbVersion } from "..";
 import { ChaoticMistressInternalfields, ChaoticMistressSettings, DefaultChaoticMistressSettings } from "./ChaoticMistressSettings";
 import { DefaultDeviousShocksSettings, DeviousShocksSettings } from "./DeviousShocksSettings";
 import { DefaultGeneralSettings, GeneralInternalfields, GeneralSettings } from "./GeneralSettings";
@@ -10,6 +11,7 @@ import { DefaultTasksSettings, TasksSettings } from "./TasksSettings";
 
 export interface CoreSettings {
     Enable: boolean;
+    Version: string;
     GeneralModule: GeneralSettings;
     RandomEventsModule: RandomEventsSettings;
     DeviousShocksModule: DeviousShocksSettings;
@@ -23,6 +25,7 @@ export interface CoreSettings {
 
 export const DefaultCoreSettings: CoreSettings = {
     Enable: true,
+    Version: getAtbVersion(),
     GeneralModule: DefaultGeneralSettings,
     RandomEventsModule: DefaultRandomEventsSettings,
     DeviousShocksModule: DefaultDeviousShocksSettings,

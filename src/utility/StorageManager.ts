@@ -7,6 +7,7 @@ import { RandomEventsSettings } from "@/models/RandomEventsSettings";
 import { isCharHaveRemoteAccessOnTarget, RemoteAccessSettings } from "@/models/RemoteAccessSettings";
 import { TaskManagerSettings } from "@/models/TaskManagerSettings";
 import { TasksSettings } from "@/models/TasksSettings";
+import { getAtbVersion } from "..";
 
 export default class StorageManager {
     private static globalSettings: CoreSettings = DefaultCoreSettings;
@@ -44,6 +45,7 @@ export default class StorageManager {
     static getPublicSettings(): CoreSettings {
         const publicSettings: CoreSettings = {
             Enable: this.getGlobalEnable(),
+            Version: getAtbVersion(),
             GeneralModule: this.getGeneralSettings(),
             RandomEventsModule: this.getRandomEventsSettings(),
             DeviousShocksModule: this.getDeviousShocksSettings(),
@@ -56,11 +58,13 @@ export default class StorageManager {
         return publicSettings;
     }
 
+    // Save Player settings
     static saveSettings() {
         Player.ExtensionSettings.ATB = LZString.compressToBase64(JSON.stringify(Player.ATB));
         ServerPlayerExtensionSettingsSync("ATB");
     }
 
+    // Load Player settings
     static loadSettings() {
         let parsedData: any = {};
         if (Player.ExtensionSettings != undefined && Player.ExtensionSettings.ATB != undefined) {
@@ -70,10 +74,22 @@ export default class StorageManager {
             }
         }
 
+        parsedData = StorageManager.newVersionMigration(parsedData);
         StorageManager.globalSettings = StorageManager.cleanSavedData(parsedData);
 
         Player.ATB = StorageManager.globalSettings;
         StorageManager.saveSettings(); // Save immediately to clean up any old/corrupted data
+    }
+
+    // Specifics data migration on new version (if any necessary)
+    private static newVersionMigration(parsedData: any) {
+        if ("Version" in parsedData && StorageManager.cmpVersion(getAtbVersion(), parsedData["Version"]) > 0) {
+            // New Version
+            // TODO: Display new version dialog or Beep ?
+        }
+        // Always save the new version
+        parsedData["Version"] = getAtbVersion();
+        return parsedData;
     }
 
     // return a Deep copy of the default settings
@@ -178,5 +194,29 @@ export default class StorageManager {
                 }
             }
         }
+    }
+
+    // Shamelessly copied from stackoverflow
+    // Return 1 if a > b
+    // Return -1 if a < b
+    // Return 0 if equal
+    private static cmpVersion(a, b) {
+        var i, cmp, len;
+        a = (a + '').split('.');
+        b = (b + '').split('.');
+        len = Math.max(a.length, b.length);
+        for( i = 0; i < len; i++ ) {
+            if( a[i] === undefined ) {
+                a[i] = '0';
+            }
+            if( b[i] === undefined ) {
+                b[i] = '0';
+            }
+            cmp = parseInt(a[i], 10) - parseInt(b[i], 10);
+            if( cmp !== 0 ) {
+                return (cmp < 0 ? -1 : 1);
+            }
+        }
+        return 0;
     }
 }
