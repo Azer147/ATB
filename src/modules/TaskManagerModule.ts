@@ -175,7 +175,10 @@ export class TaskManagerModule extends ModuleBase {
 
     // --- TASK LIFECYCLE ---
 
-    public startTask(taskData: TaskData, overwrite?: boolean): boolean {
+    public startTask(taskData: TaskData, overwrite?: boolean, initiatorName?: string): boolean {
+        if (initiatorName) {
+            sendLocalMessage("New Task Started by " + initiatorName, ChatColor.Orange);
+        }
         if (taskData.type == "wear_bondage" && taskData.itemToWear) {
             return this.startWearBondageTask(taskData.itemToWear,
                 taskData.finishType,
@@ -261,10 +264,18 @@ export class TaskManagerModule extends ModuleBase {
         return false;
     }
 
-    public skipTask(taskId: number): boolean {
+    public editTask(taskData: TaskData, initiatorName?: string): boolean {
+        let task = this.getActiveTaskById(taskData.id);
+        if (task) {
+            return task.editTask(taskData, initiatorName);
+        }
+        return false;
+    }
+
+    public skipTask(taskId: number, noCost: boolean, initiatorName?: string): boolean {
         let task = this.getActiveTaskById(taskId);
         if (task) {
-            task.triggerTaskCompletion(false, false);
+            task.skipTask(noCost, initiatorName);
             return true;
         }
         return false;

@@ -129,11 +129,19 @@ export function triggerShock(C: Character, shockDevice: Item | undefined = undef
 	return false;
 }
 
-export function getNameOrNickname(C: OtherCharacter | PlayerCharacter) {
+export function getNameOrNickname(C: OtherCharacter | PlayerCharacter | Character) {
 	if (C.Nickname && C.Nickname.length > 0) {
 		return C.Nickname;
 	}
 	return C.Name;
+}
+
+export function getNameOrNicknameByMemberNumber(memNum: number) {
+	const C = ChatRoomGetCharacter(memNum);
+	if (C) {
+		return getNameOrNickname(C);
+	}
+	return memNum.toString();
 }
 
 // Copied from LSCG

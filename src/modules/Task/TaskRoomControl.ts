@@ -133,6 +133,32 @@ export class TaskRoomControl extends TaskBase {
     protected handlePeriodicEvent() {}
     protected handleTaskFinishing() {}
 
+    protected handleEditTask(newTaskData: TaskData): boolean {
+        // TODO: data validation ?
+        if (newTaskData.roomNameReq !== undefined && this.data.roomNameReq != newTaskData.roomNameReq) {
+            this.data.roomNameReq = newTaskData.roomNameReq;
+        }
+        if (newTaskData.roomTypeReq !== undefined && this.data.roomTypeReq != newTaskData.roomTypeReq) {
+            this.data.roomTypeReq = newTaskData.roomTypeReq;
+        }
+
+        if (newTaskData.roomNameReqSearchDesc !== undefined) {
+            this.data.roomNameReqSearchDesc = newTaskData.roomNameReqSearchDesc;
+        }
+        if (newTaskData.roomUseMaxMinutesReq !== undefined) {
+            this.data.roomUseMaxMinutesReq = newTaskData.roomUseMaxMinutesReq;
+        }
+        if (newTaskData.roomMaxMinutesReq !== undefined) {
+            this.data.roomMaxMinutesReq = newTaskData.roomMaxMinutesReq;
+        }
+
+        // Reset Timer & GracePeriod
+        this.resetMaxTimeReqTimer(true);
+
+        return true;
+    }
+
+
 /**
  * Core Task Functions
  */
@@ -140,7 +166,7 @@ export class TaskRoomControl extends TaskBase {
     private resetMaxTimeReqTimer(resetGracePeriod: boolean) {
         this.inSameRoomSince = Date.now();
         if (resetGracePeriod) {
-            this.lastTimeTaskRespected = Date.now();
+            this.resetGracePeriod();
         }
     }
 

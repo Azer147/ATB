@@ -74,6 +74,31 @@ export class TaskPoseControl extends TaskBase {
     // Nothing todo
     protected handleTaskFinishing() {}
 
+    protected handleEditTask(newTaskData: TaskData): boolean {
+        // TODO: data validation ?
+        let selectPoseChanged = false;
+        if (newTaskData.selected_upper_pose !== undefined && this.data.selected_upper_pose != newTaskData.selected_upper_pose) {
+            this.data.selected_upper_pose = newTaskData.selected_upper_pose;
+            selectPoseChanged = true;
+        }
+        if (newTaskData.selected_lower_pose !== undefined && this.data.selected_lower_pose != newTaskData.selected_lower_pose) {
+            this.data.selected_lower_pose = newTaskData.selected_lower_pose;
+            selectPoseChanged = true;
+        }
+        if (newTaskData.averageRandomPosePerHour !== undefined) {
+            this.data.averageRandomPosePerHour = newTaskData.averageRandomPosePerHour;
+        }
+
+        if (selectPoseChanged) {
+            this.resetGracePeriod();
+            this.selectTargetPose();
+            this.handleFirstTick(); // trigger enforceTask() if appropriate
+        }
+
+        return true;
+    }
+
+
 /**
  * Core Task Functions
  */
@@ -153,6 +178,7 @@ export class TaskPoseControl extends TaskBase {
         }
 
         this.data.target_pose = targetPose;
+        this.getDescription(); // Update description
         return targetPose;
     }
 

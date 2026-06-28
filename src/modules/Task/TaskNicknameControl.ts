@@ -56,6 +56,17 @@ export class TaskNicknameControl extends TaskBase {
         ServerAccountUpdate.QueueData({ Nickname: this.data.original_nickname });
     }
 
+    protected handleEditTask(newTaskData: TaskData): boolean {
+        // TODO: data validation ?
+        if (newTaskData.nickname !== undefined && newTaskData.nickname != "" && this.data.nickname != newTaskData.nickname) {
+            this.resetGracePeriod();
+            this.data.nickname = newTaskData.nickname;
+            this.handleFirstTick(); // trigger enforceTask() if appropriate
+        }
+        return true;
+    }
+
+
 /**
  * Core Task Functions
  */

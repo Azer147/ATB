@@ -63,6 +63,7 @@ export abstract class TaskBase {
     protected abstract handleTransgressionWarning(): void;
     protected abstract handleTransgression(): void;
 
+    protected abstract handleEditTask(newTaskData: TaskData): boolean;
 
 /**
  * Basic Task Status Check
@@ -94,6 +95,35 @@ export abstract class TaskBase {
 /**
  * External Trigger for Tasks
  */
+
+    public editTask(newTaskData: TaskData, initiatorName?: string): boolean {
+        // TODO: newTaskData validation ?
+        this.data.finishTotalNeeded = newTaskData.finishTotalNeeded;
+
+        this.data.goodPtsOnSucces = newTaskData.goodPtsOnSucces;
+        this.data.badPtsOnFailure = newTaskData.badPtsOnFailure;
+
+        this.data.gracePeriodMs = newTaskData.gracePeriodMs;
+
+        const ret = this.handleEditTask(newTaskData);
+        this.getDescription(); // Update description in taskData
+
+        // Message for the Player
+        let changedByStr = "";
+        if (initiatorName != undefined && initiatorName != "") {
+            changedByStr = " by " + initiatorName;
+        }
+        sendLocalMessage("Task configuration changed" + changedByStr + ": " + this.getDescription(), ChatColor.Purple);
+        return ret;
+    }
+
+    public skipTask(noCost: boolean, initiatorName?: string) {
+        if (initiatorName !== undefined && initiatorName != "") {
+            sendLocalMessage("Task had been removed by " + initiatorName, ChatColor.Orange);
+        }
+        // TODO: calc & remove cost
+        this.triggerTaskCompletion(false, false);
+    }
 
     /** Called by the Task when completion conditions is met */
     public triggerTaskCompletion(succes: boolean, skipPts: boolean): void {
@@ -178,6 +208,11 @@ export abstract class TaskBase {
         } else {
             this.data.progressPerc = progress;
         }
+    }
+
+    protected resetGracePeriod() {
+        this.transgessionOccuring = false;
+        this.lastTimeTaskRespected = Date.now();
     }
 
     protected handleFirstTick(): void {

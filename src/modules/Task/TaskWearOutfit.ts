@@ -100,6 +100,17 @@ export class TaskWearOutfit extends TaskBase {
         }
     }
 
+    protected handleEditTask(newTaskData: TaskData): boolean {
+        // TODO: data validation ?
+        if (newTaskData.removeOnFinish !== undefined) {
+            this.data.removeOnFinish = newTaskData.removeOnFinish;
+        }
+        if (newTaskData.averageRandomExtPerHour !== undefined) {
+            this.data.averageRandomExtPerHour = newTaskData.averageRandomExtPerHour;
+        }
+        return true;
+    }
+
 
 /**
  * Specifcs Task Functions

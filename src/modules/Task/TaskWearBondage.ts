@@ -46,6 +46,7 @@ export class TaskWearBondage extends TaskBase {
     // Nothing todo
     protected handlePeriodicEvent() {}
     protected handleTaskFinishing() {}
+    protected handleEditTask(newTaskData: TaskData): boolean { return true; }
 
 /**
  * Core Task Functions

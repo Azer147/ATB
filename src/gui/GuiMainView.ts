@@ -11,6 +11,7 @@ import { GuiOutfitSettingsView } from "./GuiOutfitSettingsView";
 import { GuiOutfitEditorView } from "./GuiOutfitEditorView";
 import { GuiRemoteAccessSettingsView } from "./GuiRemoteAccessSettingsView";
 import { isPlayerHaveRemoteAccess } from "@/models/RemoteAccessSettings";
+import { TaskData } from "@/models/TaskManagerSettings";
 
 type TabName = "Dashboard" | "Create Task" | "Chaotic Mistress" | "Random Events" | "Tasks Settings" | "Punishements Settings"
              | "Outfit Settings" | "Outfit Editor" | "Remote Access Settings" | "Debug";
@@ -107,7 +108,18 @@ export class GuiMainView {
         }
     }
 
-    private static changeCurrentPage(C: OtherCharacter | PlayerCharacter, tabName: TabName) {
+    public static goToPageEditTask(C: OtherCharacter | PlayerCharacter, taskData: TaskData) {
+        // Clone taskData to mkae sure we have a safe object to use (maybe not necessary)
+        const newTaskData = Object.assign({}, taskData);
+
+        // Make a customRender so we can use the other params of GuiCreateTaskView's constructor to import TaskData & enable Edit Mode
+        const customRender = (parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter): GuiViewBase | undefined => {
+            return new GuiCreateTaskView(parent, C, newTaskData, true) as GuiViewBase;
+        };
+        this.changeCurrentPage(C, "Create Task", customRender);
+    }
+
+    private static changeCurrentPage(C: OtherCharacter | PlayerCharacter, tabName: TabName, customRender?: (parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter) => GuiViewBase | undefined) {
         // Unload old tab
         if (this.currentTabView) this.currentTabView.unload();
         this.currentTabView = undefined;
@@ -118,17 +130,19 @@ export class GuiMainView {
             this.currentTab = tabName;
         } else {
             this.currentTab = "Dashboard"; // Default to Dashboard else
+            customRender = undefined; // Page wanted not available, nullify customRender in this case
         }
         // Render new page
-        this.renderCurrentPage(C);
+        this.renderCurrentPage(C, customRender);
     }
 
-    private static renderCurrentPage(C: OtherCharacter | PlayerCharacter) {
+    private static renderCurrentPage(C: OtherCharacter | PlayerCharacter, customRender?: (parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter) => GuiViewBase | undefined) {
         if (!this.contentArea) return;
         this.contentArea.innerHTML = "";
-        const renderer = this.tabRegistry[this.currentTab];
+        // Use customRender if defined
+        const renderer = customRender ?? this.tabRegistry[this.currentTab].render;
         if (renderer) {
-            this.currentTabView = this.tabRegistry[this.currentTab].render(this.contentArea, C);
+            this.currentTabView = renderer(this.contentArea, C);
         }
         if (this.sideBar) {
             this.updateSidebarStyles(this.sideBar);

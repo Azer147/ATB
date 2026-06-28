@@ -81,10 +81,10 @@ export function isCharacterHaveEchoItem(C: any): boolean {
  * Operatrions Wrapper
  */
 
-export function startTaskforCharacter(C: OtherCharacter | PlayerCharacter, taskData: TaskData, overwrite: boolean): boolean {
+export function startTaskforCharacter(C: OtherCharacter | PlayerCharacter, taskData: TaskData, overwrite: boolean, initiatorName?: string): boolean {
     if (C.IsPlayer()) {
         const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
-        if (tm) return tm.startTask(taskData, overwrite);
+        if (tm) return tm.startTask(taskData, overwrite, initiatorName);
     } else if (C.MemberNumber) {
         RemoteModule.requestStartTask(C.MemberNumber, taskData, overwrite);
         return true;
@@ -92,19 +92,30 @@ export function startTaskforCharacter(C: OtherCharacter | PlayerCharacter, taskD
     return false;
 }
 
-export function startPunishementforCharacter(C: OtherCharacter | PlayerCharacter, type: PunishementType, duration: number) {
+export function editTaskforCharacter(C: OtherCharacter | PlayerCharacter, taskData: TaskData, initiatorName?: string): boolean {
+    if (C.IsPlayer()) {
+        const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
+        if (tm) return tm.editTask(taskData, initiatorName);
+    } else if (C.MemberNumber) {
+        RemoteModule.requestEditTask(C.MemberNumber, taskData);
+        return true;
+    }
+    return false;
+}
+
+export function startPunishementforCharacter(C: OtherCharacter | PlayerCharacter, type: PunishementType, duration: number, initiatorName?: string) {
     if (C.IsPlayer()) {
         //const cm = ModuleManager.getModule("ChaoticMistressModule") as ChaoticMistressModule;
-        ChaoticMistressModule.startPunishementByType(type, duration);
+        ChaoticMistressModule.startPunishementByType(type, duration, initiatorName);
     } else if (C.MemberNumber) {
         RemoteModule.requestStartPunishement(C.MemberNumber, type, duration);
     }
 }
 
-export function skipTaskforCharacter(C: OtherCharacter | PlayerCharacter, taskId: number) {
+export function skipTaskforCharacter(C: OtherCharacter | PlayerCharacter, taskId: number, noCost: boolean, initiatorName?: string) {
     if (C.IsPlayer()) {
         const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
-        if (tm) tm.skipTask(taskId);
+        if (tm) tm.skipTask(taskId, noCost, initiatorName);
     } else if (C.MemberNumber) {
         RemoteModule.requestSkipTask(C.MemberNumber, taskId);
     }

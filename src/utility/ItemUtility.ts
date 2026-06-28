@@ -274,7 +274,7 @@ export function checkItemAllow(C: Character, item: Asset) {
     for (const prereq of item.Prerequisite) {
         let msg = checkPartialItemPrerequisites(C, prereq, item);
         if (msg != "") {
-            console.log("ATB: DEBUG: checkItemAllow => false: ", msg);
+            //console.log("ATB: DEBUG: checkItemAllow => false: ", msg);
             return false;
         }
     }

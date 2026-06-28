@@ -4,7 +4,7 @@ import { GuiHelper, GuiFormField } from "./GuiHelper";
 import { FinishType, FullTaskType, getFinishTypeSetting, getTaskTypeSetting, PoseLowerSelection, PoseUpperSelection, RoomControlType, TasksSettings, TaskType, WearBondageType } from "@/models/TasksSettings";
 import { ChaoticMistressModule } from "@/modules/ChaoticMistressModule";
 import GuiViewBase from "./GuiViewBase";
-import { getCharacterChaoticMistressSettings, getCharacterTasksSettings, saveSettings, startTaskforCharacter } from "@/utility/CharacterWrapper";
+import { editTaskforCharacter, getCharacterChaoticMistressSettings, getCharacterTasksSettings, saveSettings, startTaskforCharacter } from "@/utility/CharacterWrapper";
 import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
 import { allOutfitList, getRawOutfitFromId, OutfitId } from "@/models/OutfitSettings";
 import { TaskWearOutfit } from "@/modules/Task/TaskWearOutfit";
@@ -18,6 +18,8 @@ export class GuiCreateTaskView extends GuiViewBase {
     //private form: HTMLElement;
     private settings!: ChaoticMistressSettings;
     private tasksSettings!: TasksSettings;
+    private importedTaskData: TaskData | undefined = undefined;
+    private editMode: boolean = false;
 
     // Containers for specifics fields ()
     private taskTypeSelect: HTMLElement | undefined;
@@ -278,9 +280,13 @@ export class GuiCreateTaskView extends GuiViewBase {
         PAGE_NO_TASK_AVAIL_CONTENT: "Check your settings to enable some tasks.",
 
         PAGE_TITLE: "Assign a New Task",
+        PAGE_TITLE_EDIT_MODE: "Edit an active Task",
         CREATE_TASK_BTN: "Create Task",
         CREATE_TASK_BTN_SUCCESS: "Task created!",
         CREATE_TASK_BTN_FAILED: "Task creation failed!",
+        EDIT_TASK_BTN: "Edit Task",
+        EDIT_TASK_BTN_SUCCESS: "Task edited!",
+        EDIT_TASK_BTN_FAILED: "Task edit failed!",
         HELP_BASE_TASK_TITLE: "Basic Tasks Information",
 
         // Task Type title
@@ -292,10 +298,11 @@ export class GuiCreateTaskView extends GuiViewBase {
 
         // Error dialog
         ERROR_DIALOG_TITLE: "Task Creation Failed",
+        ERROR_DIALOG_TITLE_EDIT: "Task Edit Failed",
     };
 
 
-    constructor(parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter) {
+    constructor(parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter, importTaskData?: TaskData, editMode?: boolean) {
         super(parent, C);
 
         // Check first if we have anything we need
@@ -306,7 +313,18 @@ export class GuiCreateTaskView extends GuiViewBase {
         } else {
             this.settings = settings;
             this.tasksSettings = tasksSettings;
+            this.importedTaskData = importTaskData;
+            // Note: edit mode cannot be used without importTaskData
+            this.editMode = (editMode && importTaskData !== undefined) ? true : false;
+
             this.fillDefaultValueCommon();
+            if (importTaskData !== undefined) {
+                this.fillImportedData(importTaskData);
+            }
+            if (this.editMode) {
+                this.enableEditMode();
+            }
+
             if (this.FIELD_TASK_TYPE.options && this.FIELD_TASK_TYPE.options.length > 0) {
                 this.buildCreateTaskPage();
             } else {
@@ -344,7 +362,9 @@ export class GuiCreateTaskView extends GuiViewBase {
         if (this.FIELD_TASK_TYPE.options && this.FIELD_TASK_TYPE.options.length > 0) {
             this.FIELD_TASK_TYPE.options = this.FIELD_TASK_TYPE.options.filter(opt => {
                 const setting = getTaskTypeSetting(this.tasksSettings, opt.value as TaskType);
-                return setting && setting.enable;
+                // Force keeping type for importedTaskData
+                const isImportedTaskType = (this.importedTaskData !== undefined && this.importedTaskData.type == opt.value);
+                return isImportedTaskType || (setting && setting.enable);
             });
         }
 
@@ -412,6 +432,84 @@ export class GuiCreateTaskView extends GuiViewBase {
         }
     }
 
+    private fillImportedData(taskData: TaskData) {
+        this.FIELD_TASK_TYPE.default_value = taskData.type;
+        this.FIELD_FINISH_CONDITION.default_value = taskData.finishType;
+
+        switch (taskData.finishType) {
+            case "duration":
+                this.FIELD_DURATION.default_value = Math.floor(taskData.finishTotalNeeded / (60 * 1000)); // convert to minutes
+                break;
+            case "orgasm":
+                this.FIELD_ORGASM_COUNT.default_value = taskData.finishTotalNeeded;
+                break;
+            case "orgasm_resisted":
+                this.FIELD_ORGASM_RESISTED_COUNT.default_value = taskData.finishTotalNeeded;
+                break;
+            case "orgasm_ruined":
+                this.FIELD_ORGASM_RUINED_COUNT.default_value = taskData.finishTotalNeeded;
+                break;
+            case "spank":
+                this.FIELD_SPANK_COUNT.default_value = taskData.finishTotalNeeded;
+                break;
+        }
+
+        this.FIELD_ENFORCE.default_value = taskData.enforce;
+        this.FIELD_GRACE_PERIOD.default_value = Math.floor(taskData.gracePeriodMs / 1000); // covnert to seconds
+
+        this.FIELD_REWARD_DISPLAY.default_value = taskData.goodPtsOnSucces;
+        this.FIELD_REWARD_INPUT.default_value = taskData.goodPtsOnSucces;
+        this.FIELD_PENALTY.default_value = taskData.badPtsOnFailure;
+
+        // Wear Bondage specifics
+        if (taskData.itemToWear !== undefined) {
+            this.FIELD_WEAR_TYPE.default_value = taskData.itemToWear;
+        }
+
+        // Wear Outfit specifcs
+        if (taskData.outfitId !== undefined) {
+            this.FIELD_OUTFIT_ID.default_value = taskData.outfitId;
+        }
+        if (taskData.removeOnFinish !== undefined) {
+            this.FIELD_REMOVE_ITEM.default_value = taskData.removeOnFinish;
+        }
+        if (taskData.averageRandomExtPerHour !== undefined) {
+            this.FIELD_RANDOMIZE_EXT.default_value = taskData.averageRandomExtPerHour;
+        }
+
+        // Nickname specifics
+        if (taskData.nickname !== undefined) {
+            this.FIELD_NICKNAME.default_value = taskData.nickname;
+        }
+
+        // Pose Control specifics
+        if (taskData.selected_upper_pose !== undefined) {
+            this.FIELD_POSE_UPPER.default_value = taskData.selected_upper_pose;
+        }
+        if (taskData.selected_lower_pose !== undefined) {
+            this.FIELD_POSE_LOWER.default_value = taskData.selected_lower_pose;
+        }
+        if (taskData.averageRandomPosePerHour !== undefined) {
+            this.FIELD_AVG_RANDOM_POSE.default_value = taskData.averageRandomPosePerHour;
+        }
+
+        // Room Control specifics
+        if (taskData.roomNameReq !== undefined) {
+            this.FIELD_ROOM_NAME.default_value = taskData.roomNameReq;
+        }
+        if (taskData.roomNameReqSearchDesc !== undefined) {
+            this.FIELD_ROOM_NAME_USE_DESC.default_value = taskData.roomNameReqSearchDesc;
+        }
+        if (taskData.roomTypeReq !== undefined) {
+            this.FIELD_ROOM_TYPE.default_value = taskData.roomTypeReq;
+        }
+        if (taskData.roomUseMaxMinutesReq !== undefined) {
+            this.FIELD_ROOM_USE_MAX_TIME.default_value = taskData.roomUseMaxMinutesReq;
+        }
+        if (taskData.roomMaxMinutesReq !== undefined) {
+            this.FIELD_ROOM_MAX_TIME.default_value = taskData.roomMaxMinutesReq;
+        }
+    }
 
     private fillDefaultValueForTaskTypeSelected(container: HTMLElement = this.parent) {
         const taskType = GuiHelper.getFormFieldValue(container, this.FIELD_TASK_TYPE) as TaskType;
@@ -423,8 +521,23 @@ export class GuiCreateTaskView extends GuiViewBase {
         }
     }
 
+    // disable some fields for edit mode
+    private enableEditMode() {
+        this.FIELD_TASK_TYPE.disable = true;
+        this.FIELD_FINISH_CONDITION.disable = true;
+        this.FIELD_ENFORCE.disable = true;
+
+        this.FIELD_WEAR_TYPE.disable = true;
+        this.FIELD_OUTFIT_ID.disable = true;
+    }
+
+
     public buildCreateTaskPage() {
-        GuiHelper.createContentTitle(this.parent, this.STRINGS.PAGE_TITLE, true);
+        if (this.editMode) {
+            GuiHelper.createContentTitle(this.parent, this.STRINGS.PAGE_TITLE_EDIT_MODE, true);
+        } else {
+            GuiHelper.createContentTitle(this.parent, this.STRINGS.PAGE_TITLE, true);
+        }
 
         const form = document.createElement("div");
         form.style.display = "flex";
@@ -441,7 +554,11 @@ export class GuiCreateTaskView extends GuiViewBase {
         this.specificTaskTypeFields.className = "atb-dynamic-fields";
         // Trigger change when changing the task type select
         this.taskTypeSelect.querySelector("select")!.addEventListener("change", () => { this.changeTaskTypeFields() });
-        this.fillDefaultValueForTaskTypeSelected(this.taskTypeSelect);
+
+        // Don't override importedTaskData
+        if (this.importedTaskData === undefined) {
+            this.fillDefaultValueForTaskTypeSelected(this.taskTypeSelect);
+        }
 
         // Finish condition select
         this.finishCondSelect = GuiHelper.createFormField(this.FIELD_FINISH_CONDITION);
@@ -471,8 +588,13 @@ export class GuiCreateTaskView extends GuiViewBase {
         this.createTaskBtn = document.createElement("button");
         this.createTaskBtn.className = "atb-main-btn";
         this.createTaskBtn.style.marginTop = "10px";
-        this.createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN;
-        this.createTaskBtn.disabled = !isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.createTaskPermission);
+        if (this.editMode) {
+            this.createTaskBtn.innerText = this.STRINGS.EDIT_TASK_BTN;
+            this.createTaskBtn.disabled = !isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.editTaskPermission);
+        } else {
+            this.createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN;
+            this.createTaskBtn.disabled = !isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.createTaskPermission);
+        }
         this.createTaskBtn.onclick = () => {
             this.onClickCreateTask(form);
         };
@@ -506,6 +628,7 @@ export class GuiCreateTaskView extends GuiViewBase {
  * Dynamic fields for Task Type
  */
 
+// TODO: maybe disable when editMode=true
     private checkTaskCanStartAndUpdateUI() {
         // Task cannot start Warning/Error
         const currentType = GuiHelper.getFormFieldValue(this.parent, this.FIELD_TASK_TYPE) as TaskType;
@@ -743,8 +866,13 @@ export class GuiCreateTaskView extends GuiViewBase {
         }
 
         // Start to Build TaskData
+        let taskId = 0; // placeholder for new task
+        if (this.editMode && this.importedTaskData !== undefined) {
+            // Use Existing task id for edit mode
+            taskId = this.importedTaskData.id;
+        }
         let taskData: TaskData = {
-            id: 0, // placeholder
+            id: taskId,
             type: taskType, // placeholder
             finishType: finishCondType,
             description: "",
@@ -834,13 +962,21 @@ export class GuiCreateTaskView extends GuiViewBase {
             cannotStartReason = TaskManagerModule.isTaskCanStart(this.character, {taskType: taskType});
         }
 
-        // Try to start task
-        if (cannotStartReason === "can_start") {
-            created = startTaskforCharacter(this.character, taskData, false);
-        } else if (cannotStartReason === "overwrite_only") {
-            // retryFunction is set so it can be triggered in the dialog button click
-            retryFunction = () => {
-                startTaskforCharacter(this.character, taskData, true);
+        if (this.editMode) {
+            // Try to edit task
+            // Note: If cannotStartReason is "can_start" it's mean this task wera finished/skipped
+            if (cannotStartReason === "overwrite_only") {
+                created = editTaskforCharacter(this.character, taskData);
+            }
+        } else {
+            // Try to start task
+            if (cannotStartReason === "can_start") {
+                created = startTaskforCharacter(this.character, taskData, false);
+            } else if (cannotStartReason === "overwrite_only") {
+                // retryFunction is set so it can be triggered in the dialog button click
+                retryFunction = () => {
+                    startTaskforCharacter(this.character, taskData, true);
+                }
             }
         }
 
@@ -852,10 +988,18 @@ export class GuiCreateTaskView extends GuiViewBase {
 
         // Update button style
         if (created) {
-            this.createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN_SUCCESS;
+            if (this.editMode) {
+                this.createTaskBtn.innerText = this.STRINGS.EDIT_TASK_BTN_SUCCESS;
+            } else {
+                this.createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN_SUCCESS;
+            }
             this.createTaskBtn.classList.add("success");
         } else {
-            this.createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN_FAILED;
+            if (this.editMode) {
+                this.createTaskBtn.innerText = this.STRINGS.EDIT_TASK_BTN_FAILED;
+            } else {
+                this.createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN_FAILED;
+            }
             this.createTaskBtn.classList.add("failed");
             this.showErrorDialog(cannotStartReason, retryFunction, invalidData);
         }
@@ -863,7 +1007,11 @@ export class GuiCreateTaskView extends GuiViewBase {
         setTimeout(() => {
             if (!this.createTaskBtn) return;
             // Revert button style to normal
-            this.createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN;
+            if (this.editMode) {
+                this.createTaskBtn.innerText = this.STRINGS.EDIT_TASK_BTN;
+            } else {
+                this.createTaskBtn.innerText = this.STRINGS.CREATE_TASK_BTN;
+            }
             this.createTaskBtn.classList.remove("success");
             this.createTaskBtn.classList.remove("failed");
             this.createTaskBtn.disabled = false;
@@ -950,17 +1098,25 @@ export class GuiCreateTaskView extends GuiViewBase {
     // TODO: html id should be a static (const) variable
     private showErrorDialog(cannotStartReason: TaskCannotStartReason, onOverwrite: () => void, invalidData: string | null = null) {
         const mainContainer = document.getElementById("atb-overlay-container")!;
+        let title = this.STRINGS.ERROR_DIALOG_TITLE;
         let errorString = getTaskCannotStartReasonToString(cannotStartReason);
 
         if (cannotStartReason === "invalid_data" && invalidData !== null) {
             errorString = `Invalid Data: ${invalidData}`;
         }
 
+        if (this.editMode) {
+            title = this.STRINGS.ERROR_DIALOG_TITLE_EDIT;
+        }
+        if (this.editMode && cannotStartReason === "can_start") {
+            errorString = `The selected task does not exist anymore.`;
+        }
+
         if (cannotStartReason === "overwrite_only") {
             errorString += "<br>Do you want to overwrite the existing task with the new parameters?<br>(this will restart the timer)";
             GuiHelper.showDialog(
                 mainContainer,
-                this.STRINGS.ERROR_DIALOG_TITLE,
+                title,
                 errorString,
                 [
                     {
@@ -979,7 +1135,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         } else {
             GuiHelper.showDialog(
                 mainContainer,
-                this.STRINGS.ERROR_DIALOG_TITLE,
+                title,
                 errorString,
                 [
                     {

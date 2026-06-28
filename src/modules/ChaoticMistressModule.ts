@@ -303,9 +303,12 @@ export class ChaoticMistressModule extends ModuleBase {
         return availPunish;
     }
 
-    public static startPunishementByType(type: PunishementType, duration: number): boolean {
+    public static startPunishementByType(type: PunishementType, duration: number, initiatorName?: string): boolean {
         const cm = ModuleManager.getModule("ChaoticMistressModule") as ChaoticMistressModule;
         if (cm) {
+            if (initiatorName) {
+                sendLocalMessage("New Punishement started by " + initiatorName, ChatColor.Orange);
+            }
             if (type === "full_bondage") {
                 return cm.startFullBondagePunishment(duration);
             }

@@ -54,8 +54,17 @@ export const uiStyles = `
     .atb-task-card {
         background: var(--atb-bg-card);
         padding: 15px;
+        padding-left: 10px; // To make place for expanding icon
         //margin-bottom: 15px;
         border-radius: 6px; display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .atb-task-card-expended-content {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        padding-top: 10px;
+        border-top: 1px solid var(--atb-border);
     }
 
     /* Buttons */

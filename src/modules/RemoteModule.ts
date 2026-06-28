@@ -4,9 +4,10 @@ import { BC_SDK } from "..";
 import { CoreSettings } from "@/models/CoreSettings";
 import { TaskData } from "@/models/TaskManagerSettings";
 import { PunishementType } from "@/models/TasksSettings";
-import { getCharacterRemoteAccessSettings, skipTaskforCharacter, startPunishementforCharacter, startTaskforCharacter } from "@/utility/CharacterWrapper";
+import { editTaskforCharacter, getCharacterRemoteAccessSettings, skipTaskforCharacter, startPunishementforCharacter, startTaskforCharacter } from "@/utility/CharacterWrapper";
 import { GuiMainView } from "@/gui/GuiMainView";
 import { isCharHaveRemoteAccessOnTarget } from "@/models/RemoteAccessSettings";
+import { ChatColor, getNameOrNicknameByMemberNumber, sendLocalMessage } from "@/utility/utility";
 
 export interface AtbDataRequest<T = any> {
     reqId: number;
@@ -44,6 +45,11 @@ export interface MsgStartTask {
     taskData: TaskData;
     overwrite: boolean;
 }
+export interface MsgEditTask {
+    type: "edit_task";
+    target: number;
+    taskData: TaskData;
+}
 
 export interface MsgStartPunishement {
     type: "start_punishement";
@@ -58,7 +64,7 @@ export interface MsgSkipTask {
     taskId: number;
 }
 
-export type AtbMessage = MsgSyncSettings | MsgRequestSettings | MsgApplySetting | MsgStartTask | MsgStartPunishement | MsgSkipTask;
+export type AtbMessage = MsgSyncSettings | MsgRequestSettings | MsgApplySetting | MsgStartTask | MsgEditTask | MsgStartPunishement | MsgSkipTask;
 
 /**
  * Remote Access & Communication with other Character ATB's Addon
@@ -145,6 +151,19 @@ export class RemoteModule extends ModuleBase {
             target: targetMemberNumber,
             taskData: taskData,
             overwrite: overwrite
+            //reply: true
+        }, targetMemberNumber);
+        //return promise;
+    }
+
+    public static requestEditTask(targetMemberNumber: number, taskData: TaskData) {
+        //let id = this.getUid();
+        //let promise = this.createNewRequest(id);
+        RemoteModule.sendData({
+            //req_id: id,
+            type: "edit_task",
+            target: targetMemberNumber,
+            taskData: taskData,
             //reply: true
         }, targetMemberNumber);
         //return promise;
@@ -251,6 +270,7 @@ export class RemoteModule extends ModuleBase {
                         break;
                     case "apply_settings":
                         StorageManager.applyExternalSettingsToPlayer(data.Sender, msg.newSettings);
+                        sendLocalMessage("Azer Toy Box Settings has been changed by " + getNameOrNicknameByMemberNumber(data.Sender), ChatColor.Orange);
                         break;
                     case "start_task":
                         // Check Player allow Sender to create task (RemoteAccessSettings)
@@ -258,7 +278,17 @@ export class RemoteModule extends ModuleBase {
                             console.warn("ATB: received start_task remote request from sender="+data.Sender+" that is not allowed based on the Player RemoteAccessSettings. This request will be ignored.");
                             return;
                         }
-                        startTaskforCharacter(Player, msg.taskData, msg.overwrite);
+                        startTaskforCharacter(Player, msg.taskData, msg.overwrite, getNameOrNicknameByMemberNumber(data.Sender));
+                        // TODO: improve boradcastAtbSettings efficiency (maybe only send to target ?)
+                        RemoteModule.boradcastAtbSettings(false); // Re-send new settings
+                        break;
+                    case "edit_task":
+                        // Check Player allow Sender to edit task (RemoteAccessSettings)
+                        if (remoteAccessSettings && !isCharHaveRemoteAccessOnTarget(data.Sender, Player, remoteAccessSettings.editTaskPermission)) {
+                            console.warn("ATB: received edit_task remote request from sender="+data.Sender+" that is not allowed based on the Player RemoteAccessSettings. This request will be ignored.");
+                            return;
+                        }
+                        editTaskforCharacter(Player, msg.taskData, getNameOrNicknameByMemberNumber(data.Sender));
                         // TODO: improve boradcastAtbSettings efficiency (maybe only send to target ?)
                         RemoteModule.boradcastAtbSettings(false); // Re-send new settings
                         break;
@@ -268,7 +298,7 @@ export class RemoteModule extends ModuleBase {
                             console.warn("ATB: received start_punishement remote request from sender="+data.Sender+" that is not allowed based on the Player RemoteAccessSettings. This request will be ignored.");
                             return;
                         }
-                        startPunishementforCharacter(Player, msg.punishtype, msg.duration);
+                        startPunishementforCharacter(Player, msg.punishtype, msg.duration, getNameOrNicknameByMemberNumber(data.Sender));
                         // TODO: improve boradcastAtbSettings efficiency (maybe only send to target ?)
                         RemoteModule.boradcastAtbSettings(false); // Re-send new settings
                         break;
@@ -278,7 +308,7 @@ export class RemoteModule extends ModuleBase {
                             console.warn("ATB: received skip_task remote request from sender="+data.Sender+" that is not allowed based on the Player RemoteAccessSettings. This request will be ignored.");
                             return;
                         }
-                        skipTaskforCharacter(Player, msg.taskId);
+                        skipTaskforCharacter(Player, msg.taskId, true, getNameOrNicknameByMemberNumber(data.Sender));
                         // TODO: improve boradcastAtbSettings efficiency (maybe only send to target ?)
                         RemoteModule.boradcastAtbSettings(false); // Re-send new settings
                         break;
