@@ -8,6 +8,8 @@ import { isCharHaveRemoteAccessOnTarget, RemoteAccessSettings } from "@/models/R
 import { TaskManagerSettings } from "@/models/TaskManagerSettings";
 import { TasksSettings } from "@/models/TasksSettings";
 import { getAtbVersion } from "..";
+import ModuleManager from "./ModuleManager";
+import { TaskManagerModule } from "@/modules/TaskManagerModule";
 
 export default class StorageManager {
     private static globalSettings: CoreSettings = DefaultCoreSettings;
@@ -79,6 +81,18 @@ export default class StorageManager {
 
         Player.ATB = StorageManager.globalSettings;
         StorageManager.saveSettings(); // Save immediately to clean up any old/corrupted data
+    }
+
+    static resetSettings() {
+        // Force Finish all task first
+        const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
+        tm?.forceFinishAllTask();
+
+        // Merge Default Settings in globalSettings, without changing any reference to avoud broken modules
+        StorageManager.mergeSettings(StorageManager.globalSettings, StorageManager.buildDefaultSettings(), []);
+        //StorageManager.globalSettings = StorageManager.cleanSavedData({});
+
+        StorageManager.saveSettings();
     }
 
     // Specifics data migration on new version (if any necessary)

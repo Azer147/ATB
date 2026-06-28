@@ -477,12 +477,43 @@ export class GuiHelper {
         container.appendChild(backdrop);
     }
 
+    public static createGenericCard(title: string, titleSize: "regular" | "big" | "small", titleSeparator: boolean): HTMLDivElement {
+        const card = document.createElement("div");
+        card.className = "atb-panel";
+
+        // Regular size
+        let titleSizeHtml = "h3";
+        if (titleSize == "big") {
+            titleSizeHtml = "h2";
+        }
+        else if (titleSize == "small") {
+            titleSizeHtml = "h4";
+        }
+
+        const titleElem = document.createElement(titleSizeHtml);
+        //titleElem.style.margin = "0";
+        titleElem.style.color = "var(--atb-text)";
+        titleElem.style.paddingBottom = "5px";
+        titleElem.innerText = title;
+
+        if (titleSeparator) {
+            titleElem.style.borderBottom = "1px solid var(--atb-border)";
+        }
+
+        card.appendChild(titleElem);
+        return card;
+    }
+
     public static createFeatureToggleCard(field: GuiFormField, useContentArea: boolean, rightSideElem?: HTMLElement): { card: HTMLDivElement, contentArea: HTMLDivElement } {
         if (field.type !== "checkbox" && field.type !== "display-text") {
             console.warn("ATB: createFeatureToggleCard requires a checkbox or display-text GuiFormField.");
         }
-        const isEnabled = !!field.default_value;
+        let isEnabled = !!field.default_value;
         let isExpanded = false;
+
+        if (field.type !== "checkbox") {
+            isEnabled = true;
+        }
 
         const card = document.createElement("div");
         card.className = `atb-feature-card ${isEnabled ? "is-enabled" : ""}`;
@@ -529,12 +560,13 @@ export class GuiHelper {
 
         // Right side of the header: Status
         let statusText;
-        if (!rightSideElem) {
+        if (!rightSideElem && field.type == "checkbox") {
             statusText = document.createElement("span");
             statusText.className = "atb-feature-status";
             statusText.innerText = isEnabled ? "Enabled" : "Disabled";
             rightSideElem = statusText;
         }
+        if (!rightSideElem) rightSideElem = document.createElement("div");
 
         header.appendChild(headerLeft);
         header.appendChild(rightSideElem as HTMLElement);

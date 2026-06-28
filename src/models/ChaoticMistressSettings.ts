@@ -19,7 +19,7 @@ export interface ChaoticMistressSettings {
 }
 
 export const DefaultChaoticMistressSettings: ChaoticMistressSettings = {
-    enableRandomTasks: true,
+    enableRandomTasks: false,
     enablePointsSystem: true,
 
     averageNewTaskPerHour: 2,

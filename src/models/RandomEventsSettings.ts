@@ -17,7 +17,7 @@ export interface RandomEventsSettings {
 }
 
 export const DefaultRandomEventsSettings: RandomEventsSettings = {
-    enable: true,
+    enable: false,
 
     chanceEvent: 5,
     chanceHarshEvent: 5,

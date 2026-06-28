@@ -15,7 +15,7 @@ export interface DeviousShocksSettings {
 }
 
 export const DefaultDeviousShocksSettings: DeviousShocksSettings = {
-    enable: true,
+    enable: false,
 
     shockAveragePerHour: 10,
 

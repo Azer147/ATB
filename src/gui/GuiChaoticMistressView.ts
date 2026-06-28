@@ -335,20 +335,12 @@ export class GuiChaoticMistressView extends GuiViewBase {
 
     public createPunishmentCard(config: GuiPunishmentCardConfig): HTMLDivElement {
         const havePunishAccess = isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.useEnforcedPermission);
+
         // Main Card Container
-        // TODO: Make generic function for cards
-        const card = document.createElement("div");
-        card.className = "atb-panel";
+        const card = GuiHelper.createGenericCard(config.name, "small", true);
         card.style.display = "flex";
         card.style.flexDirection = "column";
         card.style.gap = "12px";
-
-        const title = document.createElement("h4");
-        title.style.margin = "0";
-        title.style.color = "var(--atb-text)";
-        title.style.borderBottom = "1px solid var(--atb-border)";
-        title.style.paddingBottom = "5px";
-        title.innerText = config.name;
 
         const pointsDisplay = document.createElement("div");
         pointsDisplay.style.fontSize = "0.9em";
@@ -415,7 +407,6 @@ export class GuiChaoticMistressView extends GuiViewBase {
         };
 
         // Final Assembly
-        card.appendChild(title);
         card.appendChild(durationInput);
         card.appendChild(pointsDisplay);
         card.appendChild(startBtn);

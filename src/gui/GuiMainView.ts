@@ -4,7 +4,6 @@ import { GuiCreateTaskView } from "./GuiCreateTaskView";
 import GuiDashboardView from "./GuiDashboardView";
 import { GuiDebugView } from "./GuiDebugView";
 import { GuiPunishementsSettingsView } from "./GuiPunishementsSettingsView";
-import { GuiRandomEventsView } from "./GuiRandomEventsView";
 import { GuiTasksSettingsView } from "./GuiTasksSettingsView";
 import GuiViewBase from "./GuiViewBase";
 import { GuiOutfitSettingsView } from "./GuiOutfitSettingsView";
@@ -12,9 +11,11 @@ import { GuiOutfitEditorView } from "./GuiOutfitEditorView";
 import { GuiRemoteAccessSettingsView } from "./GuiRemoteAccessSettingsView";
 import { isPlayerHaveRemoteAccess } from "@/models/RemoteAccessSettings";
 import { TaskData } from "@/models/TaskManagerSettings";
+import { GuiAboutView } from "./GuiAboutView";
+import { GuiGeneralSettingsView } from "./GuiGeneralSettingsView";
 
-type TabName = "Dashboard" | "Create Task" | "Chaotic Mistress" | "Random Events" | "Tasks Settings" | "Punishements Settings"
-             | "Outfit Settings" | "Outfit Editor" | "Remote Access Settings" | "Debug";
+type TabName = "Dashboard" | "Create Task" | "Chaotic Mistress" | "General Settings" | "Tasks Settings" | "Punishements Settings"
+             | "Outfit Settings" | "Outfit Editor" | "Remote Access Settings" | "About" | "Debug";
 
 export interface TabConfig {
     render: (parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter) => GuiViewBase | undefined;
@@ -42,7 +43,7 @@ export class GuiMainView {
                     return (isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.chaoticMistressSettingsPermission)
                             || isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.useEnforcedPermission));
                 }},
-        "Random Events": {render: (parent, C) => { return new GuiRandomEventsView(parent, C) as GuiViewBase; },
+        "General Settings": {render: (parent, C) => { return new GuiGeneralSettingsView(parent, C) as GuiViewBase; },
                 showCondition: (C) => {return (isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.randomEventSettingsPermission));}},
         "Tasks Settings": {render: (parent, C) => { return new GuiTasksSettingsView(parent, C) as GuiViewBase; },
                 showCondition: (C) => {return (isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.taskSettingsPermission));}},
@@ -54,6 +55,8 @@ export class GuiMainView {
                 showCondition: (C) => { return C.IsPlayer()}},
         "Remote Access Settings": {render: (parent, C) => { return new GuiRemoteAccessSettingsView(parent, C) as GuiViewBase; },
                 showCondition: (C) => {return (isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.remoteAccessSettingsPermission));}},
+        "About": {render: (parent, C) => { return new GuiAboutView(parent, C) as GuiViewBase; },
+                showCondition: (C) => { return C.IsPlayer()}},
         "Debug": {render: (parent, C) => { return new GuiDebugView(parent, C) as GuiViewBase; },
                 showCondition: (C) => { return C.IsPlayer()}},
     };

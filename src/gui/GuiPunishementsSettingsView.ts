@@ -148,7 +148,7 @@ export class GuiPunishementsSettingsView extends GuiViewBase {
 
     private buildDroneCard(): HTMLElement {
         let prefixId = "atb-punish-drone";
-        let punishSettings = this.settings.dollPunishmentSettings;
+        let punishSettings = this.settings.dronePunishmentSettings;
         // Fields
         const FIELD_ENABLE: GuiFormField = {
             html_id: prefixId + "-enable",

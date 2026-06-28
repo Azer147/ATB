@@ -25,6 +25,7 @@ export const uiStyles = `
         z-index: 2000; position: absolute;
         top: 50%; left: 50%; transform: translate(-50%, -50%);
         font-family: sans-serif; overflow: hidden;
+        scrollbar-color: #444444 rgb(0, 0, 0, 0);
     }
 
     .atb-title-bar {
@@ -38,6 +39,7 @@ export const uiStyles = `
     .atb-sidebar {
         width: 180px; background: #252525; border-right: 1px solid var(--atb-bg-card);
         display: flex; flex-direction: column; padding: 15px 0; flex-shrink: 0;
+        overflow-y: auto;
     }
 
     .atb-content-area {
