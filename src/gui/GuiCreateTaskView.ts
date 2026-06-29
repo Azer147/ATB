@@ -943,7 +943,7 @@ export class GuiCreateTaskView extends GuiViewBase {
             const roomUseMaxTime = GuiHelper.getFormFieldValue(container, this.FIELD_ROOM_USE_MAX_TIME) as boolean;
             const roomMaxTime = GuiHelper.getFormFieldValue(container, this.FIELD_ROOM_MAX_TIME) as number;
 
-            invalidData = TaskRoomControl.dataValidation(roomName, roomType, roomUseMaxTime, roomMaxTime, gracePeriodMs);
+            invalidData = TaskRoomControl.dataValidation(taskData);
             if (invalidData) {
                 cannotStartReason = "invalid_data";
             }

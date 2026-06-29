@@ -21,15 +21,10 @@ export class TaskRoomControl extends TaskBase {
         super(data);
 
         // Specifics Task data Validation
-        let roomName = this.data.roomNameReq;
-        let nameReqSearchDesc = this.data.roomNameReqSearchDesc;
-        let roomType = this.data.roomTypeReq;
-        let roomUseMaxMinutesReq = this.data.roomUseMaxMinutesReq;
-        let roomMaxMinutesReq = this.data.roomMaxMinutesReq;
-        if (roomName === undefined || nameReqSearchDesc === undefined || !roomType
-            || roomUseMaxMinutesReq === undefined || roomMaxMinutesReq === undefined) {
+        const dataNotValid = TaskRoomControl.dataValidation(data, true);
+        if (dataNotValid != null) {
             // End the task (error)
-            console.warn("ATB: TaskRoomControl: Error: some data are not defined.");
+            console.warn("ATB: TaskRoomControl: Invalid Data: " + dataNotValid);
             this.triggerTaskCompletion(false, true);
             return;
         }
@@ -437,31 +432,47 @@ export class TaskRoomControl extends TaskBase {
  * External static Functions
  */
 
+    // if overwrite is true, directly write the corrected value in taskData (and return null if corrected)
     // return null if valid, return String with reason if not valid
-    public static dataValidation(roomName: string | undefined, roomType: RoomControlType | undefined,
-            roomUseMaxMinutesReq: boolean, roomMaxMinutesReq: number, gracePeriodMs: number): string | null
+    public static dataValidation(taskData: TaskData, overwrite: boolean = false): string | null
     {
+        if (taskData.roomNameReq === undefined || taskData.roomNameReqSearchDesc === undefined || !taskData.roomTypeReq
+                || taskData.roomUseMaxMinutesReq === undefined || taskData.roomMaxMinutesReq === undefined) {
+            return "One or more values are undefined.";
+        }
+
         let haveAtLeastOneReq: boolean = false;
-        if (roomName && roomName.length > 0) {
+        if (taskData.roomNameReq && taskData.roomNameReq.length > 0) {
             haveAtLeastOneReq = true;
         }
-        else if (roomType && roomType != "free") {
+        else if (taskData.roomTypeReq && taskData.roomTypeReq != "free") {
             haveAtLeastOneReq = true;
         }
-        else if (roomUseMaxMinutesReq) {
+        else if (taskData.roomUseMaxMinutesReq && taskData.roomMaxMinutesReq) {
             haveAtLeastOneReq = true;
 
-            if (roomMaxMinutesReq < 10 || roomMaxMinutesReq > 120) {
-                return "Max Minutes should be between 10 and 120";
+            if (taskData.roomMaxMinutesReq < 10 || taskData.roomMaxMinutesReq > 120) {
+                if (overwrite) {
+                    console.warn("ATB: TaskRoomControl: Invalid roomMaxMinutesReq=", taskData.roomMaxMinutesReq ," (value adjusted)");
+                    taskData.roomMaxMinutesReq = 10;
+                } else {
+                    return "Max Minutes should be between 10 and 120";
+                }
             }
         }
         if (!haveAtLeastOneReq) {
+            // Can't correct this
             return "Room Control Task should have at least one requirement";
         }
 
         // Check gracePeriodMs is at least 120 seconds
-        if (gracePeriodMs < (120 * 1000)) {
-            return "Grace Period should not be below 30 seconds for Room Control";
+        if (taskData.gracePeriodMs < (120 * 1000) && taskData.gracePeriodMs > (10 * 60 * 1000)) {
+            if (overwrite) {
+                console.warn("ATB: TaskRoomControl: Invalid gracePeriodMs=", taskData.gracePeriodMs ," (value adjusted)");
+                taskData.gracePeriodMs = (120 * 1000);
+            } else {
+                return "Grace Period should not be below 30 seconds for Room Control";
+            }
         }
 
         return null;
