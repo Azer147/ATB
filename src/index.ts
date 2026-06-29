@@ -1,19 +1,18 @@
 import bcModSdk, { ModSDKModAPI, PatchHook } from "bondage-club-mod-sdk";
 //import bcModSdk = require("bondage-club-mod-sdk");
 //import setupBcExtensionSetting from "./gui/SettingsBase";
-import SettingBase from "./gui/SettingPageBase";
 import MainMenuSettings from "./gui/MainMenuSettingsPage";
 import ModuleManager from "./utility/ModuleManager";
 import { RandomEventsModule } from "./modules/RandomEventsModule";
-import { SleepModeModule } from "./modules/SleepModeModule";
 import SettingPageManager from "./utility/SettingPageManager";
 import StorageManager from "./utility/StorageManager";
 import { TaskManagerModule } from "./modules/TaskManagerModule";
-import { ChaoticMistressModule } from "./modules/ChaoticMistressModule";
+import { PunishementManagerModule } from "./modules/PunishementManagerModule";
 import { uiStyles } from "./gui/GuiStylesCss";
 import { GeneralModule } from "./modules/GeneralModule";
 import { RemoteModule } from "./modules/RemoteModule";
 import { DeviousShocksModule } from "./modules/DeviousShocksModule";
+import { RandomTaskModule } from "./modules/RandomTaskModule";
 
 declare const __ATB_VERSION__: string;
 export function getAtbVersion(): string {
@@ -58,7 +57,8 @@ function loadModules() {
     ModuleManager.registerModule(new RandomEventsModule());
     ModuleManager.registerModule(new DeviousShocksModule());
     ModuleManager.registerModule(new TaskManagerModule());
-    ModuleManager.registerModule(new ChaoticMistressModule());
+    ModuleManager.registerModule(new PunishementManagerModule());
+    ModuleManager.registerModule(new RandomTaskModule());
     //ModuleManager.registerModule(new SleepModeModule());
 }
 

@@ -50,7 +50,7 @@ export class TaskPoseControl extends TaskBase {
             return;
         }
         let pose = this.getStringTargetPose();
-        sendLocalMessage("Your Pose need to be set to " + pose + ", you received  " + this.data.badPtsOnFailure + " for transgression.", ChatColor.Red);
+        sendLocalMessage("Your Pose need to be set to " + pose + ", you received  " + this.data.penaltyPtsOnFailure + " for transgression.", ChatColor.Red);
     }
     protected handleTransgressionWarning() {
         let pose = this.getStringTargetPose();

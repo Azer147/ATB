@@ -5,8 +5,7 @@ import { TaskCannotStartReason, TaskData, TaskManagerSettings } from "@/models/T
 import { TaskBase } from "./Task/TaskBase";
 import { TaskWearBondage } from "./Task/TaskWearBondage";
 import { ChatColor, isLscgEffectsPreventOutfit, sendLocalMessage } from "@/utility/utility";
-import { GuiMainView } from "@/gui/GuiMainView";
-import { FinishType, FullTaskType, getTaskTypeConstant, PoseLowerSelection, PoseUpperSelection, RoomControlType, WearBondageType } from "@/models/TasksSettings";
+import { FinishType, FullTaskList, FullTaskType, getTaskTypeConstant, PoseLowerSelection, PoseUpperSelection, RoomControlType, WearBondageType } from "@/models/TasksSettings";
 import { getCharacterTaskManagerSettings, getCharacterTasksSettings } from "@/utility/CharacterWrapper";
 import { OutfitId } from "@/models/OutfitSettings";
 import { TaskWearOutfit } from "./Task/TaskWearOutfit";
@@ -184,8 +183,8 @@ export class TaskManagerModule extends ModuleBase {
                 taskData.finishType,
                 taskData.finishTotalNeeded,
                 taskData.enforce,
-                taskData.goodPtsOnSucces,
-                taskData.badPtsOnFailure,
+                taskData.rewardPtsOnSucces,
+                taskData.penaltyPtsOnFailure,
                 taskData.gracePeriodMs,
                 overwrite
             );
@@ -197,8 +196,8 @@ export class TaskManagerModule extends ModuleBase {
                 taskData.finishType,
                 taskData.finishTotalNeeded,
                 taskData.enforce,
-                taskData.goodPtsOnSucces,
-                taskData.badPtsOnFailure,
+                taskData.rewardPtsOnSucces,
+                taskData.penaltyPtsOnFailure,
                 taskData.gracePeriodMs,
                 taskData.removeOnFinish,
                 taskData.averageRandomExtPerHour,
@@ -210,8 +209,8 @@ export class TaskManagerModule extends ModuleBase {
                 taskData.finishType,
                 taskData.finishTotalNeeded,
                 taskData.enforce,
-                taskData.goodPtsOnSucces,
-                taskData.badPtsOnFailure,
+                taskData.rewardPtsOnSucces,
+                taskData.penaltyPtsOnFailure,
                 taskData.gracePeriodMs,
                 overwrite
             );
@@ -222,8 +221,8 @@ export class TaskManagerModule extends ModuleBase {
                 taskData.finishType,
                 taskData.finishTotalNeeded,
                 taskData.enforce,
-                taskData.goodPtsOnSucces,
-                taskData.badPtsOnFailure,
+                taskData.rewardPtsOnSucces,
+                taskData.penaltyPtsOnFailure,
                 taskData.gracePeriodMs,
                 overwrite
             );
@@ -237,8 +236,8 @@ export class TaskManagerModule extends ModuleBase {
                 taskData.finishType,
                 taskData.finishTotalNeeded,
                 taskData.enforce,
-                taskData.goodPtsOnSucces,
-                taskData.badPtsOnFailure,
+                taskData.rewardPtsOnSucces,
+                taskData.penaltyPtsOnFailure,
                 taskData.gracePeriodMs,
                 overwrite
             );
@@ -255,8 +254,8 @@ export class TaskManagerModule extends ModuleBase {
                 taskData.finishType,
                 taskData.finishTotalNeeded,
                 taskData.enforce,
-                taskData.goodPtsOnSucces,
-                taskData.badPtsOnFailure,
+                taskData.rewardPtsOnSucces,
+                taskData.penaltyPtsOnFailure,
                 taskData.gracePeriodMs,
                 overwrite
             );
@@ -423,6 +422,20 @@ export class TaskManagerModule extends ModuleBase {
         return "unknown";
     }
 
+    // Reminder: static should not use StoarageManager, getModule to be compatible with OtherCharacter
+    public static getAvailableTasks(C: OtherCharacter | PlayerCharacter, allowOverwrite: boolean): FullTaskType[] {
+        let availTask: FullTaskType[] = [];
+
+        for (let i = 0; i < FullTaskList.length; i++) {
+            let taskType: FullTaskType = FullTaskList[i];
+            let reason: TaskCannotStartReason = TaskManagerModule.isTaskCanStart(C, taskType);
+            if (reason == "can_start" || (allowOverwrite && reason == "overwrite_only")) {
+                availTask.push(taskType);
+            }
+        }
+        return availTask;
+    }
+
     // Restore (start) all the task from settings
     // Warning: Should be only called once at the begining
     private restoreActiveTaskFromSettings() {
@@ -520,8 +533,8 @@ export class TaskManagerModule extends ModuleBase {
             finishTotalNeeded: finishTotal,
             progressPerc: 0,
             enforce: enforce,
-            goodPtsOnSucces: successPts,
-            badPtsOnFailure: failurePts,
+            rewardPtsOnSucces: successPts,
+            penaltyPtsOnFailure: failurePts,
             itemToWear: item,
             gracePeriodMs: gracePeriod // in millisec
         }
@@ -585,8 +598,8 @@ export class TaskManagerModule extends ModuleBase {
             finishTotalNeeded: finishTotal,
             progressPerc: 0,
             enforce: enforce,
-            goodPtsOnSucces: successPts,
-            badPtsOnFailure: failurePts,
+            rewardPtsOnSucces: successPts,
+            penaltyPtsOnFailure: failurePts,
             outfitId: outfitId,
             gracePeriodMs: gracePeriod,
             removeOnFinish: removeOnFinish,
@@ -621,8 +634,8 @@ export class TaskManagerModule extends ModuleBase {
             finishTotalNeeded: finishTotal,
             progressPerc: 0,
             enforce: enforce,
-            goodPtsOnSucces: successPts,
-            badPtsOnFailure: failurePts,
+            rewardPtsOnSucces: successPts,
+            penaltyPtsOnFailure: failurePts,
             gracePeriodMs: gracePeriod
         }
         let task = new TaskNaked(taskData);
@@ -654,8 +667,8 @@ export class TaskManagerModule extends ModuleBase {
             finishTotalNeeded: finishTotal,
             progressPerc: 0,
             enforce: enforce,
-            goodPtsOnSucces: successPts,
-            badPtsOnFailure: failurePts,
+            rewardPtsOnSucces: successPts,
+            penaltyPtsOnFailure: failurePts,
             gracePeriodMs: gracePeriod,
             nickname: nickname,
             original_nickname: Player.Nickname
@@ -689,8 +702,8 @@ export class TaskManagerModule extends ModuleBase {
             finishTotalNeeded: finishTotal,
             progressPerc: 0,
             enforce: enforce,
-            goodPtsOnSucces: successPts,
-            badPtsOnFailure: failurePts,
+            rewardPtsOnSucces: successPts,
+            penaltyPtsOnFailure: failurePts,
             gracePeriodMs: gracePeriod,
             target_pose: [], // filled later
             selected_upper_pose: selected_upper_pose,
@@ -728,8 +741,8 @@ export class TaskManagerModule extends ModuleBase {
             finishTotalNeeded: finishTotal,
             progressPerc: 0,
             enforce: enforce,
-            goodPtsOnSucces: successPts,
-            badPtsOnFailure: failurePts,
+            rewardPtsOnSucces: successPts,
+            penaltyPtsOnFailure: failurePts,
             gracePeriodMs: gracePeriod,
             roomNameReq: roomNameReq,
             roomNameReqSearchDesc: roomNameReqSearchDesc,

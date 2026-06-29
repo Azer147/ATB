@@ -353,16 +353,29 @@ export class GuiRemoteAccessSettingsView extends GuiViewBase {
                 this.shouldSaveSetting = true;
             }
         };
-        const FIELD_CHAOTIC: GuiFormField = {
-            html_id: prefixId + "-chaotic",
-            label: "Access/Edit Chaotic Mistress Settings",
-            description: "Who can edit Chaotic Mistress Settings.",
+        const FIELD_PENALTY: GuiFormField = {
+            html_id: prefixId + "-penalty",
+            label: "Access/Edit Penalty Settings",
+            description: "Who can edit Penalty Settings.",
             type: "select",
-            disable: !isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.chaoticMistressSettingsPermission),
-            default_value: this.settings.chaoticMistressSettingsPermission.toString(),
+            disable: !isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.PenaltySettingsPermission),
+            default_value: this.settings.PenaltySettingsPermission.toString(),
             options: this.getRemoteAccessRoleSelectOption(),
             onChange: (value: string) => {
-                this.settings.chaoticMistressSettingsPermission = parseInt(value);
+                this.settings.PenaltySettingsPermission = parseInt(value);
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_RAND_TASK: GuiFormField = {
+            html_id: prefixId + "-penalty",
+            label: "Access/Edit Random Task Settings",
+            description: "Who can edit Random Task Settings.",
+            type: "select",
+            disable: !isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.RandomTaskSettingsPermission),
+            default_value: this.settings.RandomTaskSettingsPermission.toString(),
+            options: this.getRemoteAccessRoleSelectOption(),
+            onChange: (value: string) => {
+                this.settings.RandomTaskSettingsPermission = parseInt(value);
                 this.shouldSaveSetting = true;
             }
         };
@@ -396,13 +409,14 @@ export class GuiRemoteAccessSettingsView extends GuiViewBase {
         // Create Fields
         const task = GuiHelper.createFormField(FIELD_TASK);
         const punish = GuiHelper.createFormField(FIELD_PUNISH);
-        const chaotic = GuiHelper.createFormField(FIELD_CHAOTIC);
+        const penalty = GuiHelper.createFormField(FIELD_PENALTY);
+        const randTask = GuiHelper.createFormField(FIELD_RAND_TASK);
         const event = GuiHelper.createFormField(FIELD_RAND_EVENT);
         const outfit = GuiHelper.createFormField(FIELD_OUTFIT);
         // Rows
         const row1 = GuiHelper.createTwoElemRow(task, punish);
-        const row2 = GuiHelper.createTwoElemRow(chaotic, event);
-        const row3 = GuiHelper.createTwoElemRow(outfit, undefined);
+        const row2 = GuiHelper.createTwoElemRow(penalty, randTask);
+        const row3 = GuiHelper.createTwoElemRow(event, outfit);
 
         // Append to container
         container.appendChild(row1);

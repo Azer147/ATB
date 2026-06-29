@@ -88,7 +88,7 @@ export class TaskRoomControl extends TaskBase {
     }
 
     protected handleTransgression() {
-        sendLocalMessage(`Room Requirements not respected: ${this.lastTransgressionStr}, you received ${this.data.badPtsOnFailure} penalty points for transgression.`, ChatColor.Red);
+        sendLocalMessage(`Room Requirements not respected: ${this.lastTransgressionStr}, you received ${this.data.penaltyPtsOnFailure} penalty points for transgression.`, ChatColor.Red);
     }
 
     protected handleTransgressionWarning() {

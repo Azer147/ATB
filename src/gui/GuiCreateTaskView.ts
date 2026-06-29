@@ -2,21 +2,20 @@ import { TaskManagerModule } from "@/modules/TaskManagerModule";
 import { getTaskCannotStartReasonToString, TaskCannotStartReason, TaskData } from "@/models/TaskManagerSettings";
 import { GuiHelper, GuiFormField } from "./GuiHelper";
 import { FinishType, FullTaskType, getFinishTypeSetting, getTaskTypeSetting, PoseLowerSelection, PoseUpperSelection, RoomControlType, TasksSettings, TaskType, WearBondageType } from "@/models/TasksSettings";
-import { ChaoticMistressModule } from "@/modules/ChaoticMistressModule";
 import GuiViewBase from "./GuiViewBase";
-import { editTaskforCharacter, getCharacterChaoticMistressSettings, getCharacterTasksSettings, saveSettings, startTaskforCharacter } from "@/utility/CharacterWrapper";
-import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
-import { allOutfitList, getRawOutfitFromId, OutfitId } from "@/models/OutfitSettings";
+import { editTaskforCharacter, getCharacterPenaltySettings, getCharacterTasksSettings, startTaskforCharacter } from "@/utility/CharacterWrapper";
+import { PenaltySettings } from "@/models/PenaltySettings";
+import { getRawOutfitFromId, OutfitId } from "@/models/OutfitSettings";
 import { TaskWearOutfit } from "@/modules/Task/TaskWearOutfit";
 import { TaskWearBondage } from "@/modules/Task/TaskWearBondage";
-import { checkNicknameValidity } from "@/utility/utility";
+import { calculatePointsFromFinishCount, checkNicknameValidity } from "@/utility/utility";
 import { TaskPoseControl } from "@/modules/Task/TaskPoseControl";
 import { TaskRoomControl } from "@/modules/Task/TaskRoomControl";
 import { isPlayerHaveRemoteAccess } from "@/models/RemoteAccessSettings";
 
 export class GuiCreateTaskView extends GuiViewBase {
     //private form: HTMLElement;
-    private settings!: ChaoticMistressSettings;
+    private settings!: PenaltySettings;
     private tasksSettings!: TasksSettings;
     private importedTaskData: TaskData | undefined = undefined;
     private editMode: boolean = false;
@@ -63,8 +62,8 @@ export class GuiCreateTaskView extends GuiViewBase {
     };
     private FIELD_REWARD_INPUT: GuiFormField = {
         html_id: "atb-create-task-reward",
-        label: "Reward (Good Points)",
-        description: "The amount of good points the character will receive upon completing the task.",
+        label: "Reward Points",
+        description: "The amount of Reward Points the character will receive upon completing the task.",
         type: "number",
         default_value: 10,
         min_value: 0,
@@ -72,13 +71,13 @@ export class GuiCreateTaskView extends GuiViewBase {
     };
     private FIELD_REWARD_DISPLAY: GuiFormField = {
         html_id: "atb-create-task-reward-display",
-        label: "Reward: 0 Good Points",
+        label: "Reward: 0 Reward Points",
         type: "display-text",
         usePrimaryColor: true,
     };
     private FIELD_PENALTY: GuiFormField = {
         html_id: "atb-create-task-penalty",
-        label: "Penalty (Bad Points)",
+        label: "Penalty Points",
         description: "Penalty points awarded upon transgression during the task.",
         type: "number",
         default_value: 10, // placeholder
@@ -251,23 +250,23 @@ export class GuiCreateTaskView extends GuiViewBase {
 
     private HELP_BASE_TASK_TEXT = `
     New Tasks can be created freely by the Player or Someone else (based on access settings).<br>
-    - Tasks award <strong>Good Points (GP)</strong> on completion and <strong>Bad Points (BP)</strong> on failure or transgression.<br>
+    - Tasks award <strong>Reward Points (RP)</strong> on completion and <strong>Penalty Points (PP)</strong> on failure or transgression.<br>
     - If the <strong>Point System</strong> is enabled, Points is calculated automatically from the base settings of the task.<br>
     - <strong>Enforce</strong> is a modifier that makes the task harsher and <strong>prevent Skipping the task</strong>.<br>
     - If the same task is already <strong>active</strong> and not enforced, you can overwrite it, this will remove the current active task and create this new task.
     However, the current active task will not yield any reward and the progress will be lost.<br>
     <br>
-    <br>Task <strong>Wear Bondage/Restraints:</strong> Player must wear specified restraints or get <strong>Bad Points penalty</strong>.
-    <br>Task <strong>Wear Outfit:</strong> Player will be forced to wear a restrictive outfit. Player will get <strong>Bad Points penalty</strong> if they try to remove it.
-    <br>Task <strong>Stay Naked:</strong> Player will be forced to stay naked. Player will get <strong>Bad Points penalty</strong> if they try to wear anything.
-    <br>Task <strong>Nickname Control:</strong> Player will be forced to use a specific nickname. Player will get <strong>Bad Points penalty</strong> if they don't have the correct nickname.
-    <br>Task <strong>Pose Control:</strong> Player will be forced to use a specific Pose. Player will get <strong>Bad Points penalty</strong> if they don't have the correct Pose.
+    <br>Task <strong>Wear Bondage/Restraints:</strong> Player must wear specified restraints or get <strong>Penalty Points</strong>.
+    <br>Task <strong>Wear Outfit:</strong> Player will be forced to wear a restrictive outfit. Player will get <strong>Penalty Points</strong> if they try to remove it.
+    <br>Task <strong>Stay Naked:</strong> Player will be forced to stay naked. Player will get <strong>Penalty Points</strong> if they try to wear anything.
+    <br>Task <strong>Nickname Control:</strong> Player will be forced to use a specific nickname. Player will get <strong>Penalty Points</strong> if they don't have the correct nickname.
+    <br>Task <strong>Pose Control:</strong> Player will be forced to use a specific Pose. Player will get <strong>Penalty Points</strong> if they don't have the correct Pose.
     `;
 
     private HELP_WEAR_TASK_TEXT = `
-    Task <strong>Wear Bondage/Restraints:</strong> Player must wear specified restraints or get <strong>Bad Points penalty</strong>.<br>
+    Task <strong>Wear Bondage/Restraints:</strong> Player must wear specified restraints or get <strong>Penalty Points</strong>.<br>
     - <strong>Enforce</strong> modifier will force equip random restraints when the Player is not wearing it.<br>
-    - <strong>Grace Period:</strong> How long the Player have before getting <strong>Bad Points penalty</strong> for not wearing the restraints.<br>
+    - <strong>Grace Period:</strong> How long the Player have before getting <strong>Penalty Points</strong> for not wearing the restraints.<br>
     `;
 
     private HELP_WEAR_OUTFIT_TEXT = `
@@ -306,7 +305,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         super(parent, C);
 
         // Check first if we have anything we need
-        const settings = getCharacterChaoticMistressSettings(this.character);
+        const settings = getCharacterPenaltySettings(this.character);
         const tasksSettings = getCharacterTasksSettings(this.character);
         if (!settings || !tasksSettings) {
             GuiHelper.buildErrorPage(parent);
@@ -457,9 +456,9 @@ export class GuiCreateTaskView extends GuiViewBase {
         this.FIELD_ENFORCE.default_value = taskData.enforce;
         this.FIELD_GRACE_PERIOD.default_value = Math.floor(taskData.gracePeriodMs / 1000); // covnert to seconds
 
-        this.FIELD_REWARD_DISPLAY.default_value = taskData.goodPtsOnSucces;
-        this.FIELD_REWARD_INPUT.default_value = taskData.goodPtsOnSucces;
-        this.FIELD_PENALTY.default_value = taskData.badPtsOnFailure;
+        this.FIELD_REWARD_DISPLAY.default_value = taskData.rewardPtsOnSucces;
+        this.FIELD_REWARD_INPUT.default_value = taskData.rewardPtsOnSucces;
+        this.FIELD_PENALTY.default_value = taskData.penaltyPtsOnFailure;
 
         // Wear Bondage specifics
         if (taskData.itemToWear !== undefined) {
@@ -517,7 +516,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         if (taskTypeSettings) {
             this.FIELD_DURATION.default_value = Math.floor(taskTypeSettings.baseDurationMs / (60 * 1000)); // convert to minutes
             this.FIELD_GRACE_PERIOD.default_value = Math.floor(taskTypeSettings.baseGracePeriodMs / 1000); // covnert to seconds
-            this.FIELD_PENALTY.default_value = taskTypeSettings.baseBadPointsPenalty;
+            this.FIELD_PENALTY.default_value = taskTypeSettings.basePenalty;
         }
     }
 
@@ -572,10 +571,10 @@ export class GuiCreateTaskView extends GuiViewBase {
 
         // Common fields
         const gracePeriodInput = GuiHelper.createFormField(this.FIELD_GRACE_PERIOD);
-        const badPtsInput = GuiHelper.createFormField(this.FIELD_PENALTY);
+        const penaltyPtsInput = GuiHelper.createFormField(this.FIELD_PENALTY);
 
         let rewardDisplay;
-        if (this.settings && this.settings.enablePointsSystem) {
+        if (this.settings && this.settings.enablePenalty) {
             // Build Reward field when Points System enabled
             rewardDisplay = GuiHelper.createFormField(this.FIELD_REWARD_DISPLAY);
         } else {
@@ -602,7 +601,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         // ROW: Finish select + Grace period
         const finishGraceRow = GuiHelper.createTwoElemRow(this.finishCondSelect, gracePeriodInput);
         // ROW: Reward + Penalty
-        const ptsRow = GuiHelper.createTwoElemRow(rewardDisplay, badPtsInput);
+        const ptsRow = GuiHelper.createTwoElemRow(rewardDisplay, penaltyPtsInput);
 
         this.errorTaskCannotStartElem = document.createElement("div");
         this.errorTaskCannotStartElem.style.display = "none";
@@ -838,8 +837,8 @@ export class GuiCreateTaskView extends GuiViewBase {
         const taskType = GuiHelper.getFormFieldValue(container, this.FIELD_TASK_TYPE) as TaskType;
         const finishCondType = GuiHelper.getFormFieldValue(container, this.FIELD_FINISH_CONDITION) as FinishType;
         const enforce = GuiHelper.getFormFieldValue(container, this.FIELD_ENFORCE) as boolean;
-        const goodPtsOnSucces = this.getRewardPoints(container);
-        const badPtsOnFailure = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_PENALTY) as number ?? 0);
+        const rewardPtsOnSucces = this.getRewardPoints(container);
+        const penaltyPtsOnFailure = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_PENALTY) as number ?? 0);
         const graceSec = Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_GRACE_PERIOD) as number || 5);
         const gracePeriodMs = graceSec * 1000;
 
@@ -880,8 +879,8 @@ export class GuiCreateTaskView extends GuiViewBase {
             finishTotalNeeded: finishTotalNeeded,
             progressPerc: 0,
             enforce: enforce,
-            goodPtsOnSucces: goodPtsOnSucces,
-            badPtsOnFailure: badPtsOnFailure,
+            rewardPtsOnSucces: rewardPtsOnSucces,
+            penaltyPtsOnFailure: penaltyPtsOnFailure,
             gracePeriodMs: gracePeriodMs
         }
 
@@ -1037,7 +1036,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     }
 
     private getRewardPoints(container: HTMLElement) {
-        if (this.settings.enablePointsSystem) {
+        if (this.settings.enablePenalty) {
             return this.calculateRewardPoints(container);
         } else {
             return Math.floor(GuiHelper.getFormFieldValue(container, this.FIELD_REWARD_INPUT) as number ?? 0);
@@ -1076,10 +1075,10 @@ export class GuiCreateTaskView extends GuiViewBase {
         }
 
         const enforced = GuiHelper.getFormFieldValue(container, this.FIELD_ENFORCE) as boolean;
-        const pts = ChaoticMistressModule.calculatePointsFromFinishCount(
+        const pts = calculatePointsFromFinishCount(
             finishCurrentTotal,
             finishBaseTotal,
-            setting.baseGoodPtsReward,
+            setting.baseReward,
             enforced
         );
         return pts;
@@ -1092,7 +1091,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         if (!elem) return;
 
         const pts = this.calculateRewardPoints(container);
-        elem.innerText = `Reward: ${pts} Good Points`;
+        elem.innerText = `Reward: ${pts} Reward Points`;
     }
 
     // TODO: html id should be a static (const) variable

@@ -11,8 +11,8 @@ export class GuiPunishementsSettingsView extends GuiViewBase {
     private HELP_BASE_TASK_TEXT = `
     Settings Fields Information:<br>
     - <strong>Weight:</strong> Used for random selection, higher weight means higher chance to be selected against other, 0 means this punishements cannot be randomly selected.<br>
-    - <strong>Base Duration:</strong> This will be the base duration used for random duration used by Chaotic Mistress. This is also used to calculate the Points Rewards, if selected duration is lower/higher than the base duration, Rewards will be lower/higher.<br>
-    - <strong>Base Good/Bad Points: </strong>Will be used as a base value for the punishements and points calculation.<br>
+    - <strong>Base Duration:</strong> This will be the base duration used for random duration used by Punishements & Penalty System. This is also used to calculate the Points Rewards, if selected duration is lower/higher than the base duration, Rewards will be lower/higher.<br>
+    - <strong>Base Reward/Penalty Points: </strong>Will be used as a base value for the punishements and points calculation.<br>
     <br>
     All Punishements list:<br>
     - <strong>Full Bondage:</strong> Force equip Random restraints: Hands/Arms, Legs, Gag, Chastity, Toy/vibrator. (does not replace existing items)
@@ -200,37 +200,37 @@ export class GuiPunishementsSettingsView extends GuiViewBase {
         };
         const FIELD_REWARD: GuiFormField = {
             html_id: prefixId + "-reward",
-            label: "Base Good Points Reward on completion",
+            label: "Base Reward Points Reward on completion",
             type: "number",
             min_value: 0,
             max_value: 100,
-            default_value: punishSettings.baseGoodPtsReward,
+            default_value: punishSettings.baseReward,
             onChange: (value: number) => {
-                punishSettings.baseGoodPtsReward = value;
+                punishSettings.baseReward = value;
                 this.shouldSaveSetting = true;
             }
         };
         const FIELD_PENALTY: GuiFormField = {
             html_id: prefixId + "-penalty",
-            label: "Base Bad Points Penalty on failure/transgression",
+            label: "Base Penalty Points on failure/transgression",
             type: "number",
             min_value: 0,
             max_value: 100,
-            default_value: punishSettings.baseBadPointsPenalty,
+            default_value: punishSettings.basePenalty,
             onChange: (value: number) => {
-                punishSettings.baseBadPointsPenalty = value;
+                punishSettings.basePenalty = value;
                 this.shouldSaveSetting = true;
             }
         };
         const FIELD_PTS_REDUCTION: GuiFormField = {
             html_id: prefixId + "-pts-reduction",
-            label: "Base Bad Points Reduction on accepting this Punishement",
+            label: "Base Penalty Points Reduction on accepting this Punishement",
             type: "number",
             min_value: 0,
             max_value: 100,
-            default_value: punishSettings.baseBadPtsReduction,
+            default_value: punishSettings.basePenaltyReduction,
             onChange: (value: number) => {
-                punishSettings.baseBadPtsReduction = value;
+                punishSettings.basePenaltyReduction = value;
                 this.shouldSaveSetting = true;
             }
         };

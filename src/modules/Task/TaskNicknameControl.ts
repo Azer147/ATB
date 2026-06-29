@@ -30,7 +30,7 @@ export class TaskNicknameControl extends TaskBase {
     }
     protected handleTransgression() {
         let nickname = "\"" + this.data.nickname + "\"";
-        sendLocalMessage("Your Nickname need to be set to " + nickname + ", you received  " + this.data.badPtsOnFailure + " for transgression.", ChatColor.Red);
+        sendLocalMessage("Your Nickname need to be set to " + nickname + ", you received  " + this.data.penaltyPtsOnFailure + " for transgression.", ChatColor.Red);
 
         // TODO: Maybe move this pre-handleTransgression
         if (TaskNicknameControl.checkTaskPrevented(Player)) {

@@ -1,16 +1,21 @@
 import { GuiHelper, GuiFormField } from "./GuiHelper";
 import { RandomEventsSettings } from "@/models/RandomEventsSettings";
 import GuiViewBase from "./GuiViewBase";
-import { getCharacterChaoticMistressSettings, getCharacterDeviousShocksSettings, getCharacterRandomEventsSettings, saveSettings } from "@/utility/CharacterWrapper";
+import { getCharacterDeviousShocksSettings, getCharacterPenaltySettings, getCharacterRandomEventsSettings, getCharacterRandomTaskSettings, getCharacterTasksSettings, saveSettings } from "@/utility/CharacterWrapper";
 import { DeviousShocksSettings } from "@/models/DeviousShocksSettings";
 import StorageManager from "@/utility/StorageManager";
 import ModuleManager from "@/utility/ModuleManager";
 import { TaskManagerModule } from "@/modules/TaskManagerModule";
 import { isPlayerHaveRemoteAccess } from "@/models/RemoteAccessSettings";
+import { PenaltySettings } from "@/models/PenaltySettings";
+import { GuiMainView } from "./GuiMainView";
+import { RandomTaskSettings } from "@/models/RandomTaskSettings";
 
 export class GuiGeneralSettingsView extends GuiViewBase {
     private shouldSaveSetting: boolean = false;
-    private settings!: RandomEventsSettings;
+    private penaltySettings!: PenaltySettings;
+    private randTaskSettings!: RandomTaskSettings;
+    private randEventsettings!: RandomEventsSettings;
     private shocksSettings!: DeviousShocksSettings;
 
 
@@ -20,6 +25,19 @@ export class GuiGeneralSettingsView extends GuiViewBase {
     - <strong>Chance of Harsh Events:</strong> Only when a random event is triggered, this is a chance that the events will be harsher (ex: more restraints added).<br>
     - <strong>Triggers:</strong> What action/thing can trigger a random event.<br>
     - <strong>Events:</strong> What Events can happen when a random event is triggered.<br>
+    `;
+
+    private INFO_PENALTY_SYS = `
+    <strong>Penalty system:</strong> A Reward and Punishements game, be a good slave and everything will be alright!<br>
+    - Gain <strong>Reward Points (RP)</strong> on task completion.<br>
+    - Get <strong>Penalty Points (PP)</strong> penalty on task failure / transgression.<br>
+    - Reduce <strong>Penalty Points (PP)</strong> by taking a <strong>Punishements</strong>.<br>
+    - Get too much <strong>Penalty Points (PP)</strong> and you will get a forced random <strong>Punishements!</strong><br>
+    <br>
+    `;
+
+    private INFO_RANDOM_TASK = `
+    <strong>Random Task:</strong> Randomly start a task, for those who want to submit to the Chaos and surrender control.<br>
     `;
 
     private STRINGS = {
@@ -38,21 +56,27 @@ export class GuiGeneralSettingsView extends GuiViewBase {
         DIALOG_SAFEWORD_DESC: "This will finish any active task and remove Penalty points over 50% of forced Punishement Threshold.",
         DIALOG_RESET_DESC: "This will reset all your settings to default, finish any active task and reset Reward/Penalty points to 0.",
 
-        HELP_RANDOM_EVENTS_TITLE: "Random Events Informations",
+        INFO_RANDOM_EVENTS_TITLE: "Random Events Informations",
+        INFO_PENALTY_TITLE: "Penalty System Informations",
+        INFO_RANDOM_TASK_TITLE: "Random Task Informations",
     };
 
     constructor(parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter) {
         super(parent, C);
 
         // Check first if we have anything we need
-        const settings = getCharacterRandomEventsSettings(this.character)
+        const penaltySettings = getCharacterPenaltySettings(this.character);
+        const randTaskSettings = getCharacterRandomTaskSettings(this.character);
+        const randEventsettings = getCharacterRandomEventsSettings(this.character)
         const shocksSettings = getCharacterDeviousShocksSettings(this.character)
-        if (!settings || !shocksSettings) {
+        if (!penaltySettings || !randTaskSettings || !randEventsettings || !shocksSettings) {
             // Build error page
             GuiHelper.buildErrorPage(parent);
             return;
         }
-        this.settings = settings;
+        this.penaltySettings = penaltySettings;
+        this.randTaskSettings = randTaskSettings;
+        this.randEventsettings = randEventsettings;
         this.shocksSettings = shocksSettings;
 
         this.buildGeneralPage();
@@ -74,12 +98,15 @@ export class GuiGeneralSettingsView extends GuiViewBase {
         form.style.flexDirection = "column";
         form.style.gap = "15px";
 
+        const penaltyCard = this.buildPenaltyCard();
+        const randomTaskCard = this.buildRandomTaskCard();
         const randomEventCard = this.buildRandomEventCard();
         const deviousShockCard = this.buildDeviousShocksCard();
         //const exportCard = this.buildExportImportCard(); // TODO
 
-
         GuiHelper.createContentTitle(form, this.STRINGS.SECTION_MAIN_FEATURE, false);
+        form.appendChild(penaltyCard);
+        form.appendChild(randomTaskCard);
         form.appendChild(randomEventCard);
         form.appendChild(deviousShockCard);
         GuiHelper.createContentTitle(form, this.STRINGS.SECTION_ADVANCED, false);
@@ -94,90 +121,162 @@ export class GuiGeneralSettingsView extends GuiViewBase {
         this.parent.appendChild(form);
     }
 
-
-    private buildExportImportCard() {
-        const FIELD_TITLE: GuiFormField = {
-            html_id: "atb-export-import-title",
-            label: "Export / Import settings",
-            type: "display-text",
-            default_value: false
+    private buildPenaltyCard(): HTMLElement {
+        const haveSettingsAccess = isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.PenaltySettingsPermission);
+        // Fields
+        const FIELD_ENABLE: GuiFormField = {
+            html_id: "atb-penalty-enable",
+            label: "Enable Penalty System (Recommended)",
+            type: "checkbox",
+            disable: !haveSettingsAccess,
+            default_value: this.penaltySettings.enablePenalty,
+            onChange: (value: boolean) => {
+                this.penaltySettings.enablePenalty = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_THRESHOLD: GuiFormField = {
+            html_id: "atb-penalty-punish-threshold",
+            label: "Threshold before forced punishement (0 to disable)",
+            type: "number",
+            min_value: 0,
+            max_value: 1000,
+            disable: !haveSettingsAccess,
+            default_value: this.penaltySettings.forcedPunishementThreshold,
+            onChange: (value: number) => {
+                this.penaltySettings.forcedPunishementThreshold = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_MIN_FINISH_COUNT: GuiFormField = {
+            html_id: "atb-penalty-min-finish-count",
+            label: "Minimum random Punishement finish count (% of the base finish count) (5% - 1000%)",
+            type: "number",
+            min_value: 5,
+            max_value: 1000,
+            disable: !haveSettingsAccess,
+            default_value: this.penaltySettings.minRandomFinishMult,
+            onChange: (value: number) => {
+                this.penaltySettings.minRandomFinishMult = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_MAX_FINISH_COUNT: GuiFormField = {
+            html_id: "atb-penalty-max-finish-count",
+            label: "Maximum random Punishement finish count (% of the base finish count) (5% - 1000%)",
+            type: "number",
+            min_value: 5,
+            max_value: 1000,
+            disable: !haveSettingsAccess,
+            default_value: this.penaltySettings.maxRandomFinishMult,
+            onChange: (value: number) => {
+                this.penaltySettings.maxRandomFinishMult = value;
+                this.shouldSaveSetting = true;
+            }
         };
 
-        const featureTuple = GuiHelper.createFeatureToggleCard(FIELD_TITLE, true);
-        const mainCard = featureTuple.card;
-        const mainContent = featureTuple.contentArea;
+        // Build Main card
+        const penaltyTuple = GuiHelper.createFeatureToggleCard(FIELD_ENABLE, true);
+        const penaltyMainCard = penaltyTuple.card;
+        const penaltyContent = penaltyTuple.contentArea;
 
-        const exportBtn = document.createElement("button");
-        exportBtn.className = "atb-main-btn";
-        //exportBtn.style.maxWidth = "fit-content";
-        exportBtn.style.background = "var(--atb-success)";
-        exportBtn.innerText = `Export Settings`;
-        exportBtn.addEventListener("click", () => {
-            // TODO impl
-        });
+        const penaltyThreshold = GuiHelper.createFormField(FIELD_THRESHOLD);
+        const penaltyMinFinish = GuiHelper.createFormField(FIELD_MIN_FINISH_COUNT);
+        const penaltyMaxFinish = GuiHelper.createFormField(FIELD_MAX_FINISH_COUNT);
 
-        const importBtn = document.createElement("button");
-        importBtn.className = "atb-main-btn";
-        //importBtn.style.maxWidth = "fit-content";
-        importBtn.style.background = "var(--atb-danger)";
-        importBtn.innerText = `Import Settings`;
-        importBtn.addEventListener("click", () => {
-            // TODO dialog confirm
-            // TODO impl
-        });
-
-        const row = GuiHelper.createTwoElemRow(exportBtn, importBtn);
-        mainContent.appendChild(row);
-
-        return mainCard;
+        const infoSection = GuiHelper.createInfoSection("info", this.STRINGS.INFO_PENALTY_TITLE, this.INFO_PENALTY_SYS);
+        penaltyContent.appendChild(infoSection);
+        penaltyContent.appendChild(penaltyThreshold);
+        const row = GuiHelper.createTwoElemRow(penaltyMinFinish, penaltyMaxFinish);
+        penaltyContent.appendChild(row);
+        return penaltyMainCard;
     }
 
-    private buildEmergencyCard() {
-        const FIELD_TITLE: GuiFormField = {
-            html_id: "atb-emergency-title",
-            label: "Emergency Options",
-            type: "display-text",
-            default_value: false
+    private buildRandomTaskCard(): HTMLElement {
+        const haveSettingsAccess = isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.PenaltySettingsPermission);
+        // Fields
+        const FIELD_ENABLE: GuiFormField = {
+            html_id: "atb-random-task-enable",
+            label: "Enable Random Tasks",
+            type: "checkbox",
+            disable: !haveSettingsAccess,
+            default_value: this.randTaskSettings.enableRandomTasks,
+            onChange: (value: boolean) => {
+                this.randTaskSettings.enableRandomTasks = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_AVERAGE_TASKS: GuiFormField = {
+            html_id: "atb-random-task-average",
+            label: "Average number of Tasks per Hour (0.1 - 15)",
+            type: "number",
+            min_value: 0.1,
+            max_value: 15.0,
+            disable: !haveSettingsAccess,
+            default_value: this.randTaskSettings.averageNewTaskPerHour,
+            onChange: (value: number) => {
+                this.randTaskSettings.averageNewTaskPerHour = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_MIN_FINISH_COUNT: GuiFormField = {
+            html_id: "atb-min-finish-count",
+            label: "Minimum random task finish count (% of the base finish count) (5% - 1000%)",
+            type: "number",
+            min_value: 5,
+            max_value: 1000,
+            disable: !haveSettingsAccess,
+            default_value: this.randTaskSettings.minRandomFinishNeeded,
+            onChange: (value: number) => {
+                this.randTaskSettings.minRandomFinishNeeded = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_MAX_FINISH_COUNT: GuiFormField = {
+            html_id: "atb-max-finish-count",
+            label: "Maximum random task finish count (% of the base finish count) (5% - 1000%)",
+            type: "number",
+            min_value: 5,
+            max_value: 1000,
+            disable: !haveSettingsAccess,
+            default_value: this.randTaskSettings.maxRandomFinishNeeded,
+            onChange: (value: number) => {
+                this.randTaskSettings.maxRandomFinishNeeded = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+        const FIELD_WEIGHT_USE_PUNISH: GuiFormField = {
+            html_id: "atb-weight-use-punish",
+            label: "Weight of random tasks choosing a punishement instead (0 to disable)",
+            type: "number",
+            min_value: 0,
+            max_value: 100,
+            disable: !haveSettingsAccess,
+            default_value: this.randTaskSettings.weightUsePunishAsTask,
+            onChange: (value: number) => {
+                this.randTaskSettings.weightUsePunishAsTask = value;
+                this.shouldSaveSetting = true;
+            }
         };
 
-        const featureTuple = GuiHelper.createFeatureToggleCard(FIELD_TITLE, true);
-        const mainCard = featureTuple.card;
-        const mainContent = featureTuple.contentArea;
+        // Build Main card
+        const randTaskTuple = GuiHelper.createFeatureToggleCard(FIELD_ENABLE, true);
+        const randTaskMainCard = randTaskTuple.card;
+        const randTaskContent = randTaskTuple.contentArea;
 
-        const safewordBtn = document.createElement("button");
-        safewordBtn.className = "atb-main-btn";
-        //safewordBtn.style.maxWidth = "fit-content";
-        safewordBtn.style.background = "var(--atb-success)";
-        safewordBtn.innerText = `SAFEWORD`;
-        safewordBtn.addEventListener("click", () => {
-            this.showConfirmDialog(this.STRINGS.DIALOG_CONFIRM_TITLE, this.STRINGS.DIALOG_SAFEWORD_DESC, () => {
-                const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
-                tm?.forceFinishAllTask();
+        const randTaskAverage = GuiHelper.createFormField(FIELD_AVERAGE_TASKS);
+        const randTaskUsePunish = GuiHelper.createFormField(FIELD_WEIGHT_USE_PUNISH);
+        const randTaskMinDuration = GuiHelper.createFormField(FIELD_MIN_FINISH_COUNT);
+        const randTaskMaxDuration = GuiHelper.createFormField(FIELD_MAX_FINISH_COUNT);
 
-                // Remove some Penalty Points if 50% over threshold
-                const cmSettings = getCharacterChaoticMistressSettings(this.character);
-                if (cmSettings) {
-                    cmSettings.badPts = Math.min(cmSettings.badPts, Math.floor(cmSettings.forcedPunishementThreshold / 2));
-                    StorageManager.saveSettings();
-                }
-            });
-        });
+        const randTaskRow1 = GuiHelper.createTwoElemRow(randTaskAverage, randTaskUsePunish);
+        const randTaskDurationRow = GuiHelper.createTwoElemRow(randTaskMinDuration, randTaskMaxDuration);
 
-        const resetBtn = document.createElement("button");
-        resetBtn.className = "atb-main-btn";
-        //resetBtn.style.maxWidth = "fit-content";
-        resetBtn.style.background = "var(--atb-danger)";
-        resetBtn.innerText = `RESET TO DEFAULT SETTINGS`;
-        resetBtn.addEventListener("click", () => {
-            this.showConfirmDialog(this.STRINGS.DIALOG_CONFIRM_TITLE, this.STRINGS.DIALOG_RESET_DESC, () => {
-                StorageManager.resetSettings();
-            });
-        });
-
-        const row = GuiHelper.createTwoElemRow(safewordBtn, resetBtn);
-        mainContent.appendChild(row);
-
-        return mainCard;
+        const infoSection = GuiHelper.createInfoSection("info", this.STRINGS.INFO_RANDOM_TASK_TITLE, this.INFO_RANDOM_TASK);
+        randTaskContent.appendChild(infoSection);
+        randTaskContent.appendChild(randTaskRow1);
+        randTaskContent.appendChild(randTaskDurationRow);
+        return randTaskMainCard;
     }
 
     private buildRandomEventCard() {
@@ -188,9 +287,9 @@ export class GuiGeneralSettingsView extends GuiViewBase {
             label: "Enable Random Events",
             type: "checkbox",
             disable: !haveSettingsAccess,
-            default_value: this.settings.enable,
+            default_value: this.randEventsettings.enable,
             onChange: (value: boolean) => {
-                this.settings.enable = value;
+                this.randEventsettings.enable = value;
                 this.shouldSaveSetting = true;
             }
         };
@@ -202,9 +301,9 @@ export class GuiGeneralSettingsView extends GuiViewBase {
             disable: !haveSettingsAccess,
             min_value: 0,
             max_value: 100,
-            default_value: this.settings.chanceEvent,
+            default_value: this.randEventsettings.chanceEvent,
             onChange: (value: number) => {
-                this.settings.chanceEvent = value;
+                this.randEventsettings.chanceEvent = value;
                 this.shouldSaveSetting = true;
             }
         };
@@ -215,9 +314,9 @@ export class GuiGeneralSettingsView extends GuiViewBase {
             disable: !haveSettingsAccess,
             min_value: 0,
             max_value: 100,
-            default_value: this.settings.chanceHarshEvent,
+            default_value: this.randEventsettings.chanceHarshEvent,
             onChange: (value: number) => {
-                this.settings.chanceHarshEvent = value;
+                this.randEventsettings.chanceHarshEvent = value;
                 this.shouldSaveSetting = true;
             }
         };
@@ -227,9 +326,9 @@ export class GuiGeneralSettingsView extends GuiViewBase {
             label: "Enable Trigger: On Room Entry",
             type: "checkbox",
             disable: !haveSettingsAccess,
-            default_value: this.settings.enableTriggerOnRoomEntry,
+            default_value: this.randEventsettings.enableTriggerOnRoomEntry,
             onChange: (value: boolean) => {
-                this.settings.enableTriggerOnRoomEntry = value;
+                this.randEventsettings.enableTriggerOnRoomEntry = value;
                 this.shouldSaveSetting = true;
             }
         };
@@ -238,9 +337,9 @@ export class GuiGeneralSettingsView extends GuiViewBase {
             label: "Enable Trigger: On Room Exit",
             type: "checkbox",
             disable: !haveSettingsAccess,
-            default_value: this.settings.enableTriggerOnRoomExit,
+            default_value: this.randEventsettings.enableTriggerOnRoomExit,
             onChange: (value: boolean) => {
-                this.settings.enableTriggerOnRoomExit = value;
+                this.randEventsettings.enableTriggerOnRoomExit = value;
                 this.shouldSaveSetting = true;
             }
         };
@@ -250,9 +349,9 @@ export class GuiGeneralSettingsView extends GuiViewBase {
             label: "Enable Event: Add Restraint",
             type: "checkbox",
             disable: !haveSettingsAccess,
-            default_value: this.settings.enableAddRestraintEvent,
+            default_value: this.randEventsettings.enableAddRestraintEvent,
             onChange: (value: boolean) => {
-                this.settings.enableAddRestraintEvent = value;
+                this.randEventsettings.enableAddRestraintEvent = value;
                 this.shouldSaveSetting = true;
             }
         };
@@ -261,9 +360,9 @@ export class GuiGeneralSettingsView extends GuiViewBase {
             label: "Enable Event: Add Locks",
             type: "checkbox",
             disable: !haveSettingsAccess,
-            default_value: this.settings.enableAddLocksEvent,
+            default_value: this.randEventsettings.enableAddLocksEvent,
             onChange: (value: boolean) => {
-                this.settings.enableAddLocksEvent = value;
+                this.randEventsettings.enableAddLocksEvent = value;
                 this.shouldSaveSetting = true;
             }
         };
@@ -272,9 +371,9 @@ export class GuiGeneralSettingsView extends GuiViewBase {
             label: "Enable Event: Random Password Lock",
             type: "checkbox",
             disable: !haveSettingsAccess,
-            default_value: this.settings.enableRandomPasswordLockEvent,
+            default_value: this.randEventsettings.enableRandomPasswordLockEvent,
             onChange: (value: boolean) => {
-                this.settings.enableRandomPasswordLockEvent = value;
+                this.randEventsettings.enableRandomPasswordLockEvent = value;
                 this.shouldSaveSetting = true;
             }
         };
@@ -305,8 +404,8 @@ export class GuiGeneralSettingsView extends GuiViewBase {
 
 
         // Final Assembly
-        const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.HELP_RANDOM_EVENTS_TITLE, this.INFO_RANDOM_EVENTS);
-        mainContent.appendChild(helpSection);
+        const infoSection = GuiHelper.createInfoSection("info", this.STRINGS.INFO_RANDOM_EVENTS_TITLE, this.INFO_RANDOM_EVENTS);
+        mainContent.appendChild(infoSection);
         GuiHelper.createContentTitle(mainContent, this.STRINGS.CATEGORY_CHANCE_TITLE);
         mainContent.appendChild(chanceRow);
         GuiHelper.createContentTitle(mainContent, this.STRINGS.CATEGORY_TRIGGERS_TITLE);
@@ -442,6 +541,89 @@ export class GuiGeneralSettingsView extends GuiViewBase {
         mainContent.appendChild(actionRow1);
         mainContent.appendChild(actionRow2);
         mainContent.appendChild(actionRow3);
+
+        return mainCard;
+    }
+
+    private buildEmergencyCard() {
+        const FIELD_TITLE: GuiFormField = {
+            html_id: "atb-emergency-title",
+            label: "Emergency Options",
+            type: "display-text",
+            default_value: false
+        };
+
+        const featureTuple = GuiHelper.createFeatureToggleCard(FIELD_TITLE, true);
+        const mainCard = featureTuple.card;
+        const mainContent = featureTuple.contentArea;
+
+        const safewordBtn = document.createElement("button");
+        safewordBtn.className = "atb-main-btn";
+        //safewordBtn.style.maxWidth = "fit-content";
+        safewordBtn.style.background = "var(--atb-success)";
+        safewordBtn.innerText = `SAFEWORD`;
+        safewordBtn.addEventListener("click", () => {
+            this.showConfirmDialog(this.STRINGS.DIALOG_CONFIRM_TITLE, this.STRINGS.DIALOG_SAFEWORD_DESC, () => {
+                const tm = ModuleManager.getModule("TaskManagerModule") as TaskManagerModule;
+                tm?.forceFinishAllTask();
+
+                // Remove some Penalty Points if 50% over threshold
+                this.penaltySettings.penaltyPts = Math.min(this.penaltySettings.penaltyPts, Math.floor(this.penaltySettings.forcedPunishementThreshold / 2));
+                StorageManager.saveSettings();
+            });
+        });
+
+        const resetBtn = document.createElement("button");
+        resetBtn.className = "atb-main-btn";
+        //resetBtn.style.maxWidth = "fit-content";
+        resetBtn.style.background = "var(--atb-danger)";
+        resetBtn.innerText = `RESET TO DEFAULT SETTINGS`;
+        resetBtn.addEventListener("click", () => {
+            this.showConfirmDialog(this.STRINGS.DIALOG_CONFIRM_TITLE, this.STRINGS.DIALOG_RESET_DESC, () => {
+                StorageManager.resetSettings();
+                GuiMainView.doFullUpdate(this.character); // Update the page with new default value
+            });
+        });
+
+        const row = GuiHelper.createTwoElemRow(safewordBtn, resetBtn);
+        mainContent.appendChild(row);
+
+        return mainCard;
+    }
+
+    private buildExportImportCard() {
+        const FIELD_TITLE: GuiFormField = {
+            html_id: "atb-export-import-title",
+            label: "Export / Import settings",
+            type: "display-text",
+            default_value: false
+        };
+
+        const featureTuple = GuiHelper.createFeatureToggleCard(FIELD_TITLE, true);
+        const mainCard = featureTuple.card;
+        const mainContent = featureTuple.contentArea;
+
+        const exportBtn = document.createElement("button");
+        exportBtn.className = "atb-main-btn";
+        //exportBtn.style.maxWidth = "fit-content";
+        exportBtn.style.background = "var(--atb-success)";
+        exportBtn.innerText = `Export Settings`;
+        exportBtn.addEventListener("click", () => {
+            // TODO impl
+        });
+
+        const importBtn = document.createElement("button");
+        importBtn.className = "atb-main-btn";
+        //importBtn.style.maxWidth = "fit-content";
+        importBtn.style.background = "var(--atb-danger)";
+        importBtn.innerText = `Import Settings`;
+        importBtn.addEventListener("click", () => {
+            // TODO dialog confirm
+            // TODO impl
+        });
+
+        const row = GuiHelper.createTwoElemRow(exportBtn, importBtn);
+        mainContent.appendChild(row);
 
         return mainCard;
     }

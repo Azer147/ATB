@@ -4,14 +4,15 @@ import { GuiHelper } from "./GuiHelper";
 import { addRandomRestrain } from "@/utility/ItemUtility";
 import { RandomEventsModule } from "@/modules/RandomEventsModule";
 import GuiViewBase from "./GuiViewBase";
-import { getCharacterChaoticMistressSettings, saveSettings } from "@/utility/CharacterWrapper";
-import { ChaoticMistressModule } from "@/modules/ChaoticMistressModule";
+import { getCharacterPenaltySettings, saveSettings } from "@/utility/CharacterWrapper";
+import { PunishementManagerModule } from "@/modules/PunishementManagerModule";
+import { RandomTaskModule } from "@/modules/RandomTaskModule";
 
 export class GuiDebugView extends GuiViewBase {
     private STRINGS = {
         PAGE_TITLE: "Debug Page",
-        ADD_GOOD_PTS: "Add 50 Good Points",
-        RESET_BAD_PTS: "Reset Bad Points",
+        ADD_REWARD_PTS: "Add 50 Reward Points",
+        RESET_PENALTY_PTS: "Reset Penalty Points",
         CLEAR_ALL_TASKS: "Clear All Tasks",
         RANDOM_TASK: "Trigger Random Task",
         RANDOM_PUNISH: "Trigger Random Punishement",
@@ -32,18 +33,18 @@ export class GuiDebugView extends GuiViewBase {
     public unload() {
     }
 
-    private addGoodPts(pts: number) {
-        const setting = getCharacterChaoticMistressSettings(this.character)
+    private addRewardPts(pts: number) {
+        const setting = getCharacterPenaltySettings(this.character)
         if (setting) {
-            setting.goodPts += pts;
+            setting.rewardPts += pts;
             saveSettings(this.character);
         }
     }
 
-    private resetBadPts() {
-        const setting = getCharacterChaoticMistressSettings(this.character)
+    private resetPenaltyPts() {
+        const setting = getCharacterPenaltySettings(this.character)
         if (setting) {
-            setting.badPts = 0;
+            setting.penaltyPts = 0;
             saveSettings(this.character);
         }
     }
@@ -64,21 +65,21 @@ export class GuiDebugView extends GuiViewBase {
         // Pts debug
         //GuiHelper.createContentTitle(form, "Task/Points Debug");
 
-        const resetGoodPointsBtn = document.createElement("button");
-        resetGoodPointsBtn.className = "atb-main-btn";
-        resetGoodPointsBtn.innerText = this.STRINGS.ADD_GOOD_PTS;
-        resetGoodPointsBtn.onclick = () => {
-            this.addGoodPts(50);
+        const resetRewardPointsBtn = document.createElement("button");
+        resetRewardPointsBtn.className = "atb-main-btn";
+        resetRewardPointsBtn.innerText = this.STRINGS.ADD_REWARD_PTS;
+        resetRewardPointsBtn.onclick = () => {
+            this.addRewardPts(50);
         };
 
-        const resetBadPointsBtn = document.createElement("button");
-        resetBadPointsBtn.className = "atb-main-btn";
-        resetBadPointsBtn.innerText = this.STRINGS.RESET_BAD_PTS;
-        resetBadPointsBtn.onclick = () => {
-            this.resetBadPts();
+        const resetPenaltyPointsBtn = document.createElement("button");
+        resetPenaltyPointsBtn.className = "atb-main-btn";
+        resetPenaltyPointsBtn.innerText = this.STRINGS.RESET_PENALTY_PTS;
+        resetPenaltyPointsBtn.onclick = () => {
+            this.resetPenaltyPts();
         };
 
-        const ptsRow = GuiHelper.createTwoElemRow(resetBadPointsBtn, resetGoodPointsBtn);
+        const ptsRow = GuiHelper.createTwoElemRow(resetPenaltyPointsBtn, resetRewardPointsBtn);
         form.appendChild(ptsRow);
 
 
@@ -90,8 +91,8 @@ export class GuiDebugView extends GuiViewBase {
         randomTaskBtn.className = "atb-main-btn";
         randomTaskBtn.innerText = this.STRINGS.RANDOM_TASK;
         randomTaskBtn.onclick = () => {
-            const cm = ModuleManager.getModule("ChaoticMistressModule") as ChaoticMistressModule;
-            if (cm) cm.triggerRandomTask();
+            const rtm = ModuleManager.getModule("RandomTaskModule") as RandomTaskModule;
+            if (rtm) rtm.triggerRandomTask();
         };
         //form.appendChild(randomTaskBtn);
 
@@ -99,8 +100,8 @@ export class GuiDebugView extends GuiViewBase {
         randomPunishBtn.className = "atb-main-btn";
         randomPunishBtn.innerText = this.STRINGS.RANDOM_PUNISH;
         randomPunishBtn.onclick = () => {
-            const cm = ModuleManager.getModule("ChaoticMistressModule") as ChaoticMistressModule;
-            if (cm) cm.triggerRandomPunishment();
+            const pmm = ModuleManager.getModule("PunishementManagerModule") as PunishementManagerModule;
+            if (pmm) pmm.triggerRandomPunishment();
         };
         //form.appendChild(randomPunishBtn);
         const randomTaskRow = GuiHelper.createTwoElemRow(randomTaskBtn, randomPunishBtn);

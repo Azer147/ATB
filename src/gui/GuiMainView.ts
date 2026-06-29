@@ -1,5 +1,5 @@
 import { RemoteModule } from "@/modules/RemoteModule";
-import { GuiChaoticMistressView } from "./GuiChaoticMistressView";
+import { GuiPunishementsView } from "./GuiPunishementsView";
 import { GuiCreateTaskView } from "./GuiCreateTaskView";
 import GuiDashboardView from "./GuiDashboardView";
 import { GuiDebugView } from "./GuiDebugView";
@@ -14,7 +14,7 @@ import { TaskData } from "@/models/TaskManagerSettings";
 import { GuiAboutView } from "./GuiAboutView";
 import { GuiGeneralSettingsView } from "./GuiGeneralSettingsView";
 
-type TabName = "Dashboard" | "Create Task" | "Chaotic Mistress" | "General Settings" | "Tasks Settings" | "Punishements Settings"
+type TabName = "Dashboard" | "Create Task" | "Punishements" | "General Settings" | "Tasks Settings" | "Punishements Settings"
              | "Outfit Settings" | "Outfit Editor" | "Remote Access Settings" | "About" | "Debug";
 
 export interface TabConfig {
@@ -38,9 +38,9 @@ export class GuiMainView {
                     return (isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.createTaskPermission)
                             || isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.editTaskPermission));
                 }},
-        "Chaotic Mistress": {render: (parent, C) => { return new GuiChaoticMistressView(parent, C) as GuiViewBase; },
+        "Punishements": {render: (parent, C) => { return new GuiPunishementsView(parent, C) as GuiViewBase; },
                 showCondition: (C) => {
-                    return (isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.chaoticMistressSettingsPermission)
+                    return (isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.PenaltySettingsPermission)
                             || isPlayerHaveRemoteAccess(C, C.ATB?.RemoteAccessSettings?.useEnforcedPermission));
                 }},
         "General Settings": {render: (parent, C) => { return new GuiGeneralSettingsView(parent, C) as GuiViewBase; },

@@ -1,8 +1,7 @@
 import { GuiHelper, GuiFormField } from "./GuiHelper";
 import GuiViewBase from "./GuiViewBase";
-import { getCharacterOutfitSettings, saveSettings } from "@/utility/CharacterWrapper";
-import { allOutfitList, extractOutfitDataFromCode, extractOutfitDataFromId, getOutfitSettingsFromId, OutfitId, OutfitsSettings, RawOutfit } from "@/models/OutfitSettings";
-import { createColorRect, extractCharacterOutfitColor, extractMainColorGroup, hslToHex, smartReplaceItemColor, smartReplaceSingleColor } from "@/utility/ColorUtility";
+import { allOutfitList, extractOutfitDataFromCode, extractOutfitDataFromId, OutfitId } from "@/models/OutfitSettings";
+import { createColorRect, extractCharacterOutfitColor, hslToHex, smartReplaceItemColor } from "@/utility/ColorUtility";
 import { isBodyPart } from "@/utility/utility";
 
 export class GuiOutfitEditorView extends GuiViewBase {

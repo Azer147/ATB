@@ -1,4 +1,7 @@
+import { allOutfitList, getOutfitSettingsFromId, OutfitId, OutfitTag, RawOutfit } from "@/models/OutfitSettings";
 import { isShockItem } from "./ItemUtility";
+import { isCharacterHaveEchoItem } from "./CharacterWrapper";
+import { FinishType, FullTaskType, getFinishTypeSetting, getTaskTypeSetting, PunishementType, TasksSettings, TaskType } from "@/models/TasksSettings";
 
 export enum ChatColor {
     Red = "#ff5555",
@@ -349,4 +352,122 @@ export function checkNicknameValidity(C: Character, nickname: string): string | 
 			return null; // Valid nickname
 	}
 	return null; // Valid nickname
+}
+
+export function selectRandomOutfit(includeTags: OutfitTag[] = [], excludeTags: OutfitTag[] = []): OutfitId | undefined {
+	// build weighted list
+	let totalWeight = 0;
+	const weightedList = allOutfitList.map(outfit => {
+		let weight = 0;
+
+		let outfitSetting = getOutfitSettingsFromId(Player.ATB.OutfitsSettings, outfit.id);
+		if (isOutfitAvailable(outfit, includeTags, excludeTags) && outfitSetting.enableForRandomTask) {
+			weight = outfitSetting.randomWeight
+		}
+
+		if (weight < 0) weight = 0;
+		totalWeight += weight;
+		return { outfit, weight };
+	});
+	if (totalWeight === 0) {
+		return undefined;
+	}
+
+	let randomRoll = Math.random() * totalWeight;
+
+	// Select task based on weight
+	let selected: OutfitId | undefined = undefined;
+	for (let item of weightedList) {
+		randomRoll -= item.weight;
+		if (randomRoll <= 0) {
+			selected = item.outfit.id;
+			break;
+		}
+	}
+	return selected;
+}
+
+export function isOutfitAvailable(outfit: RawOutfit, includeTags: OutfitTag[] = [], excludeTags: OutfitTag[] = []): boolean {
+	let includeCond: boolean = false;
+	let excludeCond: boolean = false;
+
+	let outfitSetting = getOutfitSettingsFromId(Player.ATB.OutfitsSettings, outfit.id);
+	if (!outfitSetting.enable) {
+		return false;
+	}
+
+	// Ignore outfit using echo addon if player don't have it
+	if (outfit.tags.includes("use_echo") && isCharacterHaveEchoItem(Player) == false) {
+		return false;
+	}
+
+	if (includeTags.length > 0) {
+		includeCond = outfit.tags.some((tag) => { return includeTags.includes(tag); });
+	} else {
+		includeCond = true;
+	}
+
+	if (excludeTags.length > 0) {
+		excludeCond = (outfit.tags.some((tag) => { return excludeTags.includes(tag); }) == false);
+	} else {
+		excludeCond = true;
+	}
+
+	return (includeCond && excludeCond);
+}
+
+// Work for FullTaskType, PunishementType and FinishType
+export function selectRandomByWeight<T extends FullTaskType | PunishementType | FinishType>(settings: TasksSettings, type: "task" | "punish" | "finish", availList: T[], taskType: TaskType | undefined = undefined): T | undefined {
+	// build task+weight list
+	let totalWeight = 0;
+	const weightedTasks = availList.map(task => {
+		let weight = 0;
+		let mainType;
+
+		// FullTaskType is object, others are string
+		if (type == "task" && typeof task != "string") {
+			mainType = task.taskType;
+		} else {
+			mainType = task;
+		}
+
+		let typeSetting;
+		if (type == "finish") {
+			typeSetting = getFinishTypeSetting(settings, mainType, taskType);
+		} else {
+			typeSetting = getTaskTypeSetting(settings, mainType);
+		}
+		if (typeSetting) {
+			weight = typeSetting.randomWeight;
+		}
+
+		if (weight < 0) weight = 0;
+		totalWeight += weight;
+		return { task, weight };
+	});
+	if (totalWeight === 0) {
+		return;
+	}
+
+	let randomRoll = Math.random() * totalWeight;
+
+	// Select task based on weight
+	let selectedTask: T | undefined = undefined;
+	for (let item of weightedTasks) {
+		randomRoll -= item.weight;
+		if (randomRoll <= 0) {
+			selectedTask = item.task;
+			break;
+		}
+	}
+	return selectedTask;
+}
+
+// increase / decrease basePts from the difference between duration and baseDuration
+export function calculatePointsFromFinishCount(selectedFinishCount: number, baseFinishCount: number, basePts: number, enforced: boolean): number {
+	if (selectedFinishCount == 0) return 0;
+	let durDiffPerc = selectedFinishCount / baseFinishCount;
+	let bonusMult = 1;
+	if (enforced) bonusMult = 1.2; // 20% bonus if enforced
+	return Math.floor(basePts * durDiffPerc * bonusMult);
 }

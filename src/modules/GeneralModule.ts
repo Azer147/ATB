@@ -5,7 +5,6 @@ import { BC_SDK } from "..";
 import { GuiMainView } from "@/gui/GuiMainView";
 import ModuleManager from "@/utility/ModuleManager";
 import { TaskManagerModule } from "./TaskManagerModule";
-import { CoreSettings } from "@/models/CoreSettings";
 import { RemoteModule } from "./RemoteModule";
 
 

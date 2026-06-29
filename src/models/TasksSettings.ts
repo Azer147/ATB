@@ -39,17 +39,17 @@ export interface SingleTaskSettings {
     enable: boolean;
     //type: TaskType;
 
-    randomWeight: number; // Weigthed chance to be picked among other tasks (for Chaotic Mistress)
+    randomWeight: number; // Weigthed chance to be picked among other tasks (for Random Task)
 
     baseDurationMs: number; // in millisec
     baseGracePeriodMs: number; // in millisec
 
-    baseGoodPtsReward: number;
-    baseBadPointsPenalty: number; // Can be either on complete failure or partial failure depending if the task can fail and end.
+    baseReward: number;
+    basePenalty: number; // Can be either on complete failure or partial failure depending if the task can fail and end.
 }
 
 export interface SinglePunishmentSettings extends SingleTaskSettings {
-    baseBadPtsReduction: number; // How much bad points is removed when taking this punishements
+    basePenaltyReduction: number; // How much penalty points is removed when taking this punishements
 }
 
 export interface SingleFinishSettings {
@@ -121,8 +121,8 @@ export const DefaultTasksSettings: TasksSettings = {
         randomWeight: 10,
         baseDurationMs: 30 * 60 * 1000, // 30 min
         baseGracePeriodMs: 30 * 1000, // 30 sec,
-        baseGoodPtsReward: 10,
-        baseBadPointsPenalty: 5,
+        baseReward: 10,
+        basePenalty: 5,
         enableHand: true,
         enableLeg: true,
         enableGag: true,
@@ -136,8 +136,8 @@ export const DefaultTasksSettings: TasksSettings = {
         randomWeight: 20,
         baseDurationMs: 30 * 60 * 1000, // 30 min
         baseGracePeriodMs: 45 * 1000, // 45sec
-        baseGoodPtsReward: 10,
-        baseBadPointsPenalty: 5,
+        baseReward: 10,
+        basePenalty: 5,
         averageRandomExtPerHour: 20,
         chanceRemoveOnFinish: 50,
         randomCanUseHarshOutfit: false
@@ -147,24 +147,24 @@ export const DefaultTasksSettings: TasksSettings = {
         randomWeight: 10,
         baseDurationMs: 30 * 60 * 1000, // 30 min
         baseGracePeriodMs: 45 * 1000, // 45sec
-        baseGoodPtsReward: 10,
-        baseBadPointsPenalty: 5,
+        baseReward: 10,
+        basePenalty: 5,
     },
     nicknameTaskSettings: {
         enable: true,
         randomWeight: 0, // not available for random tasks
         baseDurationMs: 120 * 60 * 1000, // 120 min
         baseGracePeriodMs: 90 * 1000, // 90sec
-        baseGoodPtsReward: 10,
-        baseBadPointsPenalty: 20,
+        baseReward: 10,
+        basePenalty: 20,
     },
     poseTaskSettings: {
         enable: true,
         randomWeight: 5,
         baseDurationMs: 30 * 60 * 1000, // 30 min
         baseGracePeriodMs: 60 * 1000, // 60sec
-        baseGoodPtsReward: 20,
-        baseBadPointsPenalty: 1,
+        baseReward: 20,
+        basePenalty: 1,
         averageRandomPosePerHour: 15,
     },
     roomControlTaskSettings: {
@@ -172,8 +172,8 @@ export const DefaultTasksSettings: TasksSettings = {
         randomWeight: 0, // not available for random tasks (for now?)
         baseDurationMs: 60 * 60 * 1000, // 60 min
         baseGracePeriodMs: 3 * 60 * 1000, // 3min
-        baseGoodPtsReward: 30,
-        baseBadPointsPenalty: 1,
+        baseReward: 30,
+        basePenalty: 1,
         roomMaxMinutesReq: 15, // 15min
     },
     taskFinishSettings: {
@@ -204,36 +204,36 @@ export const DefaultTasksSettings: TasksSettings = {
         randomWeight: 10,
         baseDurationMs: 30 * 60 * 1000, // 30 min
         baseGracePeriodMs: 15 * 1000, // 15 sec
-        baseGoodPtsReward: 20,
-        baseBadPointsPenalty: 5,
-        baseBadPtsReduction: 20,
+        baseReward: 20,
+        basePenalty: 5,
+        basePenaltyReduction: 20,
     },
     harshOutfitPunishmentSettings: {
         enable: true,
         randomWeight: 10,
         baseDurationMs: 30 * 60 * 1000, // 30 min
         baseGracePeriodMs: 15 * 1000, // 15 sec
-        baseGoodPtsReward: 30,
-        baseBadPointsPenalty: 5,
-        baseBadPtsReduction: 30,
+        baseReward: 30,
+        basePenalty: 5,
+        basePenaltyReduction: 30,
     },
     dollPunishmentSettings: {
         enable: true,
         randomWeight: 5,
         baseDurationMs: 30 * 60 * 1000, // 30 min
         baseGracePeriodMs: 60 * 1000, // 60 sec
-        baseGoodPtsReward: 20,
-        baseBadPointsPenalty: 3,
-        baseBadPtsReduction: 40,
+        baseReward: 20,
+        basePenalty: 3,
+        basePenaltyReduction: 40,
     },
     dronePunishmentSettings: {
         enable: true,
         randomWeight: 5,
         baseDurationMs: 30 * 60 * 1000, // 30 min
         baseGracePeriodMs: 60 * 1000, // 60 sec
-        baseGoodPtsReward: 30,
-        baseBadPointsPenalty: 1,
-        baseBadPtsReduction: 50,
+        baseReward: 30,
+        basePenalty: 1,
+        basePenaltyReduction: 50,
     }
 }
 

@@ -25,7 +25,8 @@ export interface RemoteAccessSettings {
     // Settings Access Permissions
     taskSettingsPermission: RemoteAccessRole;
     punishementSettingsPermission: RemoteAccessRole;
-    chaoticMistressSettingsPermission: RemoteAccessRole;
+    PenaltySettingsPermission: RemoteAccessRole;
+    RandomTaskSettingsPermission: RemoteAccessRole;
     randomEventSettingsPermission: RemoteAccessRole;
     outfitSettingsPermission: RemoteAccessRole;
 
@@ -51,7 +52,8 @@ export const DefaultRemoteAccessSettings: RemoteAccessSettings = {
 
     taskSettingsPermission: RemoteAccessRole.Owner,
     punishementSettingsPermission: RemoteAccessRole.Owner,
-    chaoticMistressSettingsPermission: RemoteAccessRole.Owner,
+    PenaltySettingsPermission: RemoteAccessRole.Owner,
+    RandomTaskSettingsPermission: RemoteAccessRole.Owner,
     randomEventSettingsPermission: RemoteAccessRole.Owner,
     outfitSettingsPermission: RemoteAccessRole.Owner,
 

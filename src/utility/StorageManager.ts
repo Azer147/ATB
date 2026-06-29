@@ -1,4 +1,4 @@
-import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
+import { PenaltySettings } from "@/models/PenaltySettings";
 import { allInternalfields, CoreSettings, DefaultCoreSettings } from "@/models/CoreSettings";
 import { DeviousShocksSettings } from "@/models/DeviousShocksSettings";
 import { GeneralSettings } from "@/models/GeneralSettings";
@@ -10,6 +10,7 @@ import { TasksSettings } from "@/models/TasksSettings";
 import { getAtbVersion } from "..";
 import ModuleManager from "./ModuleManager";
 import { TaskManagerModule } from "@/modules/TaskManagerModule";
+import { RandomTaskSettings } from "@/models/RandomTaskSettings";
 
 export default class StorageManager {
     private static globalSettings: CoreSettings = DefaultCoreSettings;
@@ -22,14 +23,17 @@ export default class StorageManager {
     static getGeneralSettings(): GeneralSettings {
         return StorageManager.globalSettings.GeneralModule;
     }
+    static getPenaltySettings(): PenaltySettings {
+        return StorageManager.globalSettings.PenaltySettings;
+    }
+    static getRandomTaskSettings(): RandomTaskSettings {
+        return StorageManager.globalSettings.RandomTaskModule;
+    }
     static getRandomEventsSettings(): RandomEventsSettings {
         return StorageManager.globalSettings.RandomEventsModule;
     }
     static getDeviousShocksSettings(): DeviousShocksSettings {
         return StorageManager.globalSettings.DeviousShocksModule;
-    }
-    static getChaoticMistressSettings(): ChaoticMistressSettings {
-        return StorageManager.globalSettings.ChaoticMistressModule;
     }
     static getTaskManagerSettings(): TaskManagerSettings {
         return StorageManager.globalSettings.TaskManagerModule;
@@ -49,9 +53,10 @@ export default class StorageManager {
             Enable: this.getGlobalEnable(),
             Version: getAtbVersion(),
             GeneralModule: this.getGeneralSettings(),
+            PenaltySettings: this.getPenaltySettings(),
+            RandomTaskModule: this.getRandomTaskSettings(),
             RandomEventsModule: this.getRandomEventsSettings(),
             DeviousShocksModule: this.getDeviousShocksSettings(),
-            ChaoticMistressModule: this.getChaoticMistressSettings(),
             TaskManagerModule: this.getTaskManagerSettings(),
             TasksSettings: this.getTasksSettings(),
             OutfitsSettings: this.getOutfitSettings(),
@@ -146,8 +151,11 @@ export default class StorageManager {
                 ignoredKeys.push("dollPunishmentSettings");
                 ignoredKeys.push("dronePunishmentSettings");
             }
-            if (!isCharHaveRemoteAccessOnTarget(sender, Player, remoteAccessSettings.chaoticMistressSettingsPermission)) {
-                ignoredKeys.push("ChaoticMistressModule");
+            if (!isCharHaveRemoteAccessOnTarget(sender, Player, remoteAccessSettings.PenaltySettingsPermission)) {
+                ignoredKeys.push("PenaltySettings");
+            }
+            if (!isCharHaveRemoteAccessOnTarget(sender, Player, remoteAccessSettings.RandomTaskSettingsPermission)) {
+                ignoredKeys.push("RandomTaskModule");
             }
             if (!isCharHaveRemoteAccessOnTarget(sender, Player, remoteAccessSettings.randomEventSettingsPermission)) {
                 ignoredKeys.push("RandomEventsModule");

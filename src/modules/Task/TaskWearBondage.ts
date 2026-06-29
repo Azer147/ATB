@@ -32,7 +32,7 @@ export class TaskWearBondage extends TaskBase {
     }
     protected handleTransgression() {
         const deviceName = TaskWearBondage.getNamePerBondageType(this.data.itemToWear);
-        sendLocalMessage("You need to wear a " + deviceName + ", you received  " + this.data.badPtsOnFailure + " for transgression.", ChatColor.Red);
+        sendLocalMessage("You need to wear a " + deviceName + ", you received  " + this.data.penaltyPtsOnFailure + " for transgression.", ChatColor.Red);
     }
     protected handleTransgressionWarning() {
         const deviceName = TaskWearBondage.getNamePerBondageType(this.data.itemToWear);

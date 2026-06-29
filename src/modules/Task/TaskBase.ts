@@ -1,6 +1,6 @@
 import { TaskData } from "@/models/TaskManagerSettings";
 import ModuleManager from "@/utility/ModuleManager";
-import { ChaoticMistressModule } from "../ChaoticMistressModule";
+import { PunishementManagerModule } from "../PunishementManagerModule";
 import { ChatColor, formatTimeMs, sendLocalMessage } from "@/utility/utility";
 import StorageManager from "@/utility/StorageManager";
 
@@ -100,8 +100,8 @@ export abstract class TaskBase {
         // TODO: newTaskData validation ?
         this.data.finishTotalNeeded = newTaskData.finishTotalNeeded;
 
-        this.data.goodPtsOnSucces = newTaskData.goodPtsOnSucces;
-        this.data.badPtsOnFailure = newTaskData.badPtsOnFailure;
+        this.data.rewardPtsOnSucces = newTaskData.rewardPtsOnSucces;
+        this.data.penaltyPtsOnFailure = newTaskData.penaltyPtsOnFailure;
 
         this.data.gracePeriodMs = newTaskData.gracePeriodMs;
 
@@ -136,12 +136,12 @@ export abstract class TaskBase {
         console.log("ATB: Task is finished: " + this.getDescription());
         sendLocalMessage("Task is finished: " + this.getDescription(), ChatColor.Purple);
 
-        // Don't add good/bad pts on error
+        // Don't add reward/penalty pts on error
         if (!skipPts) {
             if (succes) {
-                this.notifyGoodPtsChange(this.data.goodPtsOnSucces);
+                this.notifyRewardPtsChange(this.data.rewardPtsOnSucces);
             } else {
-                this.notifyBadPtsChange(this.data.badPtsOnFailure);
+                this.notifyPenaltyPtsChange(this.data.penaltyPtsOnFailure);
             }
         }
     }
@@ -260,12 +260,12 @@ export abstract class TaskBase {
             // Handle transgression after grace period
             let gracePeriodMs = this.data.gracePeriodMs ?? this.DEFAULT_GRACE_PERIOD_MS;
             if (currentTime - this.lastTimeTaskRespected >= gracePeriodMs) {
-                // Add badPts
-                this.notifyBadPtsChange(this.data.badPtsOnFailure);
+                // Add penaltyPts
+                this.notifyPenaltyPtsChange(this.data.penaltyPtsOnFailure);
                 // Re-start grace period
                 this.lastTimeTaskRespected = currentTime;
 
-                // If player cannot equip it themselve, we handle it after getting badPts
+                // If player cannot equip it themselve, we handle it after getting penaltyPts
                 if (this.data.enforce || this.isCharUnableToDoTask()) {
                     this.enforceTask();
                 }
@@ -351,19 +351,19 @@ export abstract class TaskBase {
  * Notify to Extern Module
  */
 
-    protected notifyGoodPtsChange(pts: number): void {
+    protected notifyRewardPtsChange(pts: number): void {
         if (pts == 0) return;
-        const cm = ModuleManager.getModule("ChaoticMistressModule") as ChaoticMistressModule;
-        if (cm) {
-            cm.modifyGoodPts(pts);
+        const pmm = ModuleManager.getModule("PunishementManagerModule") as PunishementManagerModule;
+        if (pmm) {
+            pmm.modifyRewardPts(pts);
         }
     }
 
-    protected notifyBadPtsChange(pts: number): void {
+    protected notifyPenaltyPtsChange(pts: number): void {
         if (pts == 0) return;
-        const cm = ModuleManager.getModule("ChaoticMistressModule") as ChaoticMistressModule;
-        if (cm) {
-            cm.modifyBadPts(pts);
+        const pmm = ModuleManager.getModule("PunishementManagerModule") as PunishementManagerModule;
+        if (pmm) {
+            pmm.modifyPenaltyPts(pts);
         }
     }
 }

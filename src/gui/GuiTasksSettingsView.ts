@@ -11,8 +11,8 @@ export class GuiTasksSettingsView extends GuiViewBase {
     private HELP_BASE_TASK_TEXT = `
     Settings Fields Information:<br>
     - <strong>Weight:</strong> Used for random selection, higher weight means higher chance to be selected against other, 0 means this punishements cannot be randomly selected.<br>
-    - <strong>Base Duration:</strong> This will be the base duration used for random duration used by Chaotic Mistress. This is also used to calculate the Points Rewards, if selected duration is lower/higher than the base duration, Rewards will be lower/higher.<br>
-    - <strong>Base Good/Bad Points: </strong>Will be used as a base value for the punishements and points calculation.<br>
+    - <strong>Base Duration:</strong> This will be the base duration used for random duration used by Random Task. This is also used to calculate the Points Rewards, if selected duration is lower/higher than the base duration, Rewards will be lower/higher.<br>
+    - <strong>Base Reward/Penalty Points: </strong>Will be used as a base value for the punishements and points calculation.<br>
     <br>
     All Tasks list:<br>
     <strong>Wear Bondage/Restraints:</strong> Get penalty if not wearing specified restraints.<br>
@@ -84,7 +84,7 @@ export class GuiTasksSettingsView extends GuiViewBase {
 
     // Handle all fields common to all tasks
     // Namely: randomWeight, baseDurationMs, baseGracePeriodMs,
-    //          baseGoodPtsReward, baseBadPointsPenalty
+    //          baseReward, basePenalty
     private appendCommonTaskField(container: HTMLElement, prefixId: string, taskSetting: SingleTaskSettings, disableRandom: boolean = false) {
         const FIELD_WEIGHT: GuiFormField = {
             html_id: prefixId + "-weight",
@@ -112,25 +112,25 @@ export class GuiTasksSettingsView extends GuiViewBase {
         };
         const FIELD_REWARD: GuiFormField = {
             html_id: prefixId + "-reward",
-            label: "Base Good Points Reward on task completion",
+            label: "Base Reward Points Reward on task completion",
             type: "number",
             min_value: 0,
             max_value: 100,
-            default_value: taskSetting.baseGoodPtsReward,
+            default_value: taskSetting.baseReward,
             onChange: (value: number) => {
-                taskSetting.baseGoodPtsReward = value;
+                taskSetting.baseReward = value;
                 this.shouldSaveSetting = true;
             }
         };
         const FIELD_PENALTY: GuiFormField = {
             html_id: prefixId + "-penalty",
-            label: "Base Bad Points Penalty on task failure",
+            label: "Base Penalty Points on task failure",
             type: "number",
             min_value: 0,
             max_value: 100,
-            default_value: taskSetting.baseBadPointsPenalty,
+            default_value: taskSetting.basePenalty,
             onChange: (value: number) => {
-                taskSetting.baseBadPointsPenalty = value;
+                taskSetting.basePenalty = value;
                 this.shouldSaveSetting = true;
             }
         };

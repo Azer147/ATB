@@ -1,17 +1,18 @@
 import { GeneralSettings } from "@/models/GeneralSettings";
 import StorageManager from "./StorageManager";
 import { RandomEventsSettings } from "@/models/RandomEventsSettings";
-import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
+import { PenaltySettings } from "@/models/PenaltySettings";
 import { TaskData, TaskManagerSettings } from "@/models/TaskManagerSettings";
 import { PunishementType, TasksSettings } from "@/models/TasksSettings";
 import { TaskManagerModule } from "@/modules/TaskManagerModule";
 import { TaskBase } from "@/modules/Task/TaskBase";
 import ModuleManager from "./ModuleManager";
 import { RemoteModule } from "@/modules/RemoteModule";
-import { ChaoticMistressModule } from "@/modules/ChaoticMistressModule";
+import { PunishementManagerModule } from "@/modules/PunishementManagerModule";
 import { OutfitsSettings } from "@/models/OutfitSettings";
 import { DeviousShocksSettings } from "@/models/DeviousShocksSettings";
 import { RemoteAccessSettings } from "@/models/RemoteAccessSettings";
+import { RandomTaskSettings } from "@/models/RandomTaskSettings";
 
 /**
  * Wrappers to handle most Character access between PlayerCharacter and OhterCharacter
@@ -36,9 +37,14 @@ export function getCharacterDeviousShocksSettings(C: OtherCharacter | PlayerChar
     if (C.ATB && C.ATB.DeviousShocksModule) return C.ATB.DeviousShocksModule;
     return undefined;
 }
-export function getCharacterChaoticMistressSettings(C: OtherCharacter | PlayerCharacter): ChaoticMistressSettings | undefined {
-    if (C.IsPlayer()) return StorageManager.getChaoticMistressSettings();
-    if (C.ATB && C.ATB.ChaoticMistressModule) return C.ATB.ChaoticMistressModule;
+export function getCharacterPenaltySettings(C: OtherCharacter | PlayerCharacter): PenaltySettings | undefined {
+    if (C.IsPlayer()) return StorageManager.getPenaltySettings();
+    if (C.ATB && C.ATB.PenaltySettings) return C.ATB.PenaltySettings;
+    return undefined;
+}
+export function getCharacterRandomTaskSettings(C: OtherCharacter | PlayerCharacter): RandomTaskSettings | undefined {
+    if (C.IsPlayer()) return StorageManager.getRandomTaskSettings();
+    if (C.ATB && C.ATB.RandomTaskModule) return C.ATB.RandomTaskModule;
     return undefined;
 }
 export function getCharacterTaskManagerSettings(C: OtherCharacter | PlayerCharacter): TaskManagerSettings | undefined {
@@ -105,8 +111,7 @@ export function editTaskforCharacter(C: OtherCharacter | PlayerCharacter, taskDa
 
 export function startPunishementforCharacter(C: OtherCharacter | PlayerCharacter, type: PunishementType, duration: number, initiatorName?: string) {
     if (C.IsPlayer()) {
-        //const cm = ModuleManager.getModule("ChaoticMistressModule") as ChaoticMistressModule;
-        ChaoticMistressModule.startPunishementByType(type, duration, initiatorName);
+        PunishementManagerModule.startPunishementByType(type, duration, initiatorName);
     } else if (C.MemberNumber) {
         RemoteModule.requestStartPunishement(C.MemberNumber, type, duration);
     }

@@ -1,9 +1,9 @@
-import { ChaoticMistressSettings } from "@/models/ChaoticMistressSettings";
+import { PenaltySettings } from "@/models/PenaltySettings";
 import { TaskData } from "@/models/TaskManagerSettings";
-import { GuiFormField, GuiHelper } from "./GuiHelper";
+import { GuiHelper } from "./GuiHelper";
 import { formatTimeMs } from "@/utility/utility";
 import GuiViewBase from "./GuiViewBase";
-import { getCharacterActiveTaskById, getCharacterChaoticMistressSettings, getCharacterTaskManagerSettings, skipTaskforCharacter } from "@/utility/CharacterWrapper";
+import { getCharacterActiveTaskById, getCharacterPenaltySettings, getCharacterTaskManagerSettings, skipTaskforCharacter } from "@/utility/CharacterWrapper";
 import { isPlayerHaveRemoteAccess } from "@/models/RemoteAccessSettings";
 import { GuiMainView } from "./GuiMainView";
 
@@ -11,8 +11,8 @@ export default class GuiDashboardView extends GuiViewBase {
     private STRINGS = {
         POINTS_TITLE: "Points Status",
         TASK_LIST_TITLE: "Active Tasks",
-        GOOD_POINTS: "Good Points (GP)",
-        BAD_POINTS: "Bad Points (BP)",
+        REWARD_POINTS: "Reward Points (RP)",
+        PENALTY_POINTS: "Penalty Points (PP)",
         FINISH_TIME_LEFT: "Time Left",
         FINISH_ORGASMED: "Orgasm Received",
         FINISH_ORGASMED_RUINED: "Orgasm Ruined",
@@ -25,9 +25,9 @@ export default class GuiDashboardView extends GuiViewBase {
     }
 
     // Updatable elem
-    private goodPtsElem: HTMLElement | undefined;
-    private badPtsElem: HTMLElement | undefined;
-    private badPtsBarElem: HTMLElement | undefined;
+    private rewardPtsElem: HTMLElement | undefined;
+    private penaltyPtsElem: HTMLElement | undefined;
+    private penaltyPtsBarElem: HTMLElement | undefined;
 
     private taskElements: Map<number, {
         cardElement: HTMLDivElement,
@@ -43,7 +43,7 @@ export default class GuiDashboardView extends GuiViewBase {
         super(parent, C);
 
         // Check first if we have anything we need
-        const settings = getCharacterChaoticMistressSettings(this.character);
+        const settings = getCharacterPenaltySettings(this.character);
         const tmSettings = getCharacterTaskManagerSettings(this.character);
         if (!settings || !tmSettings) {
             GuiHelper.buildErrorPage(parent);
@@ -59,7 +59,7 @@ export default class GuiDashboardView extends GuiViewBase {
 
 
     public buildDashboardPage() {
-        this.parent.appendChild(this.createPointsPanel(getCharacterChaoticMistressSettings(this.character)));
+        this.parent.appendChild(this.createPointsPanel(getCharacterPenaltySettings(this.character)));
 
         GuiHelper.createContentTitle(this.parent, this.STRINGS.TASK_LIST_TITLE);
 
@@ -73,13 +73,13 @@ export default class GuiDashboardView extends GuiViewBase {
     }
 
     public update() {
-        const cmSettings = getCharacterChaoticMistressSettings(this.character);
-        if (cmSettings) {
-           if (this.goodPtsElem) this.goodPtsElem.innerHTML = `${cmSettings.goodPts}`;
-           if (this.badPtsElem) this.badPtsElem.innerHTML = `${cmSettings.badPts} / ${cmSettings.forcedPunishementThreshold}`;
-           if (this.badPtsBarElem) {
-               const debtPercentage = Math.min(cmSettings.forcedPunishementThreshold, (cmSettings.badPts / cmSettings.forcedPunishementThreshold) * 100);
-               this.badPtsBarElem.style.width = `${debtPercentage}%`;
+        const penaltySettings = getCharacterPenaltySettings(this.character);
+        if (penaltySettings) {
+           if (this.rewardPtsElem) this.rewardPtsElem.innerHTML = `${penaltySettings.rewardPts}`;
+           if (this.penaltyPtsElem) this.penaltyPtsElem.innerHTML = `${penaltySettings.penaltyPts} / ${penaltySettings.forcedPunishementThreshold}`;
+           if (this.penaltyPtsBarElem) {
+               const debtPercentage = Math.min(penaltySettings.forcedPunishementThreshold, (penaltySettings.penaltyPts / penaltySettings.forcedPunishementThreshold) * 100);
+               this.penaltyPtsBarElem.style.width = `${debtPercentage}%`;
             }
         }
 
@@ -121,27 +121,27 @@ export default class GuiDashboardView extends GuiViewBase {
         }
     }
 
-    private createPointsPanel(settings: ChaoticMistressSettings | undefined): HTMLDivElement {
+    private createPointsPanel(settings: PenaltySettings | undefined): HTMLDivElement {
         const panel = document.createElement("div");
         panel.className = "atb-panel";
         if (!settings) return panel;
 
-        const debtPercentage = Math.min(settings.forcedPunishementThreshold, (settings.badPts / settings.forcedPunishementThreshold) * 100);
+        const debtPercentage = Math.min(settings.forcedPunishementThreshold, (settings.penaltyPts / settings.forcedPunishementThreshold) * 100);
 
         panel.innerHTML = `
             <h3 style="margin-bottom: 1rem;">${this.STRINGS.POINTS_TITLE}</h3>
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span style="color: var(--atb-success);">${this.STRINGS.GOOD_POINTS}: <strong id="atb-points-good">${settings.goodPts}</strong></span>
-                <span style="color: var(--atb-danger);">${this.STRINGS.BAD_POINTS}: <strong id="atb-points-bad">${settings.badPts} / ${settings.forcedPunishementThreshold}</strong></span>
+                <span style="color: var(--atb-success);">${this.STRINGS.REWARD_POINTS}: <strong id="atb-points-reward">${settings.rewardPts}</strong></span>
+                <span style="color: var(--atb-danger);">${this.STRINGS.PENALTY_POINTS}: <strong id="atb-points-penalty">${settings.penaltyPts} / ${settings.forcedPunishementThreshold}</strong></span>
             </div>
             <div class="atb-progress-bg" style="width: 100%; height: 10px;">
                 <div id="atb-points-bar" class="atb-progress-fill danger" style="width: ${debtPercentage}%;"></div>
             </div>
         `;
         // Save for update()
-        this.goodPtsElem = panel.querySelector("#atb-points-good") as HTMLElement;
-        this.badPtsElem = panel.querySelector("#atb-points-bad") as HTMLElement;
-        this.badPtsBarElem = panel.querySelector("#atb-points-bar") as HTMLElement;
+        this.rewardPtsElem = panel.querySelector("#atb-points-reward") as HTMLElement;
+        this.penaltyPtsElem = panel.querySelector("#atb-points-penalty") as HTMLElement;
+        this.penaltyPtsBarElem = panel.querySelector("#atb-points-bar") as HTMLElement;
         return panel;
     }
 
@@ -301,7 +301,7 @@ export default class GuiDashboardView extends GuiViewBase {
         } else {
             // TODO: skip always free in remote ? if (this.character.isPlayer())
             skipBtn.disabled = false;
-            skipBtn.innerText = `${this.STRINGS.SKIP} (-${task.badPtsOnFailure} GP)`;
+            skipBtn.innerText = `${this.STRINGS.SKIP} (-${task.penaltyPtsOnFailure} GP)`;
             skipBtn.onclick = () => {
                 skipBtn.innerText = `${this.STRINGS.FINISHED}`;
                 skipBtn.disabled = true;
@@ -383,8 +383,8 @@ export default class GuiDashboardView extends GuiViewBase {
             str += "<br>";
         }
 
-        str += "Reward Pts on Success: <strong>" + task.goodPtsOnSucces + "</strong><br>";
-        str += "Penalty Pts on Transgression: <strong>" + task.badPtsOnFailure + "</strong><br>";
+        str += "Reward Pts on Success: <strong>" + task.rewardPtsOnSucces + "</strong><br>";
+        str += "Penalty Pts on Transgression: <strong>" + task.penaltyPtsOnFailure + "</strong><br>";
 
         return str;
     }

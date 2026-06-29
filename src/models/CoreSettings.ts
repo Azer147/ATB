@@ -1,9 +1,10 @@
 import { getAtbVersion } from "..";
-import { ChaoticMistressInternalfields, ChaoticMistressSettings, DefaultChaoticMistressSettings } from "./ChaoticMistressSettings";
+import { PenaltyInternalfields, PenaltySettings, DefaultPenaltySettings } from "./PenaltySettings"
 import { DefaultDeviousShocksSettings, DeviousShocksSettings } from "./DeviousShocksSettings";
 import { DefaultGeneralSettings, GeneralInternalfields, GeneralSettings } from "./GeneralSettings";
 import { DefaultOutfitSettings, OutfitsSettings } from "./OutfitSettings";
 import { DefaultRandomEventsSettings, RandomEventsSettings } from "./RandomEventsSettings";
+import { DefaultRandomTaskSettings, RandomTaskSettings } from "./RandomTaskSettings";
 import { DefaultRemoteAccessSettings, RemoteAccessSettings } from "./RemoteAccessSettings";
 import { SleepControlSettings } from "./SleepControlSettings";
 import { DefaultTaskManagerSettings, TaskManagerInternalfields, TaskManagerSettings } from "./TaskManagerSettings";
@@ -13,9 +14,10 @@ export interface CoreSettings {
     Enable: boolean;
     Version: string;
     GeneralModule: GeneralSettings;
+    PenaltySettings: PenaltySettings;
+    RandomTaskModule: RandomTaskSettings;
     RandomEventsModule: RandomEventsSettings;
     DeviousShocksModule: DeviousShocksSettings;
-    ChaoticMistressModule: ChaoticMistressSettings;
     TaskManagerModule: TaskManagerSettings;
     TasksSettings: TasksSettings;
     OutfitsSettings: OutfitsSettings;
@@ -27,9 +29,10 @@ export const DefaultCoreSettings: CoreSettings = {
     Enable: true,
     Version: getAtbVersion(),
     GeneralModule: DefaultGeneralSettings,
+    PenaltySettings: DefaultPenaltySettings,
+    RandomTaskModule: DefaultRandomTaskSettings,
     RandomEventsModule: DefaultRandomEventsSettings,
     DeviousShocksModule: DefaultDeviousShocksSettings,
-    ChaoticMistressModule: DefaultChaoticMistressSettings,
     TaskManagerModule: DefaultTaskManagerSettings,
     TasksSettings: DefaultTasksSettings,
     OutfitsSettings: DefaultOutfitSettings,
@@ -39,4 +42,4 @@ export const DefaultCoreSettings: CoreSettings = {
 
 // Internal fields that should not be externally modified
 // Needed mainly to prevent remote settings change (apply_settings) to change/apply these (which are likely outdated)
-export const allInternalfields = GeneralInternalfields.concat(ChaoticMistressInternalfields, TaskManagerInternalfields);
+export const allInternalfields = GeneralInternalfields.concat(PenaltyInternalfields, TaskManagerInternalfields);

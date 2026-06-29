@@ -24,8 +24,8 @@ export interface TaskData {
 
     enforce: boolean; // Force the task / unskippable
 
-    goodPtsOnSucces: number;
-    badPtsOnFailure: number; // Can be either on complete failure or partial failure depending if the task can fail and end.
+    rewardPtsOnSucces: number;
+    penaltyPtsOnFailure: number; // Can be either on complete failure or partial failure depending if the task can fail and end.
 
     // Used with most task for now (maybe change to optional in the future)
     gracePeriodMs: number; // in millisec

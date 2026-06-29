@@ -19,7 +19,7 @@ export class TaskNaked extends TaskBase {
         return this.data.description;
     }
     protected handleTransgression() {
-        sendLocalMessage("You need to naked, you received  " + this.data.badPtsOnFailure + " for transgression.", ChatColor.Red);
+        sendLocalMessage("You need to naked, you received  " + this.data.penaltyPtsOnFailure + " for transgression.", ChatColor.Red);
     }
     protected handleTransgressionWarning() {
         sendLocalMessage("You need to be naked or be punished!", ChatColor.Red);

@@ -56,7 +56,7 @@ export class TaskWearOutfit extends TaskBase {
         return this.data.description;
     }
     protected handleTransgression() {
-        sendLocalMessage("You need to wear " + this.getOutfitName() + ", you received  " + this.data.badPtsOnFailure + " for transgression.", ChatColor.Red);
+        sendLocalMessage("You need to wear " + this.getOutfitName() + ", you received  " + this.data.penaltyPtsOnFailure + " for transgression.", ChatColor.Red);
         // Equip outfit
         this.applyOutfit();
     }
