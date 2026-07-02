@@ -140,7 +140,7 @@ export class GuiGeneralSettingsView extends GuiViewBase {
             label: "Threshold before forced punishement (0 to disable)",
             type: "number",
             min_value: 0,
-            max_value: 1000,
+            max_value: 999,
             disable: !haveSettingsAccess,
             default_value: this.penaltySettings.forcedPunishementThreshold,
             onChange: (value: number) => {

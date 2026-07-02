@@ -6,6 +6,7 @@ import GuiViewBase from "./GuiViewBase";
 import { getCharacterActiveTaskById, getCharacterPenaltySettings, getCharacterTaskManagerSettings, skipTaskforCharacter } from "@/utility/CharacterWrapper";
 import { isPlayerHaveRemoteAccess } from "@/models/RemoteAccessSettings";
 import { GuiMainView } from "./GuiMainView";
+import { TaskBase } from "@/modules/Task/TaskBase";
 
 export default class GuiDashboardView extends GuiViewBase {
     private STRINGS = {
@@ -22,6 +23,9 @@ export default class GuiDashboardView extends GuiViewBase {
         LOCKED: "LOCKED",
         FINISHED: "Finished",
         PENALTY_WARNING: "Warning: task transgression occurring! Penalty coming soon...",
+
+        DIALOG_ERR_SKIP_TITLE: "Skip Task Error",
+        DIALOG_ERR_SKIP_NO_PTS: "You don't have enough Reward Points to skip this task."
     }
 
     // Updatable elem
@@ -292,22 +296,47 @@ export default class GuiDashboardView extends GuiViewBase {
     }
 
     private updateSkipBtn(task: TaskData, skipBtn: HTMLButtonElement) {
-        if (task.enforce || !isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings.editTaskPermission)) {
-            skipBtn.disabled = true;
-            skipBtn.innerText = `${this.STRINGS.LOCKED}`;
-        } else if (task.progressPerc >= 100) {
+        const canSkipTask = isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings.editTaskPermission);
+        const canSkipEnforced = !this.character.IsPlayer() && isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings.useEnforcedPermission);
+
+        if (task.progressPerc >= 100) {
             skipBtn.disabled = true;
             skipBtn.innerText = `${this.STRINGS.FINISHED}`;
+        }
+        else if (!canSkipTask || (task.enforce && !canSkipEnforced)) {
+            skipBtn.disabled = true;
+            skipBtn.innerText = `${this.STRINGS.LOCKED}`;
         } else {
-            // TODO: skip always free in remote ? if (this.character.isPlayer())
             skipBtn.disabled = false;
-            skipBtn.innerText = `${this.STRINGS.SKIP} (-${task.penaltyPtsOnFailure} GP)`;
+            skipBtn.innerText = `${this.STRINGS.SKIP}`;
+            if (this.character.IsPlayer()) {
+                // Skip always free in remote, but cost Reward Points for Player
+                const skipCost = TaskBase.calculateSkipTaskCost(task);
+                skipBtn.innerText += ` (-${skipCost} RP)`;
+            }
             skipBtn.onclick = () => {
                 skipBtn.innerText = `${this.STRINGS.FINISHED}`;
                 skipBtn.disabled = true;
 
+                if (this.character.IsPlayer()) {
+                    const cost = TaskBase.calculateSkipTaskCost(task);
+                    const penaltySettings = getCharacterPenaltySettings(this.character);
+
+                    if (penaltySettings !== undefined && cost > penaltySettings.rewardPts) {
+                        const mainContainer = document.getElementById("atb-overlay-container")!;
+                        GuiHelper.showDialog(mainContainer, this.STRINGS.DIALOG_ERR_SKIP_TITLE, this.STRINGS.DIALOG_ERR_SKIP_NO_PTS, [
+                            {
+                                label: "Ok",
+                                isPrimary: true,
+                                onClick: () => {}
+                            },
+                        ]);
+                        return;
+                    }
+                }
+
                 console.log(`ATB: Skipping task ${task.id}`);
-                skipTaskforCharacter(this.character, task.id, false);
+                skipTaskforCharacter(this.character, task.id, !this.character.IsPlayer());
             };
         }
     }

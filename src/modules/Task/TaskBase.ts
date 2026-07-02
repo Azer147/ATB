@@ -121,12 +121,15 @@ export abstract class TaskBase {
         if (initiatorName !== undefined && initiatorName != "") {
             sendLocalMessage("Task had been removed by " + initiatorName, ChatColor.Orange);
         }
-        // TODO: calc & remove cost
-        this.triggerTaskCompletion(false, false);
+        if (!noCost) {
+            const skipCost = TaskBase.calculateSkipTaskCost(this.data);
+            this.notifyRewardPtsChange(-skipCost);
+        }
+        this.triggerTaskCompletion(false, true);
     }
 
     /** Called by the Task when completion conditions is met */
-    public triggerTaskCompletion(succes: boolean, skipPts: boolean): void {
+    public triggerTaskCompletion(succes: boolean, noPts: boolean): void {
         this.handleTaskFinishing();
 
         this.isTaskFinished = true;
@@ -137,13 +140,22 @@ export abstract class TaskBase {
         sendLocalMessage("Task is finished: " + this.getDescription(), ChatColor.Purple);
 
         // Don't add reward/penalty pts on error
-        if (!skipPts) {
+        if (!noPts) {
             if (succes) {
                 this.notifyRewardPtsChange(this.data.rewardPtsOnSucces);
             } else {
                 this.notifyPenaltyPtsChange(this.data.penaltyPtsOnFailure);
             }
         }
+    }
+
+    // Skip cost is based on rewardPtsOnSucces and reduced by higher progress with a minimum cost of 30% of rewardPtsOnSucces.
+    public static calculateSkipTaskCost(taskData: TaskData): number {
+        const baseReward = taskData.rewardPtsOnSucces;
+        const progress = Math.max(0, Math.min(100, taskData.progressPerc));
+        const progressDecimal = progress / 100.0;
+        const reductionFactor = 1.0 - (0.7 * progressDecimal);
+        return Math.floor(baseReward * reductionFactor);
     }
 
 
