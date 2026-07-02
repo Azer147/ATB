@@ -71,6 +71,7 @@ export class PunishementManagerModule extends ModuleBase {
         this.settings.rewardPts += amount;
 
         if (this.settings.rewardPts < 0) this.settings.rewardPts = 0;
+        if (this.settings.rewardPts > 999) this.settings.rewardPts = 999;
 
         console.log(`ATB: Reward Points changed: ${this.settings.rewardPts}`);
         StorageManager.saveSettings();
@@ -81,7 +82,7 @@ export class PunishementManagerModule extends ModuleBase {
         this.settings.penaltyPts += amount;
 
         if (this.settings.penaltyPts < 0) this.settings.penaltyPts = 0;
-
+        if (this.settings.penaltyPts > 999) this.settings.penaltyPts = 999;
         console.log(`ATB: Penalty Points changed: ${this.settings.penaltyPts}`);
         StorageManager.saveSettings();
     }

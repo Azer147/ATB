@@ -250,7 +250,7 @@ export class RemoteModule extends ModuleBase {
  */
 
     private receiveAtbData(data: ServerChatRoomMessage) {
-        if (!!data.Sender && data.Type == "Hidden" && data.Content == "ATBMsg" && !!data.Dictionary && !!data.Dictionary[0]) {
+        if (!!data.Sender && data.Sender != Player.MemberNumber && data.Type == "Hidden" && data.Content == "ATBMsg" && !!data.Dictionary && !!data.Dictionary[0]) {
             let C = ChatRoomGetCharacter(data.Sender) as OtherCharacter;
             var msg = (data.Dictionary[0] as any).data as AtbMessage;
 
@@ -258,7 +258,8 @@ export class RemoteModule extends ModuleBase {
 
             // playerIsTarget is also true if target not specified
             const playerIsTarget = (!msg.target || msg.target == Player.MemberNumber);
-            if (data.Sender != Player.MemberNumber && playerIsTarget) {
+            //console.log(`ATB: DEBUG: receiveAtbData from sender=${data.Sender} Player.MemberNumber=${Player.MemberNumber} to target=${msg.target} playerIsTarget=${playerIsTarget} msg.type=${msg.type}`);
+            if (playerIsTarget) {
                 switch (msg.type) {
                     case "sync_settings":
                         this.syncSettings(C, msg);

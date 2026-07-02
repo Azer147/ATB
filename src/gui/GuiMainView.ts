@@ -103,10 +103,13 @@ export class GuiMainView {
     // Re-build the current page (needed to update correctly settings fields if C.ATB has been updated)
     // Only do something if Gui is showing and Character match current Character
     public static doFullUpdate(C: OtherCharacter | PlayerCharacter) {
+        if (C.MemberNumber !== this.currentMemberNumber) {
+            return;
+        }
         if (this.sideBar) {
             this.updateSideBarContent(C, this.sideBar);
         }
-        if (this.container && C.MemberNumber == this.currentMemberNumber) {
+        if (this.container) {
             this.changeCurrentPage(C, this.currentTab);
         }
     }

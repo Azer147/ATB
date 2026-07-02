@@ -15,7 +15,7 @@ export interface PenaltySettings {
 }
 
 export const DefaultPenaltySettings: PenaltySettings = {
-    enablePenalty: false,
+    enablePenalty: true,
 
     forcedPunishementThreshold: 100,
     minRandomFinishMult: 50, // 50% of base duration/count
