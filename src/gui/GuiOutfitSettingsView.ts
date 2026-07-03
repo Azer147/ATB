@@ -4,14 +4,14 @@ import { getCharacterOutfitSettings, saveSettings } from "@/utility/CharacterWra
 import { allOutfitList, extractOutfitDataFromId, getOutfitSettingsFromId, getRawOutfitFromId, OutfitId, OutfitsSettings, RawOutfit } from "@/models/OutfitSettings";
 import { createColorRect, hexToHsl, hslToHex, smartReplaceItemColor } from "@/utility/ColorUtility";
 import { isBodyPart } from "@/utility/utility";
+import { GuiCharacterViewer } from "./GuiCharacterViewer";
 
 export class GuiOutfitSettingsView extends GuiViewBase {
     private shouldSaveSetting: boolean = false;
     private settings!: OutfitsSettings;
 
-    private previewCanva: HTMLCanvasElement | null = null;
-    private previewcanvaContext: CanvasRenderingContext2D | null = null;
     private previewChar: Character | undefined;
+    private characterViewer: GuiCharacterViewer | undefined;
 
     private UPDATE_PREVIEW_TIME_MS = 100;
     private updatePreviewInterval: number = 0;
@@ -43,7 +43,7 @@ export class GuiOutfitSettingsView extends GuiViewBase {
 
         let outfitViewer = document.createElement("div");
         let outfitCards = document.createElement("div");
-        this.testOutfitViewer(outfitViewer);
+        this.buildOutfitViewer(outfitViewer);
         this.buildOutfitSettingsPage(outfitCards);
 
         let row = GuiHelper.createTwoElemRow(outfitViewer, outfitCards);
@@ -68,33 +68,15 @@ export class GuiOutfitSettingsView extends GuiViewBase {
         if (this.updatePreviewInterval) {
             clearInterval(this.updatePreviewInterval);
         }
+        if (this.characterViewer) {
+            this.characterViewer.unload();
+        }
         if (this.previewChar) {
             CharacterDelete(this.previewChar);
         }
     }
 
-    private updatePreview() {
-        if (this.previewCanva && this.previewcanvaContext && this.previewChar) {
-            this.previewcanvaContext.clearRect(0, 0, this.previewCanva.width, this.previewCanva.height);
-            DrawCharacter(this.previewChar, -50, -20, 1, true, this.previewcanvaContext);
-        }
-    }
-
-    private testOutfitViewer(container: HTMLElement) {
-        this.previewCanva = document.createElement("canvas");
-        this.previewCanva.style.position = "relative";
-        this.previewCanva.style.display = "flex";
-        // TODO: Probably need to calculate it from the base GuiMainView width/height
-        this.previewCanva.width = 400;
-        this.previewCanva.height = 950;
-        this.previewCanva.style.margin = "0";
-
-        this.previewcanvaContext = this.previewCanva.getContext("2d");
-        if (!this.previewcanvaContext) {
-            console.warn("ATB: DEBUG: Cannot get canvaContext!");
-            return;
-        }
-
+    private buildOutfitViewer(container: HTMLElement) {
         this.previewChar = CharacterLoadSimple(`ATB-Outfit-Viewer`);
         // To prevent holding nested ref from this.character
         const appearanceStr = CharacterAppearanceStringify(this.character);
@@ -105,15 +87,13 @@ export class GuiOutfitSettingsView extends GuiViewBase {
         CharacterResetFacialExpression(this.previewChar);
         CharacterRefresh(this.previewChar, false, false);
 
-        // Issue: Can't see previewchar if Player is blind..
-
-        //DrawCharacter(this.previewChar, -50, -20, 1, true, this.previewcanvaContext);
+        this.characterViewer = new GuiCharacterViewer(this.previewChar);
 
         // Need fast interval for animations
         // Note: We could also just DrawCharacter once if needed, if we don't care about animations
-        this.updatePreviewInterval = setInterval(() => {this.updatePreview()}, this.UPDATE_PREVIEW_TIME_MS);
+        this.updatePreviewInterval = setInterval(() => {this.characterViewer?.updateCharView()}, this.UPDATE_PREVIEW_TIME_MS);
 
-        container.appendChild(this.previewCanva);
+        container.appendChild(this.characterViewer.getElement());
     }
 
     private showOutfit(outfitId: OutfitId) {

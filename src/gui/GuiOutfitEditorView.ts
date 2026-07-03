@@ -3,22 +3,11 @@ import GuiViewBase from "./GuiViewBase";
 import { allOutfitList, extractOutfitDataFromCode, extractOutfitDataFromId, OutfitId } from "@/models/OutfitSettings";
 import { createColorRect, extractCharacterOutfitColor, hslToHex, smartReplaceItemColor } from "@/utility/ColorUtility";
 import { isBodyPart } from "@/utility/utility";
+import { GuiCharacterViewer } from "./GuiCharacterViewer";
 
 export class GuiOutfitEditorView extends GuiViewBase {
-    private previewCanva: HTMLCanvasElement | null = null;
-    private previewcanvaContext: CanvasRenderingContext2D | null = null;
     private previewChar: Character | undefined;
-    private previewResizeObserver: ResizeObserver | null = null;
-
-    // Base canva size from BC.
-    private static readonly PREVIEW_BASE_WIDTH = 500;
-    private static readonly PREVIEW_BASE_HEIGHT = 1000;
-    private static readonly PREVIEW_BASE_X = 0;
-    private static readonly PREVIEW_BASE_Y = -20;
-
-    private previewZoom = 1;
-    private previewOffsetX = GuiOutfitEditorView.PREVIEW_BASE_X;
-    private previewOffsetY = GuiOutfitEditorView.PREVIEW_BASE_Y;
+    private characterViewer: GuiCharacterViewer | undefined;
 
     private UPDATE_PREVIEW_TIME_MS = 100;
     private updatePreviewInterval: number = 0;
@@ -64,7 +53,7 @@ export class GuiOutfitEditorView extends GuiViewBase {
 
         let outfitViewer = document.createElement("div");
         let outfitCards = document.createElement("div");
-        this.testOutfitViewer(outfitViewer);
+        this.buildOutfitViewer(outfitViewer);
         this.buildOutfitEditorPage(outfitCards);
 
         let row = GuiHelper.createTwoElemRow(outfitViewer, outfitCards);
@@ -86,89 +75,32 @@ export class GuiOutfitEditorView extends GuiViewBase {
         if (this.updatePreviewInterval) {
             clearInterval(this.updatePreviewInterval);
         }
-        if (this.previewResizeObserver) {
-            this.previewResizeObserver.disconnect();
-            this.previewResizeObserver = null;
+        if (this.characterViewer) {
+            this.characterViewer.unload();
         }
         if (this.previewChar) {
             CharacterDelete(this.previewChar);
         }
     }
 
-    private updatePreview() {
-        if (this.previewCanva && this.previewcanvaContext && this.previewChar) {
-            this.previewcanvaContext.clearRect(0, 0, this.previewCanva.width, this.previewCanva.height);
-
-            // Fix blind issue, If current Player is blind or others effects, DrawCharacter will render a darken/blurry/invisble character.
-            const savedEffect = Player.Effect = [];
-            DrawCharacter(this.previewChar, this.previewOffsetX, this.previewOffsetY, this.previewZoom, true, this.previewcanvaContext);
-            Player.Effect = savedEffect;
-        }
-    }
-
-    // Update the Canva size based on the container size, and adjust the zoom/offset to keep the same framing.
-    // Details: CSS can only control the size of the container,
-    //   but the actual drawing buffer resolution is controlled by the width/height attributes of the canvas element.
-    //   So we need to update those whenever the container size changes, and also adjust the zoom/offset to keep the same framing.
-    private resizePreviewCanvas(width: number, height: number) {
-        if (!this.previewCanva || width <= 0 || height <= 0) return;
-
-        const dpr = window.devicePixelRatio || 1;
-        this.previewCanva.width = Math.round(width * dpr);
-        this.previewCanva.height = Math.round(height * dpr);
-
-        const scale = this.previewCanva.height / GuiOutfitEditorView.PREVIEW_BASE_HEIGHT;
-        this.previewZoom = scale;
-        this.previewOffsetX = GuiOutfitEditorView.PREVIEW_BASE_X * scale;
-        this.previewOffsetY = GuiOutfitEditorView.PREVIEW_BASE_Y * scale;
-
-        this.updatePreview();
-    }
-
-    private testOutfitViewer(container: HTMLElement) {
-        this.previewCanva = document.createElement("canvas");
-        this.previewCanva.style.position = "relative";
-        this.previewCanva.style.display = "flex";
-        this.previewCanva.style.width = "20em";
-        // Prevent stretching
-        this.previewCanva.style.aspectRatio = `${GuiOutfitEditorView.PREVIEW_BASE_WIDTH} / ${GuiOutfitEditorView.PREVIEW_BASE_HEIGHT}`;
-        this.previewCanva.style.margin = "0";
-
-        this.previewcanvaContext = this.previewCanva.getContext("2d");
-        if (!this.previewcanvaContext) {
-            console.warn("ATB: DEBUG: Cannot get canvaContext!");
-            return;
-        }
-
-        // Update the canva size when the container size changes
-        this.previewResizeObserver = new ResizeObserver(entries => {
-            const entry = entries[0];
-            if (entry) this.resizePreviewCanvas(entry.contentRect.width, entry.contentRect.height);
-        });
-        this.previewResizeObserver.observe(this.previewCanva);
-
+    private buildOutfitViewer(container: HTMLElement) {
         this.previewChar = CharacterLoadSimple(`ATB-Outfit-Viewer`);
         // To prevent holding nested ref from this.character
         const appearanceStr = CharacterAppearanceStringify(this.character);
         CharacterAppearanceRestore(this.previewChar, appearanceStr);
-
-        // Test fix blind
-        //this.previewChar.MemberNumber = this.character.MemberNumber;
 
         //CharacterNaked(this.previewChar, false);
         //CharacterReleaseTotal(this.previewChar, false);
         CharacterResetFacialExpression(this.previewChar);
         CharacterRefresh(this.previewChar, false, false);
 
-        // Issue: Can't see previewchar if Player is blind..
-
-        //DrawCharacter(this.previewChar, -50, -20, 1, true, this.previewcanvaContext);
+        this.characterViewer = new GuiCharacterViewer(this.previewChar);
 
         // Need fast interval for animations
         // Note: We could also just DrawCharacter once if needed, if we don't care about animations
-        this.updatePreviewInterval = setInterval(() => {this.updatePreview()}, this.UPDATE_PREVIEW_TIME_MS);
+        this.updatePreviewInterval = setInterval(() => {this.characterViewer?.updateCharView()}, this.UPDATE_PREVIEW_TIME_MS);
 
-        container.appendChild(this.previewCanva);
+        container.appendChild(this.characterViewer.getElement());
     }
 
     private resetPreviewCharAppearance() {
