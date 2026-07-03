@@ -13,7 +13,7 @@ export class GuiOutfitEditorView extends GuiViewBase {
     // Base canva size from BC.
     private static readonly PREVIEW_BASE_WIDTH = 500;
     private static readonly PREVIEW_BASE_HEIGHT = 1000;
-    private static readonly PREVIEW_BASE_X = -50;
+    private static readonly PREVIEW_BASE_X = 0;
     private static readonly PREVIEW_BASE_Y = -20;
 
     private previewZoom = 1;
@@ -98,7 +98,11 @@ export class GuiOutfitEditorView extends GuiViewBase {
     private updatePreview() {
         if (this.previewCanva && this.previewcanvaContext && this.previewChar) {
             this.previewcanvaContext.clearRect(0, 0, this.previewCanva.width, this.previewCanva.height);
+
+            // Fix blind issue, If current Player is blind or others effects, DrawCharacter will render a darken/blurry/invisble character.
+            const savedEffect = Player.Effect = [];
             DrawCharacter(this.previewChar, this.previewOffsetX, this.previewOffsetY, this.previewZoom, true, this.previewcanvaContext);
+            Player.Effect = savedEffect;
         }
     }
 
@@ -271,7 +275,7 @@ export class GuiOutfitEditorView extends GuiViewBase {
         const form = document.createElement("div");
         form.style.display = "flex";
         form.style.flexDirection = "column";
-        form.style.gap = "0.9em";
+        form.style.gap = "0.5em";
 
         //const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
         //form.appendChild(helpSection);
@@ -290,6 +294,7 @@ export class GuiOutfitEditorView extends GuiViewBase {
         const applyStoredBtn = document.createElement("button");
         applyStoredBtn.className = "atb-main-btn";
         applyStoredBtn.innerText = "Apply Stored Outfit";
+        applyStoredBtn.style.maxWidth = "fit-content";
         applyStoredBtn.onclick = () => {
             this.applyOutfitFromStored();
         };
@@ -301,6 +306,7 @@ export class GuiOutfitEditorView extends GuiViewBase {
         const applyCodeBtn = document.createElement("button");
         applyCodeBtn.className = "atb-main-btn";
         applyCodeBtn.innerText = "Apply Outfit Code";
+        applyStoredBtn.style.maxWidth = "fit-content";
         applyCodeBtn.onclick = () => {
             this.applyOutfitFromCode();
         };
