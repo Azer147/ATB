@@ -141,12 +141,12 @@ export class GuiPunishementsView extends GuiViewBase {
         const debtPercentage = Math.min(this.settings.forcedPunishementThreshold, (this.settings.penaltyPts / this.settings.forcedPunishementThreshold) * 100);
 
         panel.innerHTML = `
-            <h3 style="margin-bottom: 1rem;">${this.STRINGS.POINTS_STATUS_TITLE}</h3>
+            <h3 style="margin-bottom: 0.7em;">${this.STRINGS.POINTS_STATUS_TITLE}</h3>
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5em;">
                 <span style="color: var(--atb-success);">${this.STRINGS.REWARD_POINTS}: <strong id="${this.ID_STATUS_REWARD_PTS}">${this.settings.rewardPts}</strong></span>
                 <span style="color: var(--atb-danger);">${this.STRINGS.PENALTY_POINTS}: <strong id="${this.ID_STATUS_PENALTY_PTS}">${this.settings.penaltyPts} / ${this.settings.forcedPunishementThreshold}</strong></span>
             </div>
-            <div class="atb-progress-bg" style="width: 100%; height: 0.5em;">
+            <div class="atb-progress-bg">
                 <div id="${this.ID_STATUS_PROGRESS_BAR}" class="atb-progress-fill danger" style="width: ${debtPercentage}%;"></div> 
             </div>
         `;

@@ -60,7 +60,7 @@ export class GuiDebugView extends GuiViewBase {
         const form = document.createElement("div");
         form.style.display = "flex";
         form.style.flexDirection = "column";
-        form.style.gap = "25px";
+        form.style.gap = "1.5em";
 
         // Pts debug
         //GuiHelper.createContentTitle(form, "Task/Points Debug");

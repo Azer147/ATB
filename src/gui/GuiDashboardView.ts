@@ -133,12 +133,12 @@ export default class GuiDashboardView extends GuiViewBase {
         const debtPercentage = Math.min(settings.forcedPunishementThreshold, (settings.penaltyPts / settings.forcedPunishementThreshold) * 100);
 
         panel.innerHTML = `
-            <h3 style="margin-bottom: 1rem;">${this.STRINGS.POINTS_TITLE}</h3>
+            <h3 style="margin-bottom: 0.7em;">${this.STRINGS.POINTS_TITLE}</h3>
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5em;">
                 <span style="color: var(--atb-success);">${this.STRINGS.REWARD_POINTS}: <strong id="atb-points-reward">${settings.rewardPts}</strong></span>
                 <span style="color: var(--atb-danger);">${this.STRINGS.PENALTY_POINTS}: <strong id="atb-points-penalty">${settings.penaltyPts} / ${settings.forcedPunishementThreshold}</strong></span>
             </div>
-            <div class="atb-progress-bg" style="width: 100%; height: 0.5em;">
+            <div class="atb-progress-bg">
                 <div id="atb-points-bar" class="atb-progress-fill danger" style="width: ${debtPercentage}%;"></div>
             </div>
         `;
@@ -164,7 +164,7 @@ export default class GuiDashboardView extends GuiViewBase {
         infoDiv.style.flex = "1";
         infoDiv.innerHTML = `
             <h4 class="atb-task-desc" style="margin: 0 0 0.6em 0;">${task.description}</h4>
-            <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; flex-direction: column; gap: 0.4em;">
                 <div class="atb-progress-bg">
                     <div class="atb-progress-fill task-bar-fill" style="width: ${progressPercentage}%;"></div>
                 </div>
@@ -206,7 +206,7 @@ export default class GuiDashboardView extends GuiViewBase {
         // bottom row (warning + time left)
         const infoBottomDiv = document.createElement("div");
         infoBottomDiv.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; font-size: 0.8em; min-height: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; font-size: 0.8em; min-height: 1em;">
                 <div class="task-warning">
                 </div>
                 <div class="task-time-text" style="color: var(--atb-text-muted); white-space: nowrap; text-align: right;">

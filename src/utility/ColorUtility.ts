@@ -6,14 +6,14 @@ import { isBodyPart } from "./utility";
 const DEFAULT_HUE_TOLERANCE = 25;
 
 // TODO: placeholder - need redo
-export function createColorRect(htmlId: string, hex: string, height: number = 20): HTMLDivElement {
+export function createColorRect(htmlId: string, hex: string, height: number = 1.2): HTMLDivElement {
     const square = document.createElement("div");
     square.id = htmlId;
-    //square.style.width = `${size}px`;
-    square.style.height = `${height}px`;
+    //square.style.width = `${size}em`;
+    square.style.height = `${height}em`;
     square.style.backgroundColor = hex;
     square.style.border = "1px solid #ccc";
-    square.style.borderRadius = "4px";
+    square.style.borderRadius = "0.3em";
     square.style.display = "inline-block";
 
     return square;

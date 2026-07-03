@@ -280,7 +280,7 @@ export class GuiHelper {
         textDisplay.style.fontWeight = "bold";
         textDisplay.style.textAlign = "center";
         textDisplay.style.alignContent = "center";
-        textDisplay.style.borderRadius = "6px";
+        textDisplay.style.borderRadius = "0.4em";
         textDisplay.style.border = "1px solid " + color;
         textDisplay.innerText = labelText;
 

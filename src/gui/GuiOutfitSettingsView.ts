@@ -189,7 +189,7 @@ export class GuiOutfitSettingsView extends GuiViewBase {
         const baseHueValue = hexToHsl(this.settings.customColorHex)?.h || 0;
 
         const colorMain = document.createElement("div");
-        const colorMainRect = createColorRect("atb-custom-color-rect", this.settings.customColorHex, 20);
+        const colorMainRect = createColorRect("atb-custom-color-rect", this.settings.customColorHex);
         const colorMainSlider = document.createElement("input");
         colorMainSlider.id = "atb-custom-color-range"; // should be a variable
         colorMainSlider.className = "atb-hue-slider";

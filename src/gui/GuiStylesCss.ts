@@ -18,15 +18,15 @@ export const uiStyles = `
     /* Layout Components */
     .atb-overlay-container {
         display: flex; flex-direction: column;
-        width: min(70vw, 1100px);
-        height: 70vh;
+        width: min(95vw, 1100px);
+        height: min(80vh, 800px);
         background: var(--atb-bg-base); color: var(--atb-text);
-        border: 2px solid var(--atb-border); border-radius: 8px;
+        border: 2px solid var(--atb-border); border-radius: 0.6em;
         z-index: 2000; position: absolute;
         top: 50%; left: 50%; transform: translate(-50%, -50%);
         font-family: sans-serif; overflow: hidden;
         scrollbar-color: #444444 rgb(0, 0, 0, 0);
-        font-size: clamp(12px, 1.6vmin, 1.2em);
+        font-size: clamp(8px, 1.6vmin, 1.2em);
     }
 
     .atb-title-bar {
@@ -53,13 +53,13 @@ export const uiStyles = `
     }
 
     /* Panels & Cards */
-    .atb-panel { background: var(--atb-bg-panel); padding: 0.9em; border-radius: 6px; }
+    .atb-panel { background: var(--atb-bg-panel); padding: 0.9em; border-radius: 0.4em; }
     .atb-task-card {
         background: var(--atb-bg-card);
         padding: 0.9em;
         padding-left: 0.5em; // To make place for expanding icon
         //margin-bottom: 0.9em;
-        border-radius: 6px; display: flex; justify-content: space-between; align-items: center;
+        border-radius: 0.4em; display: flex; justify-content: space-between; align-items: center;
     }
 
     .atb-task-card-expended-content {
@@ -91,7 +91,7 @@ export const uiStyles = `
     .atb-action-btn {
         padding: 0.6em;
         background: #555; color: var(--atb-text);
-        border: none; border-radius: 4px;
+        border: none; border-radius: 0.5em;
         cursor: pointer;
         transition: background 0.2s;
         font-size: 0.9em;
@@ -100,7 +100,7 @@ export const uiStyles = `
 
     .atb-main-btn {
         padding: 0.7em; background: var(--atb-primary); color: var(--atb-text);
-        border: none; border-radius: 6px; cursor: pointer;
+        border: none; border-radius: 0.4em; cursor: pointer;
         font-weight: bold; transition: background 0.2s;
     }
     .atb-main-btn:hover { background: var(--atb-primary-hover); }
@@ -113,19 +113,20 @@ export const uiStyles = `
     .atb-form-input {
         padding: 0.3em 0.4em;
         background: var(--atb-bg-input); color: var(--atb-text);
-        border: 1px solid var(--atb-border); border-radius: 4px;
+        border: 1px solid var(--atb-border); border-radius: 0.3em;
     }
     .atb-dynamic-fields {
         display: flex; flex-direction: column; gap: 0.9em; padding: 0.9em;
-        background: var(--atb-bg-card); border-radius: 6px; border: 1px dashed #555;
+        background: var(--atb-bg-card); border-radius: 0.4em; border: 1px dashed #555;
     }
 
     /* Progress Bars */
     .atb-progress-bg {
         //flex: 1;
-        height: 6px;
+        width: 100%;
+        height: 0.5em;
         background: #555;
-        border-radius: 3px;
+        border-radius: 0.2em;
         overflow: hidden;
     }
     .atb-progress-fill { height: 100%; background: var(--atb-primary); }
@@ -158,7 +159,7 @@ export const uiStyles = `
         margin: 0;
         background: var(--atb-bg-input);
         border: 1px solid var(--atb-border);
-        border-radius: 4px;
+        border-radius: 0.2em;
         cursor: pointer;
         position: relative;
         transition: background 0.2s, border-color 0.2s;
@@ -172,8 +173,8 @@ export const uiStyles = `
     .atb-form-checkbox:checked::after {
         content: '';
         position: absolute;
-        left: 6px;
-        top: 2px;
+        left: 0.3em;
+        top: 0.1em;
         width: 0.3em;
         height: 0.5em;
         border: solid white;
@@ -186,7 +187,7 @@ export const uiStyles = `
     .atb-info-section {
         background: var(--atb-bg-input);
         border: 1px solid var(--atb-border);
-        border-radius: 6px;
+        border-radius: 0.4em;
         overflow: hidden;
     }
 
@@ -203,7 +204,7 @@ export const uiStyles = `
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 6px 8px;
+        padding: 0.4em 0.5em;
         font-size: 0.9em;
         color: var(--atb-text-secondary);
         cursor: pointer;
@@ -241,9 +242,9 @@ export const uiStyles = `
 
     .atb-dialog-box {
         background: var(--atb-bg-panel); border: 1px solid var(--atb-border);
-        border-radius: 8px; padding: 1.2em; width: 28em; max-width: 90%;
+        border-radius: 0.5em; padding: 1.2em; width: 28em; max-width: 90%;
         display: flex; flex-direction: column; gap: 0.9em;
-        box-shadow: 0 0.5em 25px rgba(0,0,0,0.5);
+        box-shadow: 0 0.5em 1.5em rgba(0,0,0,0.5);
     }
 
     .atb-dialog-title {
@@ -264,7 +265,7 @@ export const uiStyles = `
     /* Feature Toggle Cards */
     .atb-feature-card {
         background: var(--atb-bg-panel);
-        border-radius: 6px;
+        border-radius: 0.4em;
         padding: 0.9em;
         display: flex;
         flex-direction: column;
@@ -329,16 +330,16 @@ export const uiStyles = `
         color: var(--atb-text, #fff);
         border: 1px solid var(--atb-bg-card, #444);
         text-align: left;
-        border-radius: 6px;
+        border-radius: 0.4em;
         padding: 0.6em 0.8em;
         position: absolute;
         bottom: 125%;
         opacity: 0;
         transition: opacity 0.2s;
         font-weight: normal;
-        font-size: 0.9rem;
+        font-size: 0.9em;
         pointer-events: none;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        box-shadow: 0 4px 0.4em rgba(0,0,0,0.3);
     }
 
     .atb-tooltip:hover .atb-tooltip-text,
@@ -353,7 +354,7 @@ export const uiStyles = `
         appearance: none;
         width: 100%;
         height: 0.7em;
-        border-radius: 6px;
+        border-radius: 0.4em;
         /* The magic 0-360 hue gradient */
         background: linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%);
         outline: none;

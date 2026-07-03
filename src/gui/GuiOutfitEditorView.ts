@@ -281,7 +281,7 @@ export class GuiOutfitEditorView extends GuiViewBase {
 
         // Select color
         const colorMain = document.createElement("div");
-        const colorMainRect = createColorRect("atb-main-color-rect", "#ffffff", 20);
+        const colorMainRect = createColorRect("atb-main-color-rect", "#ffffff");
         const colorMainSlider = document.createElement("input");
         colorMainSlider.id = "atb-main-color-range"; // should be a variable
         colorMainSlider.className = "atb-hue-slider";
@@ -300,7 +300,7 @@ export class GuiOutfitEditorView extends GuiViewBase {
         this.colorTargetSelect = document.createElement("div");
         this.colorTargetSelect.appendChild(GuiHelper.createFormField(this.FIELD_COLOR_TARGET));
         form.appendChild(this.colorTargetSelect);
-        form.appendChild(createColorRect("atb-target-color-rect", "#ffffff", 20));
+        form.appendChild(createColorRect("atb-target-color-rect", "#ffffff"));
 
         const changeColorBtn = document.createElement("button");
         changeColorBtn.className = "atb-main-btn";
