@@ -121,7 +121,7 @@ export class GuiPunishementsView extends GuiViewBase {
         const form = document.createElement("div");
         form.style.display = "flex";
         form.style.flexDirection = "column";
-        form.style.gap = "15px";
+        form.style.gap = "0.9em";
 
         const pointsPanel = this.createPointsPanel();
 
@@ -142,11 +142,11 @@ export class GuiPunishementsView extends GuiViewBase {
 
         panel.innerHTML = `
             <h3 style="margin-bottom: 1rem;">${this.STRINGS.POINTS_STATUS_TITLE}</h3>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5em;">
                 <span style="color: var(--atb-success);">${this.STRINGS.REWARD_POINTS}: <strong id="${this.ID_STATUS_REWARD_PTS}">${this.settings.rewardPts}</strong></span>
                 <span style="color: var(--atb-danger);">${this.STRINGS.PENALTY_POINTS}: <strong id="${this.ID_STATUS_PENALTY_PTS}">${this.settings.penaltyPts} / ${this.settings.forcedPunishementThreshold}</strong></span>
             </div>
-            <div class="atb-progress-bg" style="width: 100%; height: 10px;">
+            <div class="atb-progress-bg" style="width: 100%; height: 0.5em;">
                 <div id="${this.ID_STATUS_PROGRESS_BAR}" class="atb-progress-fill danger" style="width: ${debtPercentage}%;"></div> 
             </div>
         `;
@@ -194,7 +194,7 @@ export class GuiPunishementsView extends GuiViewBase {
         const card = GuiHelper.createGenericCard(config.name, "small", true);
         card.style.display = "flex";
         card.style.flexDirection = "column";
-        card.style.gap = "12px";
+        card.style.gap = "0.7em";
 
         const pointsDisplay = document.createElement("div");
         pointsDisplay.style.fontSize = "0.9em";

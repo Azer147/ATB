@@ -175,7 +175,7 @@ export class GuiMainView {
 
         const btnGroup = document.createElement("div");
         btnGroup.style.display = "flex";
-        btnGroup.style.gap = "20px";
+        btnGroup.style.gap = "1.2em";
 
         // Only add refresh button for other character
         if (C.MemberNumber && !C.IsPlayer()) {

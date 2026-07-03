@@ -541,7 +541,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         const form = document.createElement("div");
         form.style.display = "flex";
         form.style.flexDirection = "column";
-        form.style.gap = "15px";
+        form.style.gap = "0.9em";
 
         const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
         form.appendChild(helpSection);
@@ -586,7 +586,7 @@ export class GuiCreateTaskView extends GuiViewBase {
         // Create Task Button
         this.createTaskBtn = document.createElement("button");
         this.createTaskBtn.className = "atb-main-btn";
-        this.createTaskBtn.style.marginTop = "10px";
+        this.createTaskBtn.style.marginTop = "0.5em";
         if (this.editMode) {
             this.createTaskBtn.innerText = this.STRINGS.EDIT_TASK_BTN;
             this.createTaskBtn.disabled = !isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.editTaskPermission);
@@ -1096,7 +1096,6 @@ export class GuiCreateTaskView extends GuiViewBase {
 
     // TODO: html id should be a static (const) variable
     private showErrorDialog(cannotStartReason: TaskCannotStartReason, onOverwrite: () => void, invalidData: string | null = null) {
-        const mainContainer = document.getElementById("atb-overlay-container")!;
         let title = this.STRINGS.ERROR_DIALOG_TITLE;
         let errorString = getTaskCannotStartReasonToString(cannotStartReason);
 
@@ -1114,7 +1113,6 @@ export class GuiCreateTaskView extends GuiViewBase {
         if (cannotStartReason === "overwrite_only") {
             errorString += "<br>Do you want to overwrite the existing task with the new parameters?<br>(this will restart the timer)";
             GuiHelper.showDialog(
-                mainContainer,
                 title,
                 errorString,
                 [
@@ -1133,7 +1131,6 @@ export class GuiCreateTaskView extends GuiViewBase {
             );
         } else {
             GuiHelper.showDialog(
-                mainContainer,
                 title,
                 errorString,
                 [

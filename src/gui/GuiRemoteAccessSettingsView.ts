@@ -84,9 +84,7 @@ export class GuiRemoteAccessSettingsView extends GuiViewBase {
     }
 
     showErrorDialog(title: string, description: string) {
-        const mainContainer = document.getElementById("atb-overlay-container")!;
         GuiHelper.showDialog(
-            mainContainer,
             title,
             description,
             [
@@ -160,7 +158,7 @@ export class GuiRemoteAccessSettingsView extends GuiViewBase {
         const form = document.createElement("div");
         form.style.display = "flex";
         form.style.flexDirection = "column";
-        form.style.gap = "15px";
+        form.style.gap = "0.9em";
 
         const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.HELP_BASE_REMOTE_TITLE, this.HELP_BASE_REMOTE_TEXT);
         form.appendChild(helpSection);
@@ -200,8 +198,8 @@ export class GuiRemoteAccessSettingsView extends GuiViewBase {
         const removeBtn = document.createElement("button");
         removeBtn.className = "atb-action-btn";
         removeBtn.innerText = this.STRINGS.BTN_REMOVE;
-        removeBtn.style.marginTop = "5px";
-        removeBtn.style.marginBottom = "5px";
+        removeBtn.style.marginTop = "0.3em";
+        removeBtn.style.marginBottom = "0.3em";
         removeBtn.onclick = () => {
             this.removeCharFromRoleList(memberNumber);
             this.updateRoleList(roleList);

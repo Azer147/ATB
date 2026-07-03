@@ -96,7 +96,7 @@ export class GuiGeneralSettingsView extends GuiViewBase {
         const form = document.createElement("div");
         form.style.display = "flex";
         form.style.flexDirection = "column";
-        form.style.gap = "15px";
+        form.style.gap = "0.9em";
 
         const penaltyCard = this.buildPenaltyCard();
         const randomTaskCard = this.buildRandomTaskCard();
@@ -630,9 +630,7 @@ export class GuiGeneralSettingsView extends GuiViewBase {
 
     // Helper
     showConfirmDialog(title: string, description: string, onConfirmed: () => void) {
-        const mainContainer = document.getElementById("atb-overlay-container")!;
         GuiHelper.showDialog(
-            mainContainer,
             title,
             description,
             [

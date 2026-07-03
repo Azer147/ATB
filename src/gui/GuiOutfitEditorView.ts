@@ -62,7 +62,7 @@ export class GuiOutfitEditorView extends GuiViewBase {
 
         // Make outfitViewer stick
         outfitViewer.style.position = "sticky";
-        outfitViewer.style.top = "20px"; // The distance from the top of the scrolling container
+        outfitViewer.style.top = "1.2em"; // The distance from the top of the scrolling container
         outfitViewer.style.alignSelf = "flex-start";
 
         this.parent.appendChild(row);
@@ -230,7 +230,7 @@ export class GuiOutfitEditorView extends GuiViewBase {
         const form = document.createElement("div");
         form.style.display = "flex";
         form.style.flexDirection = "column";
-        form.style.gap = "15px";
+        form.style.gap = "0.9em";
 
         //const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
         //form.appendChild(helpSection);
@@ -327,7 +327,7 @@ export class GuiOutfitEditorView extends GuiViewBase {
 
         const untieBtn = document.createElement("button");
         untieBtn.className = "atb-main-btn";
-        //untieBtn.style.marginTop = "10px";
+        //untieBtn.style.marginTop = "0.5em";
         untieBtn.innerText = "Untie";
         untieBtn.onclick = () => {
             if (this.previewChar) {

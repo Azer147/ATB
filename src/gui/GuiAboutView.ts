@@ -35,7 +35,7 @@ export class GuiAboutView extends GuiViewBase {
         const form = document.createElement("div");
         form.style.display = "flex";
         form.style.flexDirection = "column";
-        form.style.gap = "15px";
+        form.style.gap = "0.9em";
 
         const changelog = GuiHelper.createInfoSection("info", this.STRINGS.CHANGELOG_TITLE, this.LATEST_CHANGELOG_TEXT);
         form.appendChild(changelog);
@@ -44,7 +44,7 @@ export class GuiAboutView extends GuiViewBase {
         const contactCard = GuiHelper.createGenericCard(this.STRINGS.LABEL_CONTACT, "regular", true);
         contactCard.style.display = "flex";
         contactCard.style.flexDirection = "column";
-        contactCard.style.gap = "12px";
+        contactCard.style.gap = "0.7em";
 
         // Example Contact
         const discordContact = document.createElement("span");
@@ -56,7 +56,7 @@ export class GuiAboutView extends GuiViewBase {
         const linkCard = GuiHelper.createGenericCard(this.STRINGS.LABEL_LINK, "regular", true);
         linkCard.style.display = "flex";
         linkCard.style.flexDirection = "column";
-        linkCard.style.gap = "12px";
+        linkCard.style.gap = "0.7em";
 
         // Example Link Helper
         const createLink = (label: string, url: string) => {
@@ -77,7 +77,7 @@ export class GuiAboutView extends GuiViewBase {
         const versionCard = GuiHelper.createGenericCard(this.STRINGS.LABEL_VERSION, "regular", true);
         versionCard.style.display = "flex";
         versionCard.style.flexDirection = "column";
-        versionCard.style.gap = "12px";
+        versionCard.style.gap = "0.7em";
 
         const version = document.createElement("span");
         version.innerHTML = `Version: <strong style="color: var(--atb-primary, #4da6ff); user-select: text;">${getAtbVersion()}</strong>`;

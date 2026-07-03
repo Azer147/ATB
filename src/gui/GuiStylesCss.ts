@@ -18,27 +18,28 @@ export const uiStyles = `
     /* Layout Components */
     .atb-overlay-container {
         display: flex; flex-direction: column;
-        width: 55rem;
-        height: 40rem;
+        width: min(70vw, 1100px);
+        height: 70vh;
         background: var(--atb-bg-base); color: var(--atb-text);
         border: 2px solid var(--atb-border); border-radius: 8px;
         z-index: 2000; position: absolute;
         top: 50%; left: 50%; transform: translate(-50%, -50%);
         font-family: sans-serif; overflow: hidden;
         scrollbar-color: #444444 rgb(0, 0, 0, 0);
+        font-size: clamp(12px, 1.6vmin, 1.2em);
     }
 
     .atb-title-bar {
         display: flex; justify-content: space-between; align-items: center;
-        padding: 15px 20px; background: var(--atb-bg-input);
+        padding: 0.9em 1.1em; background: var(--atb-bg-input);
         border-bottom: 1px solid var(--atb-bg-card);
     }
 
     .atb-body-wrapper { display: flex; flex: 1; overflow: hidden; }
 
     .atb-sidebar {
-        width: 180px; background: #252525; border-right: 1px solid var(--atb-bg-card);
-        display: flex; flex-direction: column; padding: 15px 0; flex-shrink: 0;
+        width: min(15vw, 200px); background: #252525; border-right: 1px solid var(--atb-bg-card);
+        display: flex; flex-direction: column;
         overflow-y: auto;
     }
 
@@ -46,26 +47,26 @@ export const uiStyles = `
         flex: 1;
         display: flex;
         flex-direction: column;
-        padding: 20px;
-        gap: 15px;
+        padding: 1.2em;
+        gap: 0.9em;
         overflow-y: auto;
     }
 
     /* Panels & Cards */
-    .atb-panel { background: var(--atb-bg-panel); padding: 15px; border-radius: 6px; }
+    .atb-panel { background: var(--atb-bg-panel); padding: 0.9em; border-radius: 6px; }
     .atb-task-card {
         background: var(--atb-bg-card);
-        padding: 15px;
-        padding-left: 10px; // To make place for expanding icon
-        //margin-bottom: 15px;
+        padding: 0.9em;
+        padding-left: 0.5em; // To make place for expanding icon
+        //margin-bottom: 0.9em;
         border-radius: 6px; display: flex; justify-content: space-between; align-items: center;
     }
 
     .atb-task-card-expended-content {
         display: flex;
         flex-direction: column;
-        gap: 15px;
-        padding-top: 10px;
+        gap: 0.9em;
+        padding-top: 0.5em;
         border-top: 1px solid var(--atb-border);
     }
 
@@ -77,7 +78,7 @@ export const uiStyles = `
 
     .atb-nav-btn {
         background: transparent; color: var(--atb-text-muted); border: none;
-        padding: 15px 20px; text-align: left; cursor: pointer;
+        padding: 0.8em 1em; text-align: left; cursor: pointer;
         border-left: 4px solid transparent; outline: none;
         font-size: 1em; transition: background 0.2s, color 0.2s;
     }
@@ -88,7 +89,7 @@ export const uiStyles = `
     }
 
     .atb-action-btn {
-        padding: 8px;
+        padding: 0.6em;
         background: #555; color: var(--atb-text);
         border: none; border-radius: 4px;
         cursor: pointer;
@@ -98,7 +99,7 @@ export const uiStyles = `
     .atb-action-btn:hover { background: #666; }
 
     .atb-main-btn {
-        padding: 12px; background: var(--atb-primary); color: var(--atb-text);
+        padding: 0.7em; background: var(--atb-primary); color: var(--atb-text);
         border: none; border-radius: 6px; cursor: pointer;
         font-weight: bold; transition: background 0.2s;
     }
@@ -107,15 +108,15 @@ export const uiStyles = `
     .atb-main-btn.failed { background: var(--atb-danger); }
 
     /* Forms */
-    .atb-form-group { display: flex; flex-direction: column; gap: 5px; }
+    .atb-form-group { display: flex; flex-direction: column; gap: 0.3em; }
     .atb-form-label { font-size: 0.9em; color: var(--atb-text-secondary); }
     .atb-form-input {
-        padding: 5px 7px;
+        padding: 0.3em 0.4em;
         background: var(--atb-bg-input); color: var(--atb-text);
         border: 1px solid var(--atb-border); border-radius: 4px;
     }
     .atb-dynamic-fields {
-        display: flex; flex-direction: column; gap: 15px; padding: 15px;
+        display: flex; flex-direction: column; gap: 0.9em; padding: 0.9em;
         background: var(--atb-bg-card); border-radius: 6px; border: 1px dashed #555;
     }
 
@@ -131,17 +132,17 @@ export const uiStyles = `
     .atb-progress-fill.danger { background: var(--atb-danger); }
 
     .atb-content-title {
-        //margin: 0 0 20px 0;
+        //margin: 0 0 1.2em 0;
         border-bottom: 1px solid #444;
-        padding-bottom: 10px;
-        padding-top: 10px;
+        padding-bottom: 0.5em;
+        padding-top: 0.5em;
     }
 
     /* Custom Checkbox */
     .atb-checkbox-label {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 0.5em;
         cursor: pointer;
         color: var(--atb-text-secondary);
         font-size: 0.9em;
@@ -152,8 +153,8 @@ export const uiStyles = `
         appearance: none;
         -webkit-appearance: none;
 
-        width: 20px;
-        height: 20px;
+        width: 1.2em;
+        height: 1.2em;
         margin: 0;
         background: var(--atb-bg-input);
         border: 1px solid var(--atb-border);
@@ -173,8 +174,8 @@ export const uiStyles = `
         position: absolute;
         left: 6px;
         top: 2px;
-        width: 5px;
-        height: 10px;
+        width: 0.3em;
+        height: 0.5em;
         border: solid white;
         border-width: 0 2px 2px 0;
         transform: rotate(45deg);
@@ -221,7 +222,7 @@ export const uiStyles = `
     }
 
     .atb-info-content {
-        padding: 15px;
+        padding: 0.9em;
         border-top: 1px solid var(--atb-border);
         font-size: 0.85em;
         color: var(--atb-text-muted);
@@ -240,14 +241,14 @@ export const uiStyles = `
 
     .atb-dialog-box {
         background: var(--atb-bg-panel); border: 1px solid var(--atb-border);
-        border-radius: 8px; padding: 20px; width: 400px; max-width: 90%;
-        display: flex; flex-direction: column; gap: 15px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        border-radius: 8px; padding: 1.2em; width: 28em; max-width: 90%;
+        display: flex; flex-direction: column; gap: 0.9em;
+        box-shadow: 0 0.5em 25px rgba(0,0,0,0.5);
     }
 
     .atb-dialog-title {
         margin: 0; font-size: 1.2em; color: var(--atb-text);
-        border-bottom: 1px solid var(--atb-bg-card); padding-bottom: 10px;
+        border-bottom: 1px solid var(--atb-bg-card); padding-bottom: 0.5em;
     }
 
     .atb-dialog-text {
@@ -256,7 +257,7 @@ export const uiStyles = `
     }
 
     .atb-dialog-buttons {
-        display: flex; justify-content: flex-end; gap: 10px; margin-top: 5px;
+        display: flex; justify-content: flex-end; gap: 0.5em; margin-top: 0.3em;
     }
 
 
@@ -264,10 +265,10 @@ export const uiStyles = `
     .atb-feature-card {
         background: var(--atb-bg-panel);
         border-radius: 6px;
-        padding: 15px;
+        padding: 0.9em;
         display: flex;
         flex-direction: column;
-        gap: 15px;
+        gap: 0.9em;
         border-left: 4px solid #555; /* Default disabled border */
         transition: border-color 0.3s;
     }
@@ -297,8 +298,8 @@ export const uiStyles = `
     .atb-feature-content {
         display: flex;
         flex-direction: column;
-        gap: 15px;
-        padding-top: 15px;
+        gap: 0.9em;
+        padding-top: 0.9em;
         border-top: 1px solid var(--atb-bg-card);
     }
 
@@ -308,14 +309,14 @@ export const uiStyles = `
         display: inline-flex;
         //align-items: center;
         //justify-content: center;
-        margin-left: 5px;
+        margin-left: 0.3em;
         vertical-align: bottom;
         user-select: none;
     }
 
     .atb-tooltip svg {
-        width: 18px;
-        height: 18px;
+        width: 1.2em;
+        height: 1.2em;
         flex-shrink: 0;
         color: var(--atb-text-muted, #888);
     }
@@ -323,13 +324,13 @@ export const uiStyles = `
     .atb-tooltip-text {
         display: none;
         width: max-content;
-        max-width: 400px;
+        max-width: 28em;
         background-color: var(--atb-bg-input, #222);
         color: var(--atb-text, #fff);
         border: 1px solid var(--atb-bg-card, #444);
         text-align: left;
         border-radius: 6px;
-        padding: 8px 12px;
+        padding: 0.6em 0.8em;
         position: absolute;
         bottom: 125%;
         opacity: 0;
@@ -351,20 +352,20 @@ export const uiStyles = `
         -webkit-appearance: none; /* Removes default webkit styles */
         appearance: none;
         width: 100%;
-        height: 12px;
+        height: 0.7em;
         border-radius: 6px;
         /* The magic 0-360 hue gradient */
         background: linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%);
         outline: none;
-        margin: 10px 0;
+        margin: 0.5em 0;
     }
 
     /* Style the draggable handle */
     .atb-hue-slider::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
-        width: 20px;
-        height: 20px;
+        width: 1.2em;
+        height: 1.2em;
         border-radius: 50%;
         background: #ffffff;
         border: 2px solid #333333;
@@ -373,8 +374,8 @@ export const uiStyles = `
     }
 
     .atb-hue-slider::-moz-range-thumb {
-        width: 20px;
-        height: 20px;
+        width: 1.2em;
+        height: 1.2em;
         border-radius: 50%;
         background: #ffffff;
         border: 2px solid #333333;

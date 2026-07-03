@@ -54,7 +54,7 @@ export class GuiHelper {
     public static createTwoElemRow(elem1: HTMLElement | undefined, elem2: HTMLElement | undefined): HTMLDivElement {
         const row = document.createElement("div");
         row.style.display = "flex";
-        row.style.gap = "15px";
+        row.style.gap = "0.9em";
 
         // Create empty div if elem undefined to keep spacing correct
         if (!elem1) elem1 = document.createElement("div");
@@ -122,7 +122,7 @@ export class GuiHelper {
 
         if (useInputPadding) {
             // Push the checkbox down slightly so it aligns with the input box size (which is quite bigger)
-            checkboxWrapper.style.paddingTop = "20px";
+            checkboxWrapper.style.paddingTop = "1.2em";
         }
 
         const checkboxInput = document.createElement("input");
@@ -422,7 +422,10 @@ export class GuiHelper {
         return wrapper;
     }
 
-    public static showDialog(container: HTMLElement, title: string, htmlDescription: string, buttons: GuiDialogButton[]) {
+    public static showDialog(title: string, htmlDescription: string, buttons: GuiDialogButton[]) {
+        // Main ATB Container
+        const mainContainer = document.getElementById("atb-overlay-container")!;
+
         // Backdrop
         const backdrop = document.createElement("div");
         backdrop.className = "atb-dialog-backdrop";
@@ -474,7 +477,7 @@ export class GuiHelper {
         box.appendChild(btnContainer);
         backdrop.appendChild(box);
 
-        container.appendChild(backdrop);
+        mainContainer.appendChild(backdrop);
     }
 
     public static createGenericCard(title: string, titleSize: "regular" | "big" | "small", titleSeparator: boolean): HTMLDivElement {
@@ -493,7 +496,7 @@ export class GuiHelper {
         const titleElem = document.createElement(titleSizeHtml);
         //titleElem.style.margin = "0";
         titleElem.style.color = "var(--atb-text)";
-        titleElem.style.paddingBottom = "5px";
+        titleElem.style.paddingBottom = "0.3em";
         titleElem.innerText = title;
 
         if (titleSeparator) {
@@ -517,7 +520,7 @@ export class GuiHelper {
 
         const card = document.createElement("div");
         card.className = `atb-feature-card ${isEnabled ? "is-enabled" : ""}`;
-        if (rightSideElem) card.style.padding = "8px"; // lower padding when using rightSideElem
+        if (rightSideElem) card.style.padding = "0.6em"; // lower padding when using rightSideElem
 
         // Row: Header
         const header = document.createElement("div");
@@ -527,7 +530,7 @@ export class GuiHelper {
         const headerLeft = document.createElement("div");
         headerLeft.style.display = "flex";
         headerLeft.style.alignItems = "center";
-        headerLeft.style.gap = "15px";
+        headerLeft.style.gap = "0.9em";
 
         // Expand/Collapse Icon (+/-)
         const expandIcon = document.createElement("span");
@@ -537,8 +540,8 @@ export class GuiHelper {
         expandIcon.style.color = "var(--atb-text-muted)";
         expandIcon.style.userSelect = "none";
         expandIcon.style.display = useContentArea ? "inline-block" : "none"; // Hide if no content
-        expandIcon.style.paddingLeft = "5px";
-        expandIcon.style.paddingRight = "5px";
+        expandIcon.style.paddingLeft = "0.3em";
+        expandIcon.style.paddingRight = "0.3em";
         expandIcon.innerText = isExpanded ? "-" : "+";
 
         // The Main Checkbox

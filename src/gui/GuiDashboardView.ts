@@ -134,11 +134,11 @@ export default class GuiDashboardView extends GuiViewBase {
 
         panel.innerHTML = `
             <h3 style="margin-bottom: 1rem;">${this.STRINGS.POINTS_TITLE}</h3>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5em;">
                 <span style="color: var(--atb-success);">${this.STRINGS.REWARD_POINTS}: <strong id="atb-points-reward">${settings.rewardPts}</strong></span>
                 <span style="color: var(--atb-danger);">${this.STRINGS.PENALTY_POINTS}: <strong id="atb-points-penalty">${settings.penaltyPts} / ${settings.forcedPunishementThreshold}</strong></span>
             </div>
-            <div class="atb-progress-bg" style="width: 100%; height: 10px;">
+            <div class="atb-progress-bg" style="width: 100%; height: 0.5em;">
                 <div id="atb-points-bar" class="atb-progress-fill danger" style="width: ${debtPercentage}%;"></div>
             </div>
         `;
@@ -154,7 +154,7 @@ export default class GuiDashboardView extends GuiViewBase {
         card.className = "atb-task-card";
         card.style.flexDirection = "column";
         card.style.alignItems = "stretch";
-        card.style.gap = "10px";
+        card.style.gap = "0.5em";
 
         const progressPercentage = task.progressPerc;
         const finishConditionStr = this.getFinishConditionString(task);
@@ -163,7 +163,7 @@ export default class GuiDashboardView extends GuiViewBase {
         const infoDiv = document.createElement("div");
         infoDiv.style.flex = "1";
         infoDiv.innerHTML = `
-            <h4 class="atb-task-desc" style="margin: 0 0 8px 0;">${task.description}</h4>
+            <h4 class="atb-task-desc" style="margin: 0 0 0.6em 0;">${task.description}</h4>
             <div style="display: flex; flex-direction: column; gap: 6px;">
                 <div class="atb-progress-bg">
                     <div class="atb-progress-fill task-bar-fill" style="width: ${progressPercentage}%;"></div>
@@ -172,7 +172,7 @@ export default class GuiDashboardView extends GuiViewBase {
         `;
 
         const btnDiv = document.createElement("div");
-        btnDiv.style.marginLeft = "20px";
+        btnDiv.style.marginLeft = "1.2em";
         const skipBtn = document.createElement("button");
         skipBtn.className = "atb-action-btn";
         this.updateSkipBtn(task, skipBtn);
@@ -187,8 +187,8 @@ export default class GuiDashboardView extends GuiViewBase {
         expandIcon.style.color = "var(--atb-text-muted)";
         expandIcon.style.userSelect = "none";
         expandIcon.style.display = "inline-block";
-        expandIcon.style.paddingLeft = "5px";
-        expandIcon.style.paddingRight = "15px";
+        expandIcon.style.paddingLeft = "0.3em";
+        expandIcon.style.paddingRight = "0.9em";
         expandIcon.innerText = "+";
 
 
@@ -323,8 +323,7 @@ export default class GuiDashboardView extends GuiViewBase {
                     const penaltySettings = getCharacterPenaltySettings(this.character);
 
                     if (penaltySettings !== undefined && cost > penaltySettings.rewardPts) {
-                        const mainContainer = document.getElementById("atb-overlay-container")!;
-                        GuiHelper.showDialog(mainContainer, this.STRINGS.DIALOG_ERR_SKIP_TITLE, this.STRINGS.DIALOG_ERR_SKIP_NO_PTS, [
+                        GuiHelper.showDialog(this.STRINGS.DIALOG_ERR_SKIP_TITLE, this.STRINGS.DIALOG_ERR_SKIP_NO_PTS, [
                             {
                                 label: "Ok",
                                 isPrimary: true,
