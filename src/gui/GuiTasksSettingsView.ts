@@ -13,10 +13,15 @@ export class GuiTasksSettingsView extends GuiViewBase {
     - <strong>Weight:</strong> Used for random selection, higher weight means higher chance to be selected against other, 0 means this punishements cannot be randomly selected.<br>
     - <strong>Base Duration:</strong> This will be the base duration used for random duration used by Random Task. This is also used to calculate the Points Rewards, if selected duration is lower/higher than the base duration, Rewards will be lower/higher.<br>
     - <strong>Base Reward/Penalty Points: </strong>Will be used as a base value for the punishements and points calculation.<br>
+    - <strong>Grace Period:</strong> How long the Player have before getting a penalty for not following the task requirement. A Warning will be given when the Grace period start counting down.<br>
     <br>
-    All Tasks list:<br>
-    <strong>Wear Bondage/Restraints:</strong> Get penalty if not wearing specified restraints.<br>
-    - <strong>Grace Period:</strong> How long the Player have before getting a penalty for not wearing the specified restraint.
+    All Tasks list:
+    <br>Task <strong>Wear Bondage/Restraints:</strong> Player have to wear specified restraints or get <strong>Penalty Points</strong>.
+    <br>Task <strong>Wear Outfit:</strong> Player will have to wear a restrictive outfit. Player will get <strong>Penalty Points</strong> if they try to remove it.
+    <br>Task <strong>Stay Naked:</strong> Player will have to stay naked. Player will get <strong>Penalty Points</strong> if they try to wear anything.
+    <br>Task <strong>Nickname Control:</strong> Player will have to use a specific nickname. Player will get <strong>Penalty Points</strong> if they don't have the correct nickname.
+    <br>Task <strong>Pose Control:</strong> Player will have to be in a specific Pose. Player will get <strong>Penalty Points</strong> if they don't have the correct Pose.
+    <br>Task <strong>Room Control:</strong> Player will have to be in a Room with specific name/type or not stay in the same room too long. Player will get <strong>Penalty Points</strong> if they don't comply.
     `;
 
     private STRINGS = {

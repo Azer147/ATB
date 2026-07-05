@@ -19,6 +19,32 @@ export class GuiGeneralSettingsView extends GuiViewBase {
     private shocksSettings!: DeviousShocksSettings;
 
 
+    private INFO_PENALTY_SYS = `
+    <strong>Penalty system:</strong> A Punishements system, Just follow the rules and everything will be alright!<br>
+    - Get <strong>Penalty Points (PP)</strong> penalty on task transgression.<br>
+    - Reduce <strong>Penalty Points (PP)</strong> by taking a <strong>Punishements</strong>.<br>
+    - Get too much <strong>Penalty Points (PP)</strong> and you will get a forced random <strong>Punishements!</strong><br>
+    <br>
+    - The Forced random punishement will use a random finish count (duration/orgasm need/...) based on the base duration/orgasm/... of the punishements settings and will be multiplied by a random value between the minimum and maximum random punishement finish count you have set in this page.<br>
+    <strong>Make sure you setup the punishements settings to your liking before using this feature.</strong><br>
+    <br>
+    Example: If you have a punishement with a base duration of 10 minutes, and you set the minimum random finish count to 50% and the maximum random finish count to 200%, the forced random punishement will have a duration between 5 minutes (10 * 0.5) and 20 minutes (10 * 2).<br>
+    `;
+
+    private INFO_RANDOM_TASK = `
+    <strong>Random Task:</strong> Automatically start a random task at random times! For those who want to submit to the Chaos and surrender control.<br>
+    <br>
+    - The generated task options will be random, based on the task settings you have set in the Task Settings page.<br>
+    - The generated task finish count will be based on the finish task settings you have set in the Task Settings page, and will be multiplied by a random value between the minimum and maximum random task finish count you have set in this page.<br>
+    <strong>Make sure you setup the task settings and Finish condition settings to your liking before using this feature.</strong><br>
+    <br>
+    - <strong>Average New Task per Hour:</strong> Average number of new random tasks that will be started per hour. (0 to disable)<br>
+    - <strong>Minimum random task finish count:</strong> Minimum number of times a random task must be completed before it is considered finished. (5% - 1000%)<br>
+    - <strong>Maximum random task finish count:</strong> Maximum number of times a random task must be completed before it is considered finished. (5% - 1000%)<br>
+    <br>
+    Example: If you have a task finish condition with a base duration of 10 minutes, and you set the minimum random finish count to 50% and the maximum random finish count to 200%, the random task will have a duration between 5 minutes (10 * 0.5) and 20 minutes (10 * 2).<br>
+    `;
+
     private INFO_RANDOM_EVENTS = `
     Random Events are one time event that can trigger randomly depending of your settings.<br>
     - <strong>Chance of Events:</strong> the main chance of an events triggering, the chance is used on every trigger enabled.<br>
@@ -27,24 +53,25 @@ export class GuiGeneralSettingsView extends GuiViewBase {
     - <strong>Events:</strong> What Events can happen when a random event is triggered.<br>
     `;
 
-    private INFO_PENALTY_SYS = `
-    <strong>Penalty system:</strong> A Reward and Punishements game, be a good slave and everything will be alright!<br>
-    - Gain <strong>Reward Points (RP)</strong> on task completion.<br>
-    - Get <strong>Penalty Points (PP)</strong> penalty on task failure / transgression.<br>
-    - Reduce <strong>Penalty Points (PP)</strong> by taking a <strong>Punishements</strong>.<br>
-    - Get too much <strong>Penalty Points (PP)</strong> and you will get a forced random <strong>Punishements!</strong><br>
+    private INFO_DEVIOUS_SHOCKS = `
+    <strong>Devious Shocks:</strong> Makes Shock devices much more restrictives!<br>
+    This feature work only when the Player wear a shock device or items capable of delivering shocks.<br>
     <br>
-    `;
-
-    private INFO_RANDOM_TASK = `
-    <strong>Random Task:</strong> Randomly start a task, for those who want to submit to the Chaos and surrender control.<br>
+    <strong>Warning:</strong> Most trigger will also cancel the action, using high chance values can render the Player unable to do anything.<br>
+    <br>
+    - <strong>Automatic Shocks:</strong> Trigger shocks randomly. Higher Value will trigger shocks more often (0 to disable).<br>
+    - <strong>Chance of shocks on Leaving Room:</strong> Chance of shocks triggering when leaving a room. <strong>Warning:</strong> Shocks will also cancel the leaving room attempt when triggered. 100% will prevent the Player to leave the room completly.<br>
+    - <strong>Chance of shocks on Struggling:</strong> Chance of shocks triggering when struggling. <strong>Warning:</strong> Shocks will also cancel the struggle when triggered. 100% will prevent the Player to struggle completly.<br>
+    - <strong>Chance of shocks on Standing:</strong> Chance of shocks triggering when standing up. <strong>Warning:</strong> Shocks will also cancel the standing up attempt when triggered. 100% will prevent the Player to stand up completly.<br>
+    - <strong>Chance of shocks on Wardrobe Usage:</strong> Chance of shocks triggering when opening the wardrobe. <strong>Warning:</strong> Shocks will also cancel the wardrobe opening attempt when triggered. 100% will prevent the Player to open the wardrobe completly.<br>
+    - <strong>Chance of shocks on Equipping Item on Others:</strong> Chance of shocks triggering when equipping an item on another character. <strong>Warning:</strong> Shocks will also cancel the equip attempt when triggered. 100% will prevent the Player to equip items on others completly.<br>
     `;
 
     private STRINGS = {
         PAGE_TITLE: "General Settings",
 
         SECTION_MAIN_FEATURE: "Main Features",
-        SECTION_ADVANCED: "Advenced Options",
+        SECTION_ADVANCED: "Advanced Options",
 
         CATEGORY_CHANCE_TITLE: "Events Chance On Trigger",
         CATEGORY_TRIGGERS_TITLE: "Triggers",
@@ -56,9 +83,10 @@ export class GuiGeneralSettingsView extends GuiViewBase {
         DIALOG_SAFEWORD_DESC: "This will finish any active task and remove Penalty points over 50% of forced Punishement Threshold.",
         DIALOG_RESET_DESC: "This will reset all your settings to default, finish any active task and reset Reward/Penalty points to 0.",
 
-        INFO_RANDOM_EVENTS_TITLE: "Random Events Informations",
         INFO_PENALTY_TITLE: "Penalty System Informations",
         INFO_RANDOM_TASK_TITLE: "Random Task Informations",
+        INFO_RANDOM_EVENTS_TITLE: "Random Events Informations",
+        INFO_DEVIOUS_SHOCKS_TITLE: "Devious Shocks Informations",
     };
 
     constructor(parent: HTMLDivElement, C: OtherCharacter | PlayerCharacter) {
@@ -208,7 +236,7 @@ export class GuiGeneralSettingsView extends GuiViewBase {
         };
         const FIELD_AVERAGE_TASKS: GuiFormField = {
             html_id: "atb-random-task-average",
-            label: "Average number of Tasks per Hour (0.1 - 15)",
+            label: "Average number of new Tasks per Hour (0.1 - 15)",
             type: "number",
             min_value: 0.1,
             max_value: 15.0,
@@ -245,7 +273,7 @@ export class GuiGeneralSettingsView extends GuiViewBase {
                 this.shouldSaveSetting = true;
             }
         };
-        const FIELD_WEIGHT_USE_PUNISH: GuiFormField = {
+        /*const FIELD_WEIGHT_USE_PUNISH: GuiFormField = {
             html_id: "atb-weight-use-punish",
             label: "Weight of random tasks choosing a punishement instead (0 to disable)",
             type: "number",
@@ -257,7 +285,7 @@ export class GuiGeneralSettingsView extends GuiViewBase {
                 this.randTaskSettings.weightUsePunishAsTask = value;
                 this.shouldSaveSetting = true;
             }
-        };
+        };*/
 
         // Build Main card
         const randTaskTuple = GuiHelper.createFeatureToggleCard(FIELD_ENABLE, true);
@@ -265,11 +293,11 @@ export class GuiGeneralSettingsView extends GuiViewBase {
         const randTaskContent = randTaskTuple.contentArea;
 
         const randTaskAverage = GuiHelper.createFormField(FIELD_AVERAGE_TASKS);
-        const randTaskUsePunish = GuiHelper.createFormField(FIELD_WEIGHT_USE_PUNISH);
+        //const randTaskUsePunish = GuiHelper.createFormField(FIELD_WEIGHT_USE_PUNISH);
         const randTaskMinDuration = GuiHelper.createFormField(FIELD_MIN_FINISH_COUNT);
         const randTaskMaxDuration = GuiHelper.createFormField(FIELD_MAX_FINISH_COUNT);
 
-        const randTaskRow1 = GuiHelper.createTwoElemRow(randTaskAverage, randTaskUsePunish);
+        const randTaskRow1 = GuiHelper.createTwoElemRow(randTaskAverage, undefined/*randTaskUsePunish*/);
         const randTaskDurationRow = GuiHelper.createTwoElemRow(randTaskMinDuration, randTaskMaxDuration);
 
         const infoSection = GuiHelper.createInfoSection("info", this.STRINGS.INFO_RANDOM_TASK_TITLE, this.INFO_RANDOM_TASK);
@@ -536,6 +564,9 @@ export class GuiGeneralSettingsView extends GuiViewBase {
         const actionRow3 = GuiHelper.createTwoElemRow(chanceEqupOther, undefined);
 
         // Final Assembly
+        const infoSection = GuiHelper.createInfoSection("info", this.STRINGS.INFO_DEVIOUS_SHOCKS_TITLE, this.INFO_DEVIOUS_SHOCKS);
+        mainContent.appendChild(infoSection);
+
         mainContent.appendChild(chanceRandomShock);
         GuiHelper.createContentTitle(mainContent, this.STRINGS.CATEGORY_SHOCK_ON_ACTION);
         mainContent.appendChild(actionRow1);

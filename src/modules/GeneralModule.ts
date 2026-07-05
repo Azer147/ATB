@@ -103,7 +103,7 @@ export class GeneralModule extends ModuleBase {
         }));
 
         // Register commands for ATB
-        CommandCombine({
+        CommandCombine([{
             Tag: 'atb',
             Description: ": Toggle Azer Toy Box UI Overlay",
             Action: (args, msg, parsed) => {
@@ -124,7 +124,14 @@ export class GeneralModule extends ModuleBase {
                     GuiMainView.toggleUi(Player);
                 }
             }
-        });
+        }, {
+            Tag: 'atb-reset',
+            Description: ": Reset Azer Toy Box Addon to default settings (also end all tasks and resets points)",
+            Action: (args, msg, parsed) => {
+                // TODO: add arg account name to confirm reset ?
+                StorageManager.resetSettings();
+            }
+        }]);
     }
 
 

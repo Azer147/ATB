@@ -4,7 +4,7 @@ import StorageManager from "@/utility/StorageManager";
 export interface GenericSettingElement {
 	title: string;
 	description?: string;
-	type: 'checkbox' | 'number' | 'text' | 'dropdown' | 'button' | 'button_with_label'; // 'custom' to have click managed for custom draw ?
+	type: 'label' | 'checkbox' | 'number' | 'text' | 'dropdown' | 'button' | 'button_with_label'; // 'custom' to have click managed for custom draw ?
 	value: any;
 	onChange: (val: any) => void;
 	//options?: any[]; // for dropdown
@@ -134,6 +134,10 @@ export default abstract class SettingPageBase {
 			// Start of Run()
 			else if (operation === "Run") {
 				switch (elem.type) {
+					case "label":
+						MainCanvas.textAlign = "left";
+						DrawTextFit(elem.title, left, top, width, "Black", "Gray");
+						break;
 					case 'checkbox':
 						//DrawCheckbox(left, top, 64, 64, elem.title, elem.value, elem.disabled || false);
 						this.DrawCheckboxRight(left, top, width, height, elem.title, elem.value, elem.disabled || false);

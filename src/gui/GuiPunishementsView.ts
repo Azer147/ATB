@@ -29,10 +29,29 @@ export class GuiPunishementsView extends GuiViewBase {
     private ID_STATUS_PROGRESS_BAR = "atb-status-progress-bar";
 
 
+    private INFO_TEXT = `
+    All Punishements Overview:<br>
+    <strong>Full Bondage:</strong> Force equip Random restraints: Hands/Arms, Legs, Gag, blindfold/hood, Chastity, Toy/vibrator, shock device. (does not replace existing items)<br>
+    <br>
+    <strong>Harsh Outfit:</strong> Force equip Random Outfit considered harsh (Full bondage outfit / Doll Outfit / Drone Outfit).<br>
+    <br>
+    <strong>Doll Play:</strong><br>
+    - Force equip a Doll Outfit.<br>
+    - Forced Nickname "DOLL-<number>".<br>
+    - Forced Room Control: Only Room with "doll" in name or description.<br>
+    - Forced Room Control: X minutes Maximum in the same room.<br>
+    <br>
+    <strong>Drone Play:</strong><br>
+    - Force equip a Drone/Futuristic Outfit.<br>
+    - Forced Nickname "DRONE-<number>".<br>
+    - Forced Pose Control: Random Pose Changing every X minutes.<br>
+    - Forced Room Control: X minutes Maximum in the same room.<br>
+    `;
+
     private STRINGS = {
         PAGE_TITLE: "Punishements",
         CATEGORY_SELECT_PUNISHEMENT: "Select Punishement",
-        BASE_HELP_TITLE: "Penalty & Punishements Overview",
+        INFO_TITLE: "Penalty & Punishements Overview",
 
         POINTS_STATUS_TITLE: "Points Status",
         REWARD_POINTS: "Reward Points (RP)",
@@ -127,7 +146,8 @@ export class GuiPunishementsView extends GuiViewBase {
 
         // Final Assembly
         form.appendChild(pointsPanel);
-
+        const infoSection = GuiHelper.createInfoSection("info", this.STRINGS.INFO_TITLE, this.INFO_TEXT);
+        form.appendChild(infoSection);
         GuiHelper.createContentTitle(form, this.STRINGS.CATEGORY_SELECT_PUNISHEMENT);
         this.createAllPunishementsCards(form);
 

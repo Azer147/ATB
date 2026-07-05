@@ -21,13 +21,13 @@ export default class MainMenuSettingsPage extends SettingBase {
                 height_override: 100,
                 onChange: () => { SettingPageManager.goToSettingPage(new GeneralSettingsPage()); }
             },
-            {
+            /*{
                 title: 'Random Events',
                 type: 'button',
                 value: null,
                 height_override: 100,
                 onChange: () => { SettingPageManager.goToSettingPage(new RandomEventsSettingsPage()); }
-            },
+            },*/
             /*{
                 title: 'Sleep Control',
                 type: 'button',

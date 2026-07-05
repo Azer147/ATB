@@ -17,14 +17,20 @@ export class GuiOutfitSettingsView extends GuiViewBase {
     private updatePreviewInterval: number = 0;
 
 
-    private HELP_BASE_TASK_TEXT = `
-    TODO
+    private INFO_TEXT = `
+    All Outfits pre-made, to be used with Task <strong>Wear Outfit</strong>.<br>
+    - <strong>Enable:</strong> Enable/Disable this outfit for the task Wear Outfit. Especially usefull to prevent usage on Remote Access.<br>
+    - <strong>Enable for Random Task:</strong> Enable/Disable this outfit Random Task / Random Punishement.<br>
+    - <strong>Weigth Random:</strong> Weigth that this outfit will be selected when generating a random task. (For Random Task/Random Punishement)<br>
+    - <strong>Show:</strong> Preview the outfit on your character.<br>
+    <br>
+    <strong>Know issue:</strong> If your character is blind, the character model will not appear.
     `;
 
     private STRINGS = {
-        PAGE_TITLE: "TODO",
+        PAGE_TITLE: "Outfit Settings",
 
-        HELP_BASE_TASK_TITLE: "TODO",
+        INFO_TITLE: "Outfit Settings Informations",
 
         BTN_SHOW: "Show"
     };
@@ -133,8 +139,8 @@ export class GuiOutfitSettingsView extends GuiViewBase {
         form.style.flexDirection = "column";
         form.style.gap = "0.9em";
 
-        //const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
-        //form.appendChild(helpSection);
+        const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.INFO_TITLE, this.INFO_TEXT);
+        form.appendChild(helpSection);
 
         //GuiHelper.createContentTitle(form, this.STRINGS.PAGE_TITLE, true);
 
@@ -208,6 +214,7 @@ export class GuiOutfitSettingsView extends GuiViewBase {
             const FIELD_ENABLE_RANDOM: GuiFormField = {
                 html_id: "atb-outfit-enable-random-" + outfitData.id,
                 label: "Enable For Random Task",
+                description: "Enable this Outfit for Random Task / Random Punishement",
                 type: "checkbox",
                 default_value: outfitSettings.enableForRandomTask,
                 onChange: (value: boolean) => {
@@ -218,6 +225,7 @@ export class GuiOutfitSettingsView extends GuiViewBase {
             const FIELD_WEIGHT_RANDOM: GuiFormField = {
                 html_id: "atb-outfit-weight" + outfitData.id,
                 label: "Weight For Random Task",
+                description: "Weigth for this Outfit to be selected on Random Task or Random Punishement",
                 type: "number",
                 min_value: 0,
                 max_value: 1000,

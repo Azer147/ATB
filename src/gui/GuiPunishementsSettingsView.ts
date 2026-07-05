@@ -8,20 +8,35 @@ export class GuiPunishementsSettingsView extends GuiViewBase {
     private settings!: TasksSettings
 
 
-    private HELP_BASE_TASK_TEXT = `
+    private INFO_TEXT = `
     Settings Fields Information:<br>
     - <strong>Weight:</strong> Used for random selection, higher weight means higher chance to be selected against other, 0 means this punishements cannot be randomly selected.<br>
     - <strong>Base Duration:</strong> This will be the base duration used for random duration used by Punishements & Penalty System. This is also used to calculate the Points Rewards, if selected duration is lower/higher than the base duration, Rewards will be lower/higher.<br>
     - <strong>Base Reward/Penalty Points: </strong>Will be used as a base value for the punishements and points calculation.<br>
+    - <strong>Penalty Points Reduction: </strong>How much Penalty pts does this Punishments will remove based on the base duration. Meaning, selecting a punishement with the same duration as base durtion will remove this much penalty points. And selecting a shorter or longer duration will give less or more points than this.<br>
     <br>
     All Punishements list:<br>
-    - <strong>Full Bondage:</strong> Force equip Random restraints: Hands/Arms, Legs, Gag, Chastity, Toy/vibrator. (does not replace existing items)
+    <strong>Full Bondage:</strong> Force equip Random restraints: Hands/Arms, Legs, Gag, blindfold/hood, Chastity, Toy/vibrator, shock device. (does not replace existing items)<br>
+    <br>
+    <strong>Harsh Outfit:</strong> Force equip Random Outfit considered harsh (Full bondage outfit / Doll Outfit / Drone Outfit).<br>
+    <br>
+    <strong>Doll Play:</strong><br>
+    - Force equip a Doll Outfit.<br>
+    - Forced Nickname "DOLL-<number>".<br>
+    - Forced Room Control: Only Room with "doll" in name or description.<br>
+    - Forced Room Control: X minutes Maximum in the same room.<br>
+    <br>
+    <strong>Drone Play:</strong><br>
+    - Force equip a Drone/Futuristic Outfit.<br>
+    - Forced Nickname "DRONE-<number>".<br>
+    - Forced Pose Control: Random Pose Changing every X minutes.<br>
+    - Forced Room Control: X minutes Maximum in the same room.<br>
     `;
 
     private STRINGS = {
         PAGE_TITLE: "Punishements Settings",
 
-        HELP_BASE_TASK_TITLE: "Punishements Overview/Information",
+        INFO_TITLE: "Punishements Overview/Information",
     };
 
 
@@ -55,7 +70,7 @@ export class GuiPunishementsSettingsView extends GuiViewBase {
         form.style.flexDirection = "column";
         form.style.gap = "0.9em";
 
-        const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
+        const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.INFO_TITLE, this.INFO_TEXT);
         form.appendChild(helpSection);
 
         const fullBondageCard = this.buildFullBondageCard();

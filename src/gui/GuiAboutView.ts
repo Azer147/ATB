@@ -5,13 +5,37 @@ import { getAtbVersion } from "..";
 export class GuiAboutView extends GuiViewBase {
 
     private LATEST_CHANGELOG_TEXT = `
-        TODO
+        First ever Demo/Alpha version!<br>
+    `;
+
+    private FEATURE_IDEAS_TEXT = `
+        Here is the list of some of my ideas i have for the next features:<br>
+        - More Punishements. <strong>(I need more ideas for this)</strong>.<br>
+        - Task Random Activity (similar to Pose Control but with activities)<br>
+        - Task Talk Control (i'm not sure on specifics yet)<br>
+        - Task Time Enforcement: Player need to be connected/Not connected at certain times (real time) or get penalty.<br>
+        - Task Don't Cheat: Give penalty if the player attempt to cheat/safeword or use certain commands<br>
+        - Task Finish Condition: Give X Orgasm to other player.<br>
+        - Task Finish Condition: Lick/Kiss other people body part X time.<br>
+        - Some sort of Escape Challenge as a Task or Finish condition.(not sure how to do that yet)<br>
+        <br>
+        - Reward Shop to spend Reward Points, with Clothes/Outfit (Outfit code), maybe Skills Boost, maybe LSCG Spells, ... <strong>(I need more ideas for this)</strong>.<br>
+        - Locking the base Reward points settings to prevent cheating Reward Points to Spend in the Reward Shop.<br>
+        <br>
+        - More Outfits<br>
+        - More Random Events (need ideas)<br>
+        - More events for Devious Shocks (need ideas)<br>
+        - A way to Export/Import a task or a list of tasks.<br>
+        - BCX Rules violations gives Penalty points<br>
+        <br>
+        <strong>Disclaimer:</strong> All of this can be changed, cancelled and will probably not be done in that order.
     `;
 
     private STRINGS = {
         PAGE_TITLE: "Azer Toy Box - About",
 
         CHANGELOG_TITLE: "Latest Changelog",
+        IDEAS_TITLE: "Next Features Ideas",
 
         LABEL_CONTACT: "Contacts",
         LABEL_LINK: "Links",
@@ -39,6 +63,8 @@ export class GuiAboutView extends GuiViewBase {
 
         const changelog = GuiHelper.createInfoSection("info", this.STRINGS.CHANGELOG_TITLE, this.LATEST_CHANGELOG_TEXT);
         form.appendChild(changelog);
+        const ideas = GuiHelper.createInfoSection("info", this.STRINGS.IDEAS_TITLE, this.FEATURE_IDEAS_TEXT);
+        form.appendChild(ideas);
 
         // Contacts Card
         const contactCard = GuiHelper.createGenericCard(this.STRINGS.LABEL_CONTACT, "regular", true);
@@ -46,11 +72,10 @@ export class GuiAboutView extends GuiViewBase {
         contactCard.style.flexDirection = "column";
         contactCard.style.gap = "0.7em";
 
-        // Example Contact
+        // Contact
         const discordContact = document.createElement("span");
         discordContact.innerHTML = `Find me on BC Discord: <strong style="color: var(--atb-primary, #4da6ff); user-select: text;">azer14783</strong>`;
         contactCard.appendChild(discordContact);
-
 
         // Links Card
         const linkCard = GuiHelper.createGenericCard(this.STRINGS.LABEL_LINK, "regular", true);
@@ -58,7 +83,7 @@ export class GuiAboutView extends GuiViewBase {
         linkCard.style.flexDirection = "column";
         linkCard.style.gap = "0.7em";
 
-        // Example Link Helper
+        // Link Helper
         const createLink = (label: string, url: string) => {
             const anchor = document.createElement("a");
             anchor.href = url;

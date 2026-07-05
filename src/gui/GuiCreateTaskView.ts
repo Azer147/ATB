@@ -45,7 +45,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     private FIELD_FINISH_CONDITION: GuiFormField = {
         html_id: "atb-finish-condition",
         label: "Finish Condition",
-        description: "What need to be done to get the reward and end the task.",
+        description: "What need to be done to get the reward and finish the task.",
         type: "select",
         options: [] // Will be fill on build
     };
@@ -54,7 +54,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     private FIELD_ENFORCE: GuiFormField = {
         html_id: "atb-create-task-enforce",
         label: "Enforce Task (Unskippable)",
-        description: "When enforced, the task cannot be skipped and might be harsher in some cases.",
+        description: "When enforced, the task cannot be skipped and task requirement is forced on the Player.",
         type: "checkbox",
         useInputPadding: true, // makes it align correctly with input fields on the same row
         default_value: false,
@@ -78,7 +78,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     private FIELD_PENALTY: GuiFormField = {
         html_id: "atb-create-task-penalty",
         label: "Penalty Points",
-        description: "Penalty points awarded upon transgression during the task.",
+        description: "Penalty points given upon transgression during the task.",
         type: "number",
         default_value: 10, // placeholder
         min_value: 0,
@@ -87,7 +87,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     private FIELD_GRACE_PERIOD: GuiFormField = {
         html_id: "atb-create-task-grace-period",
         label: "Grace Period (Seconds)",
-        description: "Time given before starting to apply penalties when the task is not respected.",
+        description: "Time given before starting to apply penalties when the task is not respected., Grace Period start at the moment a warning is given to the Player.",
         type: "number",
         default_value: 15, // placeholder
         min_value: 5,
@@ -98,6 +98,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     private FIELD_DURATION: GuiFormField = {
         html_id: "atb-create-task-duration",
         label: "Duration (Minutes)",
+        description: "Task will finish after the duration (Connected time only).",
         type: "number",
         default_value: 3, // placeholder
         min_value: 1,
@@ -105,7 +106,8 @@ export class GuiCreateTaskView extends GuiViewBase {
     };
     private FIELD_ORGASM_COUNT: GuiFormField = {
         html_id: "atb-create-task-orgasm-count",
-        label: "Orgasm needed",
+        label: "Orgasm received",
+        description: "Number of orgasms received required to complete the task.",
         type: "number",
         default_value: 20, // placeholder
         min_value: 1,
@@ -113,7 +115,8 @@ export class GuiCreateTaskView extends GuiViewBase {
     };
     private FIELD_ORGASM_RUINED_COUNT: GuiFormField = {
         html_id: "atb-create-task-orgasm-ruined-count",
-        label: "Orgasm Ruined needed",
+        label: "Orgasm Ruined",
+        description: "Number of orgasms ruined required to complete the task.",
         type: "number",
         default_value: 40, // placeholder
         min_value: 1,
@@ -121,7 +124,8 @@ export class GuiCreateTaskView extends GuiViewBase {
     };
     private FIELD_ORGASM_RESISTED_COUNT: GuiFormField = {
         html_id: "atb-create-task-orgasm-resisted-count",
-        label: "Orgasm Resisted needed",
+        label: "Orgasm Resisted",
+        description: "Number of orgasms resisted required to complete the task.",
         type: "number",
         default_value: 20, // placeholder
         min_value: 1,
@@ -130,6 +134,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     private FIELD_SPANK_COUNT: GuiFormField = {
         html_id: "atb-create-task-spank-count",
         label: "Spank needed",
+        description: "Number of spanks received by others required to complete the task (self spank does not count).",
         type: "number",
         default_value: 30, // placeholder
         min_value: 1,
@@ -154,7 +159,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     };
     private FIELD_REMOVE_ITEM: GuiFormField = {
         html_id: "atb-create-task-remove-item",
-        label: "Remove Outfit on Finished",
+        label: "Remove Outfit when Task is Finished",
         type: "checkbox",
         useInputPadding: true, // makes it align correctly with input fields on the same row
         default_value: true,
@@ -183,12 +188,14 @@ export class GuiCreateTaskView extends GuiViewBase {
     private FIELD_POSE_UPPER: GuiFormField = {
         html_id: "atb-create-task-pose-upper",
         label: "Upper Pose",
+        description: "Upper Pose that the Player must maintain. (Random will select a random pose at the start of the task)",
         type: "select",
         options: [] // Will be filled on build
     };
     private FIELD_POSE_LOWER: GuiFormField = {
         html_id: "atb-create-task-pose-lower",
         label: "Lower Pose",
+        description: "Lower Pose that the Player must maintain. (Random will select a random pose at the start of the task)",
         type: "select",
         options: [] // Will be filled on build
     };
@@ -232,7 +239,7 @@ export class GuiCreateTaskView extends GuiViewBase {
     private FIELD_ROOM_USE_MAX_TIME: GuiFormField = {
         html_id: "atb-create-task-room-use-max-time",
         label: "Enable Room Max Time Requirement",
-        description: "Force the player to change room periodically",
+        description: "Enable the Room Max Time Requirement. If enabled, Player will get a penalty if they stay in the same room for more than the specified time.",
         type: "checkbox",
         useInputPadding: true, // makes it align correctly with input fields on the same row
         default_value: false,
@@ -250,27 +257,87 @@ export class GuiCreateTaskView extends GuiViewBase {
 
     private HELP_BASE_TASK_TEXT = `
     New Tasks can be created freely by the Player or Someone else (based on access settings).<br>
-    - Tasks award <strong>Reward Points (RP)</strong> on completion and <strong>Penalty Points (PP)</strong> on failure or transgression.<br>
+    - Tasks award <strong>Reward Points (RP)</strong> on completion and <strong>Penalty Points (PP)</strong> on transgression.<br>
     - If the <strong>Point System</strong> is enabled, Points is calculated automatically from the base settings of the task.<br>
-    - <strong>Enforce</strong> is a modifier that makes the task harsher and <strong>prevent Skipping the task</strong>.<br>
+    - <strong>Enforce</strong> is a modifier that <strong>automatically force the task requirement on the Player</strong> and also <strong>prevent the Player from Skipping the task</strong>.<br>
     - If the same task is already <strong>active</strong> and not enforced, you can overwrite it, this will remove the current active task and create this new task.
     However, the current active task will not yield any reward and the progress will be lost.<br>
     <br>
-    <br>Task <strong>Wear Bondage/Restraints:</strong> Player must wear specified restraints or get <strong>Penalty Points</strong>.
-    <br>Task <strong>Wear Outfit:</strong> Player will be forced to wear a restrictive outfit. Player will get <strong>Penalty Points</strong> if they try to remove it.
-    <br>Task <strong>Stay Naked:</strong> Player will be forced to stay naked. Player will get <strong>Penalty Points</strong> if they try to wear anything.
-    <br>Task <strong>Nickname Control:</strong> Player will be forced to use a specific nickname. Player will get <strong>Penalty Points</strong> if they don't have the correct nickname.
-    <br>Task <strong>Pose Control:</strong> Player will be forced to use a specific Pose. Player will get <strong>Penalty Points</strong> if they don't have the correct Pose.
+    Task <strong>Wear Bondage/Restraints:</strong> Player have to wear specified restraints or get <strong>Penalty Points</strong>.<br>
+    Task <strong>Wear Outfit:</strong> Player will have to wear a restrictive outfit. Player will get <strong>Penalty Points</strong> if they try to remove it.<br>
+    Task <strong>Stay Naked:</strong> Player will have to stay naked. Player will get <strong>Penalty Points</strong> if they try to wear anything.<br>
+    Task <strong>Nickname Control:</strong> Player will have to use a specific nickname. Player will get <strong>Penalty Points</strong> if they don't have the correct nickname.<br>
+    Task <strong>Pose Control:</strong> Player will have to be in a specific Pose. Player will get <strong>Penalty Points</strong> if they don't have the correct Pose.<br>
+    Task <strong>Room Control:</strong> Player will have to be in a Room with specific name/type or not stay in the same room too long. Player will get <strong>Penalty Points</strong> if they don't comply.<br>
     `;
 
     private HELP_WEAR_TASK_TEXT = `
     Task <strong>Wear Bondage/Restraints:</strong> Player must wear specified restraints or get <strong>Penalty Points</strong>.<br>
-    - <strong>Enforce</strong> modifier will force equip random restraints when the Player is not wearing it.<br>
-    - <strong>Grace Period:</strong> How long the Player have before getting <strong>Penalty Points</strong> for not wearing the restraints.<br>
+    <br>
+    For each type of restraints, only item that apply an effect to the Player will be counted:<br>
+    - <strong>Hand/Arm Restraint</strong>: Items that bind/prevent using arm/hand (ex: armbinder/linked cuffs/mittens)<br>
+    - <strong>Leg/Feet Restraint</strong>: Items that slow the Player (simple shoes that does not slow will not be counted)<br>
+    - <strong>Gag</strong>: Items that gag/prevent speech<br>
+    - <strong>Chastity</strong>: Belt/Item that makes the Player Chaste (block front AND Rear access)<br>
+    - <strong>Toy (Vibe/Plug)</strong>: Items that can vibe or fill hole<br>
+    - <strong>Blindfold/Hood</strong>: Items that blind (at least partially) the player. (Hood that does not blind will not be counted)<br>
+    - <strong>Shock Device</strong>: Any items that can shock the player.<br>
+    <br>
+    All types of restraints can be started in parallel, meaning the Player can have multiple Wear Bondage tasks active at the same time for different restraints.<br>
+    <br>
+    <strong>Enforce</strong> modifier will force equip random restraints at the start and when the Player is not wearing it (at the same time a penalty is applied).<br>
     `;
 
     private HELP_WEAR_OUTFIT_TEXT = `
-    <strong>TODO</strong>
+    Task <strong>Wear Outfit:</strong> Player must wear specified outfit or get <strong>Penalty Points</strong>.<br>
+    <br>
+    The Outfit will be equiped on the Player when the task start.<br>
+    If the Player try to remove it, they will get <strong>Penalty Points</strong> and the Outfit will get equiped again.<br>
+    <br>
+    <strong>Randomize Extended item</strong> option will randomize the options on some items of the outfit.<br>
+    <br>
+    <strong>Some Items will be ignored (and not equiped):</strong><br>
+    - Items locked by Owner/lover/DOGS padlock<br>
+    - Collar<br>
+    - Items cursed by BCX<br>
+    `;
+
+    private HELP_NAKED_TEXT = `
+    Task <strong>Stay Naked:</strong> Player must be naked or get <strong>Penalty Points</strong>.<br>
+    <br>
+    <strong>Enforce</strong> modifier will force strip naked the Player at the start and at the same time a penalty is applied.<br>
+    `;
+
+    private HELP_NICKNAME_TEXT = `
+    Task <strong>Nickname Control:</strong> Player must use the specified nickname or get <strong>Penalty Points</strong>.<br>
+    <br>
+    <strong>Enforce</strong> modifier will force change the Player's nickname at the start and whenever the Nickname is not correct (at the same time a penalty is applied).<br>
+    `;
+
+    private HELP_POSE_TEXT = `
+    Task <strong>Pose Control:</strong> Player must maintain the specified pose or get <strong>Penalty Points</strong>.<br>
+    <br>
+    Selecting <strong>"Random"</strong> Pose will select a random Pose at the start of the task and that pose will be effective until the task is finished.
+    <br>
+    Using <strong>Random Pose Change</strong> will randomly change the pose during the task. The number represent approximately how many times the random change occur per hour.<br>
+    <br>
+    <strong>Enforce</strong> modifier will force the Player pose at the start and whenever they are not in the correct pose (at the same time a penalty is applied).<br>
+    <br>
+    <strong>Note:</strong> Pose that are made unavailable by outfit or retraints worn will be ignored.<br>
+    `;
+
+    private HELP_ROOM_TEXT = `
+    Task <strong>Room Control:</strong> Player must be in the specified room or get <strong>Penalty Points</strong>.<br>
+    <br>
+    One or more Requirements can be set for the Room Control task:<br>
+    - <strong>Room Name Requirement</strong>: Player must be in a room with the specified word in the Room Name (or Description if enabled).<br>
+    - <strong>Room Type Requirement</strong>: Player must be in a room of the specified type (Free/Public/Private).<br>
+    - <strong>Room Max Time Requirement</strong>: Player must not stay in the same room for more than the specified time (in minutes).<br>
+    <br>
+    <strong>Enforce</strong> modifier will automatically leave and join another room at the start and whenever the Player are not in a room meeting the requirements (at the same time a penalty is applied).<br>
+    <br>
+    <strong>Note:</strong> Max Time Requirement will be ignored if there is not any other room meetings all requirements.<br>
+    <strong>Note:</strong> Grace Period should be at least 120sec.<br>
     `;
 
 
@@ -294,6 +361,18 @@ export class GuiCreateTaskView extends GuiViewBase {
 
         TASK_TYPE_WEAR_OUTFIT_TITLE: "Wear Outfit Options",
         HELP_WEAR_OUTFIT_TITLE: "Wear Outfit Task Information",
+
+        //TASK_TYPE_NAKED_TITLE: "Naked Task Options",
+        //HELP_NAKED_TITLE: "Naked Task Information",
+
+        TASK_TYPE_NICKNAME_TITLE: "Nickname Control Task Options",
+        HELP_NICKNAME_TITLE: "Nickname Control Task Information",
+
+        TASK_TYPE_POSE_TITLE: "Pose Task Options",
+        HELP_POSE_TITLE: "Pose Task Information",
+
+        TASK_TYPE_ROOM_TITLE: "Room Task Options",
+        HELP_ROOM_TITLE: "Room Task Information",
 
         // Error dialog
         ERROR_DIALOG_TITLE: "Task Creation Failed",
@@ -695,6 +774,11 @@ export class GuiCreateTaskView extends GuiViewBase {
             }
             if (currentType === "nickname") {
                 this.specificTaskTypeFields.style.display = "flex";
+                this.addGroupTitleAndHelp(this.specificTaskTypeFields,
+                    this.STRINGS.TASK_TYPE_NICKNAME_TITLE,
+                    this.STRINGS.HELP_NICKNAME_TITLE,
+                    this.HELP_NICKNAME_TEXT
+                );
                 const nickname = GuiHelper.createFormField(this.FIELD_NICKNAME);
                 this.specificTaskTypeFields.appendChild(nickname);
             }
@@ -744,11 +828,11 @@ export class GuiCreateTaskView extends GuiViewBase {
     }
 
     private addPoseTypeElem(container: HTMLElement) {
-        /*this.addGroupTitleAndHelp(container,
-            this.STRINGS.TASK_TYPE_WEAR_OUTFIT_TITLE,
-            this.STRINGS.HELP_WEAR_OUTFIT_TITLE,
-            this.HELP_WEAR_OUTFIT_TEXT
-        );*/
+        this.addGroupTitleAndHelp(container,
+            this.STRINGS.TASK_TYPE_POSE_TITLE,
+            this.STRINGS.HELP_POSE_TITLE,
+            this.HELP_POSE_TEXT
+        );
 
         // Final assembly
         const poseUpper = GuiHelper.createFormField(this.FIELD_POSE_UPPER);
@@ -760,11 +844,11 @@ export class GuiCreateTaskView extends GuiViewBase {
     }
 
     private addRoomControlTypeElem(container: HTMLElement) {
-        /*this.addGroupTitleAndHelp(container,
-            this.STRINGS.TASK_TYPE_WEAR_OUTFIT_TITLE,
-            this.STRINGS.HELP_WEAR_OUTFIT_TITLE,
-            this.HELP_WEAR_OUTFIT_TEXT
-        );*/
+        this.addGroupTitleAndHelp(container,
+            this.STRINGS.TASK_TYPE_ROOM_TITLE,
+            this.STRINGS.HELP_ROOM_TITLE,
+            this.HELP_ROOM_TEXT
+        );
 
         // Final assembly
         const roomName = GuiHelper.createFormField(this.FIELD_ROOM_NAME);

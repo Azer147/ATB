@@ -10,7 +10,12 @@ export class GuiRemoteAccessSettingsView extends GuiViewBase {
 
 
     private HELP_BASE_REMOTE_TEXT = `
-        TODO
+        Control how much other people can do using Remote Access.<br>
+        <br>
+        Higher Roles also have Access to lower roles access.<br>
+        Role priority: Public < Friends < Whitelist < Lovers < Mistress < Owner < Player<br>
+        <br>
+        Note: The BC Owner of the Player is always included in the role Owner.<br>
     `;
 
     private INFO_DANGEROUS_TEXT = `
@@ -286,7 +291,7 @@ export class GuiRemoteAccessSettingsView extends GuiViewBase {
         const FIELD_EDIT_TASK: GuiFormField = {
             html_id: prefixId + "-edit-task",
             label: "Edit/Skip Task Permission",
-            description: "Who can edit and skip an active task.",
+            description: "Who can edit, overwrite and skip an active task.",
             type: "select",
             disable: !isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.editTaskPermission),
             default_value: this.settings.editTaskPermission.toString(),
@@ -440,7 +445,7 @@ export class GuiRemoteAccessSettingsView extends GuiViewBase {
         };
         const FIELD_HARSH: GuiFormField = {
             html_id: prefixId + "-use-harsh",
-            label: "Use Harsh settings/value",
+            label: "Use Harsh settings/value (NOT IMPLEMENTED)",
             description: "Who can use harsh value for some settings. (Without this permission some high value considered too harsh can be restricted)",
             type: "select",
             disable: !isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.harshSettingsPermission),
@@ -453,7 +458,7 @@ export class GuiRemoteAccessSettingsView extends GuiViewBase {
         };
         const FIELD_LOCK: GuiFormField = {
             html_id: prefixId + "-lock-setting",
-            label: "Lock Settings for Player",
+            label: "Lock Settings for Player (NOT IMPLEMENTED)",
             description: "Who can Lock the settings for the Player. Lock all settings excluding Remote Access Settings",
             type: "select",
             disable: !isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.lockSettingsPermission),
@@ -466,7 +471,7 @@ export class GuiRemoteAccessSettingsView extends GuiViewBase {
         };
         const FIELD_FULL_LOCK: GuiFormField = {
             html_id: prefixId + "-full-lock-settings",
-            label: "Full Lock Settings for Player (WARNING)",
+            label: "Full Lock Settings for Player (WARNING) (NOT IMPLEMENTED)",
             description: "Permission to Lock all settings INCLUDING Remote Access Settings. Be warned that only people with that Role can unlock a Full Lock and YOU CAN BE STUCK.",
             type: "select",
             disable: !isPlayerHaveRemoteAccess(this.character, this.character.ATB.RemoteAccessSettings?.fullLockSettingsPermission),

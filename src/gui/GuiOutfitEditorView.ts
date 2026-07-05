@@ -14,14 +14,18 @@ export class GuiOutfitEditorView extends GuiViewBase {
 
     private colorTargetSelect: HTMLElement | null = null;
 
-    private HELP_BASE_TASK_TEXT = `
-    TODO
+    private INFO_TEXT = `
+    This page is a tool to help you edit your outfit colors, you can import an outfit from your inventory or from a code, and then change the colors of the outfit and export it back to a code or apply it to yourself.<br>
+    <br>
+    <strong>Disclaimer:</strong> This Page has been made originally for testing and is not a planned feature.
+    <br>
+    <strong>Know issue:</strong> If your character is blind, the character model will not appear.
     `;
 
     private STRINGS = {
-        PAGE_TITLE: "TODO",
+        PAGE_TITLE: "Outfit Color Editor",
 
-        HELP_BASE_TASK_TITLE: "TODO",
+        INFO_TITLE: "Outfit Color Editor Informations",
 
         BTN_SHOW: "Show"
     };
@@ -209,8 +213,8 @@ export class GuiOutfitEditorView extends GuiViewBase {
         form.style.flexDirection = "column";
         form.style.gap = "0.5em";
 
-        //const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.HELP_BASE_TASK_TITLE, this.HELP_BASE_TASK_TEXT);
-        //form.appendChild(helpSection);
+        const infoSection = GuiHelper.createInfoSection("info", this.STRINGS.INFO_TITLE, this.INFO_TEXT);
+        form.appendChild(infoSection);
         GuiHelper.createContentTitle(form, "Outfit import", true);
 
         // Populate Outfit Select

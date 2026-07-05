@@ -16,5 +16,5 @@ export const DefaultRandomTaskSettings: RandomTaskSettings = {
     averageNewTaskPerHour: 2,
     minRandomFinishNeeded: 40, // 40% of base duration/count
     maxRandomFinishNeeded: 250, // 250% of base duration/count
-    weightUsePunishAsTask: 1,
+    weightUsePunishAsTask: 0,
 }

@@ -19,10 +19,22 @@ export default class GeneralSettingsPage extends SettingBase {
                 onChange: (new_val) => { this.globalEnable = new_val; }
             },
             {
-                title: 'Add ATB button in chat room',
+                title: 'Add button to open ATB Window in chat room',
                 type: 'checkbox',
                 value: this.settings.addChatRoomBtn,
                 onChange: (new_val) => { this.settings.addChatRoomBtn = new_val; }
+            },
+            {
+                title: 'Use command /atb to open ATB Window',
+                type: 'label',
+                value: null,
+                onChange: (new_val) => { }
+            },
+            {
+                title: 'Use command /atb-reset to reset ATB Addon to default settings.',
+                type: 'label',
+                value: null,
+                onChange: (new_val) => { }
             },
         ];
     }
