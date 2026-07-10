@@ -1,10 +1,12 @@
 
 export interface GeneralSettings {
     addChatRoomBtn: boolean;
+    textScale: number;
 }
 
 export const DefaultGeneralSettings: GeneralSettings = {
     addChatRoomBtn: true,
+    textScale: 1,
 }
 
 // Internal fields that should not be externally modified

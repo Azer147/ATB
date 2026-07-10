@@ -26,7 +26,7 @@ export const uiStyles = `
         top: 50%; left: 50%; transform: translate(-50%, -50%);
         font-family: sans-serif; overflow: hidden;
         scrollbar-color: #444444 rgb(0, 0, 0, 0);
-        font-size: clamp(6px, 1.6vmin, 1.2em);
+        font-size: clamp(6px, 1.6vmin, 1.3em);
     }
 
     .atb-title-bar {

@@ -13,6 +13,7 @@ import { isPlayerHaveRemoteAccess } from "@/models/RemoteAccessSettings";
 import { TaskData } from "@/models/TaskManagerSettings";
 import { GuiAboutView } from "./GuiAboutView";
 import { GuiGeneralSettingsView } from "./GuiGeneralSettingsView";
+import StorageManager from "@/utility/StorageManager";
 
 type TabName = "Dashboard" | "Create Task" | "Punishements" | "General Settings" | "Tasks Settings" | "Punishements Settings"
              | "Outfit Settings" | "Outfit Editor" | "Remote Access Settings" | "About" | "Debug";
@@ -73,6 +74,7 @@ export class GuiMainView {
         this.container = document.createElement("div");
         this.container.id = "atb-overlay-container";
         this.container.className = "atb-overlay-container";
+        this.updateGuiTextSize();
 
         const blockEvent = (e: Event) => e.stopPropagation();
         this.container.addEventListener("mousedown", blockEvent);
@@ -97,6 +99,14 @@ export class GuiMainView {
             this.container.remove();
             this.container = null;
             clearInterval(this.updateInterval);
+        }
+    }
+
+    public static updateGuiTextSize() {
+        // Calc fontSize that will shape the overall scale of the GUI
+        if (this.container) {
+            const textSize = 1.6 * StorageManager.getGeneralSettings().textScale;
+            this.container.style.fontSize = `clamp(6px, ${textSize}vmin, 1.3em)`;
         }
     }
 

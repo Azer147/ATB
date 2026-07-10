@@ -1,7 +1,7 @@
 import { GuiHelper, GuiFormField } from "./GuiHelper";
 import { RandomEventsSettings } from "@/models/RandomEventsSettings";
 import GuiViewBase from "./GuiViewBase";
-import { getCharacterDeviousShocksSettings, getCharacterPenaltySettings, getCharacterRandomEventsSettings, getCharacterRandomTaskSettings, getCharacterTasksSettings, saveSettings } from "@/utility/CharacterWrapper";
+import { getCharacterDeviousShocksSettings, getCharacterGeneralSettings, getCharacterPenaltySettings, getCharacterRandomEventsSettings, getCharacterRandomTaskSettings, getCharacterTasksSettings, saveSettings } from "@/utility/CharacterWrapper";
 import { DeviousShocksSettings } from "@/models/DeviousShocksSettings";
 import StorageManager from "@/utility/StorageManager";
 import ModuleManager from "@/utility/ModuleManager";
@@ -10,9 +10,11 @@ import { isPlayerHaveRemoteAccess } from "@/models/RemoteAccessSettings";
 import { PenaltySettings } from "@/models/PenaltySettings";
 import { GuiMainView } from "./GuiMainView";
 import { RandomTaskSettings } from "@/models/RandomTaskSettings";
+import { GeneralSettings } from "@/models/GeneralSettings";
 
 export class GuiGeneralSettingsView extends GuiViewBase {
     private shouldSaveSetting: boolean = false;
+    private generalSettings!: GeneralSettings;
     private penaltySettings!: PenaltySettings;
     private randTaskSettings!: RandomTaskSettings;
     private randEventsettings!: RandomEventsSettings;
@@ -93,15 +95,17 @@ export class GuiGeneralSettingsView extends GuiViewBase {
         super(parent, C);
 
         // Check first if we have anything we need
+        const generalSettings = getCharacterGeneralSettings(this.character);
         const penaltySettings = getCharacterPenaltySettings(this.character);
         const randTaskSettings = getCharacterRandomTaskSettings(this.character);
         const randEventsettings = getCharacterRandomEventsSettings(this.character)
         const shocksSettings = getCharacterDeviousShocksSettings(this.character)
-        if (!penaltySettings || !randTaskSettings || !randEventsettings || !shocksSettings) {
+        if (!generalSettings || !penaltySettings || !randTaskSettings || !randEventsettings || !shocksSettings) {
             // Build error page
             GuiHelper.buildErrorPage(parent);
             return;
         }
+        this.generalSettings = generalSettings;
         this.penaltySettings = penaltySettings;
         this.randTaskSettings = randTaskSettings;
         this.randEventsettings = randEventsettings;
@@ -140,13 +144,56 @@ export class GuiGeneralSettingsView extends GuiViewBase {
         GuiHelper.createContentTitle(form, this.STRINGS.SECTION_ADVANCED, false);
         //form.appendChild(exportCard); // TODO
 
-        // Only show Emergency for Player
+        // Only show Gui/Emergency for Player
         if (this.character.IsPlayer()) {
+            const guiCard = this.buildGuiCard();
             const emergencyCard = this.buildEmergencyCard();
+            form.appendChild(guiCard);
             form.appendChild(emergencyCard);
         }
 
         this.parent.appendChild(form);
+    }
+
+    private buildGuiCard() {
+        const FIELD_TITLE: GuiFormField = {
+            html_id: "atb-emergency-title",
+            label: "GUI Options",
+            type: "display-text",
+            default_value: false
+        };
+        const FIELD_TEXT_SIZE: GuiFormField = {
+            html_id: "atb-text-size",
+            label: "UI Text Scale",
+            type: "select",
+            default_value: this.generalSettings.textScale.toString(),
+            options: [
+                { value: "0.7", label: "70% (Very Small)" },
+                { value: "0.85", label: "85% (Small)" },
+                { value: "1", label: "100% (Regular)" },
+                { value: "1.15", label: "115% (Big)" },
+                { value: "1.3", label: "130% (Very Big)" },
+            ],
+            onChange: (value: string) => {
+                let val = parseFloat(value);
+                if (val > 1.5) val = 1.5;
+                if (val < 0.5) val = 0.5;
+                this.generalSettings.textScale = val;
+                this.shouldSaveSetting = true;
+                GuiMainView.updateGuiTextSize();
+            }
+        };
+
+        const featureTuple = GuiHelper.createFeatureToggleCard(FIELD_TITLE, true);
+        const mainCard = featureTuple.card;
+        const mainContent = featureTuple.contentArea;
+
+       const textSize = GuiHelper.createFormField(FIELD_TEXT_SIZE);
+
+        const row = GuiHelper.createTwoElemRow(textSize, undefined);
+        mainContent.appendChild(row);
+
+        return mainCard;
     }
 
     private buildPenaltyCard(): HTMLElement {
