@@ -80,8 +80,8 @@ export class TaskManagerModule extends ModuleBase {
                 this.dispatchOrgasmResistedEvent();
             }
         }));
-        // Generic Activity Event
-        this.hook.push(BC_SDK.hookFunction('ActivityRun', 0, (args, next) => {
+        // Generic Activity Event (Started by the Player)
+        /*this.hook.push(BC_SDK.hookFunction('ActivityRun', 0, (args, next) => {
             next(args);
             //let initiator: Character = args[0];
             let target: Character = args[1];
@@ -90,6 +90,38 @@ export class TaskManagerModule extends ModuleBase {
 
             if (target.IsPlayer() && ItemActivity.Activity.Name === "Spank") {
                 this.dispatchSpankedEvent();
+            }
+        }));*/
+        // Get Activity Started by another Player
+        this.hook.push(BC_SDK.hookFunction('ChatRoomMessage', 0, (args, next) => {
+            next(args);
+
+            const data = args[0];
+
+            if (data.Type == "Activity" && data.Dictionary) {
+                let sender: number | undefined = undefined;
+                let target: number | undefined = undefined;
+                let activityName: string | undefined = undefined;
+
+                // Find Relevant info from the Dictonnary
+                data.Dictionary.forEach(elem => {
+                    if (IsSourceCharacterDictionaryEntry(elem)) {
+                        sender = elem.SourceCharacter;
+                    }
+                    if (IsTargetCharacterDictionaryEntry(elem)) {
+                        target = elem.TargetCharacter;
+                    }
+                    if (IsActivityNameDictionaryEntry(elem)) {
+                        activityName = elem.ActivityName;
+                    }
+                });
+
+                // Only process if we have everything we need
+                if (sender != undefined && target != undefined && activityName != undefined) {
+                    if (target === Player.MemberNumber && activityName === "Spank") {
+                        this.dispatchSpankedEvent();
+                    }
+                }
             }
         }));
 
