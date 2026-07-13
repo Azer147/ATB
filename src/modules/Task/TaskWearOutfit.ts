@@ -1,6 +1,6 @@
 import { TaskData } from "@/models/TaskManagerSettings";
 import { TaskBase } from "./TaskBase";
-import { ChatColor, getBCXActiveCurseSlots, getNameOrNickname, isBodyPart, isClothe, isItem, isLscgCursedItemActive, sendActionMessage, sendLocalMessage, shouldTriggerFromAveragePerHour } from "@/utility/utility";
+import { ChatColor, getBCXActiveCurseSlots, getNameOrNickname, isBodyPart, isClothe, isItem, isLscgCursedItemActive, sendActionMessage, sendLocalMessage, shouldTriggerFromAveragePerHour, stripNakedCharacterAdv } from "@/utility/utility";
 import { randomizeExtendedItem } from "@/utility/ItemUtility";
 import { allOutfitList, extractOutfitDataFromId, getRawOutfitFromId, OutfitId, OutfitTag } from "@/models/OutfitSettings";
 import { smartReplaceItemColor } from "@/utility/ColorUtility";
@@ -40,7 +40,7 @@ export class TaskWearOutfit extends TaskBase {
         // Equip the outfit (and strip) for the first time
         if (!this.firstEquipDone) {
             this.firstEquipDone = true;
-            CharacterNaked(Player, false);
+            stripNakedCharacterAdv(Player, false);
             this.applyOutfit();
             return;
         }
@@ -156,7 +156,7 @@ export class TaskWearOutfit extends TaskBase {
         // Note: Task cannot start with cursed-item active,
         //      so this is only necessary when cursed-item have been applied during the task.
         if (isLscgCursedItemActive(Player)) {
-            CharacterNaked(Player, false);
+            stripNakedCharacterAdv(Player, false);
             CharacterReleaseTotal(Player, false);
         }
 

@@ -2,7 +2,7 @@ import { GuiHelper, GuiFormField } from "./GuiHelper";
 import GuiViewBase from "./GuiViewBase";
 import { allOutfitList, extractOutfitDataFromCode, extractOutfitDataFromId, OutfitId } from "@/models/OutfitSettings";
 import { createColorRect, extractCharacterOutfitColor, hslToHex, smartReplaceItemColor } from "@/utility/ColorUtility";
-import { isBodyPart } from "@/utility/utility";
+import { isBodyPart, stripNakedCharacterAdv } from "@/utility/utility";
 import { GuiCharacterViewer } from "./GuiCharacterViewer";
 
 export class GuiOutfitEditorView extends GuiViewBase {
@@ -93,7 +93,7 @@ export class GuiOutfitEditorView extends GuiViewBase {
         const appearanceStr = CharacterAppearanceStringify(this.character);
         CharacterAppearanceRestore(this.previewChar, appearanceStr);
 
-        //CharacterNaked(this.previewChar, false);
+        //stripNakedCharacterAdv(this.previewChar, false);
         //CharacterReleaseTotal(this.previewChar, false);
         CharacterResetFacialExpression(this.previewChar);
         CharacterRefresh(this.previewChar, false, false);
@@ -121,7 +121,7 @@ export class GuiOutfitEditorView extends GuiViewBase {
     private showOutfit(outfitItem: ServerItemBundle[]) {
         if (this.previewChar) {
             CharacterReleaseTotal(this.previewChar, false);
-            CharacterNaked(this.previewChar, false);
+            stripNakedCharacterAdv(this.previewChar, false);
             CharacterResetFacialExpression(this.previewChar);
 
             for (let i = 0; i < outfitItem.length; i++) {
@@ -302,7 +302,7 @@ export class GuiOutfitEditorView extends GuiViewBase {
         nakedBtn.innerText = "Naked";
         nakedBtn.onclick = () => {
             if (this.previewChar) {
-                CharacterNaked(this.previewChar, false);
+                stripNakedCharacterAdv(this.previewChar, false);
                 CharacterRefresh(this.previewChar, false, false);
             }
         };

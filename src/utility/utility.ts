@@ -73,15 +73,19 @@ export function formatTimeMs(ms: number): string {
     }
 }
 
-// Copied from BC (CharacterIsNaked)
+// Based on BC (CharacterIsNaked)
 export function isBodyPart(item: Item) {
 	if (item.Asset != null && !item.Asset.Group.AllowNone) {
+		return true;
+	}
+	// For Echo's Groups, we can only deduce body part by eliminating other categories.
+	else if (item.Asset != null && !isItem(item) && !isCosplay(item) && !isClothe(item)) {
 		return true;
 	}
 	return false;
 }
 export function isItem(item: Item) {
-	if (item.Asset != null && item.Asset.Group.Category != "Appearance") {
+	if (item.Asset != null && (item.Asset.Group.Category != "Appearance"/* || item.Asset.Group.IsRestraint*/)) {
 		return true;
 	}
 	return false;
@@ -93,10 +97,63 @@ export function isCosplay(item: Item) {
 	return false;
 }
 export function isClothe(item: Item) {
-	if (!isBodyPart(item) && !isItem(item) && !isCosplay(item)) {
+	//if (!isBodyPart(item) && !isItem(item) && !isCosplay(item)) {
+	if (item.Asset != null && item.Asset.Group.Clothing) {
 		return true;
 	}
 	return false;
+}
+
+// Same as BC's CharacterIsNaked, but exclude some Echo's body group and BCX Cursed items
+export function isCharacterNakedAdv(C: Character) {
+	let bcxCursedItems: AssetGroupName[] = [];
+	if (C.IsPlayer()) {
+		bcxCursedItems = getBCXActiveCurseSlots();
+	}
+
+	for (const A of C.Appearance) {
+		if (A.Asset == null) {
+			continue;
+		}
+		// Ignore BCX Cursed item (Only for Player for now)
+		if (C.IsPlayer()) {
+			if (bcxCursedItems.includes(A.Asset.Group.Name)) {
+				continue;
+			}
+		}
+
+		// Ignore Body / Item / Cosplay
+		if (isBodyPart(A) || isItem(A) || isCosplay(A)) {
+			continue;
+		}
+
+		if (isClothe(A)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+// Same as BC's CharacterNaked/CharacterAppearanceNaked, but exclude some Echo's body group
+export function stripNakedCharacterAdv(C: Character, refresh: boolean = true) {
+	const keepCosplay = (C.IsPlayer() || C.IsOnline()) && C.OnlineSharedSettings?.BlockBodyCosplay;
+	C.Appearance = C.Appearance.filter((item) => {
+		// If it's cosplay, it stays on
+		if (keepCosplay && isCosplay(item))
+			return true;
+
+		if (isClothe(item)) {
+			return false;
+		}
+		return true;
+	});
+
+	// Loads the new character canvas
+	CharacterLoadCanvas(C);
+
+	if (refresh) {
+		CharacterRefresh(C);
+	}
 }
 
 // return a random shock device worn by the Character or null if not any.

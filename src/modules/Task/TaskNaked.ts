@@ -1,6 +1,6 @@
 import { TaskData } from "@/models/TaskManagerSettings";
 import { TaskBase } from "./TaskBase";
-import { ChatColor, sendLocalMessage } from "@/utility/utility";
+import { ChatColor, isCharacterNakedAdv, sendLocalMessage, stripNakedCharacterAdv } from "@/utility/utility";
 
 
 export class TaskNaked extends TaskBase {
@@ -39,11 +39,11 @@ export class TaskNaked extends TaskBase {
  */
 
     protected checkTaskIsRespected(): boolean {
-        return CharacterIsNaked(Player);
+        return isCharacterNakedAdv(Player);
     }
 
     protected enforceTask(): boolean {
-        CharacterNaked(Player, false);
+        stripNakedCharacterAdv(Player, false);
         TaskBase.setNeedCharacterUpdate(true);
         return true;
     }

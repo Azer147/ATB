@@ -3,7 +3,7 @@ import GuiViewBase from "./GuiViewBase";
 import { getCharacterOutfitSettings, saveSettings } from "@/utility/CharacterWrapper";
 import { allOutfitList, extractOutfitDataFromId, getOutfitSettingsFromId, getRawOutfitFromId, OutfitId, OutfitsSettings, RawOutfit } from "@/models/OutfitSettings";
 import { createColorRect, hexToHsl, hslToHex, smartReplaceItemColor } from "@/utility/ColorUtility";
-import { isBodyPart } from "@/utility/utility";
+import { isBodyPart, stripNakedCharacterAdv } from "@/utility/utility";
 import { GuiCharacterViewer } from "./GuiCharacterViewer";
 
 export class GuiOutfitSettingsView extends GuiViewBase {
@@ -88,7 +88,7 @@ export class GuiOutfitSettingsView extends GuiViewBase {
         const appearanceStr = CharacterAppearanceStringify(this.character);
         CharacterAppearanceRestore(this.previewChar, appearanceStr);
 
-        //CharacterNaked(this.previewChar, false);
+        //stripNakedCharacterAdv(this.previewChar, false);
         CharacterReleaseTotal(this.previewChar, false);
         CharacterResetFacialExpression(this.previewChar);
         CharacterRefresh(this.previewChar, false, false);
@@ -108,7 +108,7 @@ export class GuiOutfitSettingsView extends GuiViewBase {
 
         if (this.previewChar) {
             CharacterReleaseTotal(this.previewChar, false);
-            CharacterNaked(this.previewChar, false);
+            stripNakedCharacterAdv(this.previewChar, false);
             CharacterResetFacialExpression(this.previewChar);
 
             for (let i = 0; i < outfitItem.length; i++) {
