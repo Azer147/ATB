@@ -2,13 +2,15 @@
 export interface GeneralSettings {
     addChatRoomBtn: boolean;
     textScale: number;
+    excludeRandomABDL: boolean; // Exclude ABDL items with addRandomRestraints
 }
 
 export const DefaultGeneralSettings: GeneralSettings = {
     addChatRoomBtn: true,
     textScale: 1,
+    excludeRandomABDL: true,
 }
 
 // Internal fields that should not be externally modified
 // Needed mainly to prevent remote settings change (apply_settings) to change/apply these (which are likely outdated)
-export const GeneralInternalfields = ["addChatRoomBtn"];
+export const GeneralInternalfields = ["addChatRoomBtn", "textScale", "excludeRandomABDL"];

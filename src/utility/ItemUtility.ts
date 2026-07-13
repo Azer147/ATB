@@ -1,3 +1,4 @@
+import StorageManager from "./StorageManager";
 import { CloneAndRandomizeList } from "./utility";
 
 
@@ -213,6 +214,11 @@ export function addRandomRestrain(C: Character, nbToAdd: number, push: boolean, 
 // @param effects: Filter only item that have one of the Effect
 // @param fetish:  Filter only item that have one of the Fetish
 export function getItemListByGroup(C: Character, groupName: AssetGroupName, effects: EffectName[] = [], fetish: FetishName[] = []): Asset[] {
+    let excludedFetish: FetishName[] = [];
+    if (StorageManager.getGeneralSettings().excludeRandomABDL) {
+        excludedFetish.push("ABDL");
+    }
+
     let itemList: Asset[] = [];
     for (let i = 0; i < Asset.length; i++) {
         let item: Asset = Asset[i];
@@ -221,11 +227,11 @@ export function getItemListByGroup(C: Character, groupName: AssetGroupName, effe
 
             let effectMatch: boolean = false;
             if (effects.length > 0) {
-                if (item.Effect && item.Effect.length > 0 && item.Effect.some(item => effects.includes(item))) {
+                if (item.Effect && item.Effect.length > 0 && item.Effect.some(itemEffect => effects.includes(itemEffect))) {
                     effectMatch = true;
                 }
-                // TEST for Extended item
-                if (item.AllowEffect && item.AllowEffect.length > 0 && item.AllowEffect.some(item => effects.includes(item))) {
+                // Also consider Effect of Extended item options
+                if (item.AllowEffect && item.AllowEffect.length > 0 && item.AllowEffect.some(itemAllowEffect => effects.includes(itemAllowEffect))) {
                     effectMatch = true;
                 }
             } else {
@@ -234,11 +240,18 @@ export function getItemListByGroup(C: Character, groupName: AssetGroupName, effe
 
             let fetishMatch: boolean = false;
             if (fetish.length > 0) {
-                if (item.Fetish && item.Fetish.length > 0 && item.Fetish.some(item => fetish.includes(item))) {
+                if (item.Fetish && item.Fetish.length > 0 && item.Fetish.some(itemFetish => fetish.includes(itemFetish))) {
                     fetishMatch = true;
                 }
             } else {
                 fetishMatch = true;
+            }
+
+            // Ignore Excluded Fetish
+            if (excludedFetish.length > 0 && item.Fetish && item.Fetish.length > 0) {
+                if (item.Fetish.some(itemFetish => excludedFetish.includes(itemFetish))) {
+                    continue;
+                }
             }
 
             if (effectMatch && fetishMatch) {

@@ -130,6 +130,12 @@ export class GuiGeneralSettingsView extends GuiViewBase {
         form.style.flexDirection = "column";
         form.style.gap = "0.9em";
 
+        // General Settings (Player only)
+        if (this.character.IsPlayer()) {
+            const generalCard = this.buildGeneralCard();
+            form.appendChild(generalCard);
+        }
+
         const penaltyCard = this.buildPenaltyCard();
         const randomTaskCard = this.buildRandomTaskCard();
         const randomEventCard = this.buildRandomEventCard();
@@ -155,9 +161,40 @@ export class GuiGeneralSettingsView extends GuiViewBase {
         this.parent.appendChild(form);
     }
 
+    private buildGeneralCard() {
+        const FIELD_TITLE: GuiFormField = {
+            html_id: "atb-general-title",
+            label: "General Options",
+            type: "display-text",
+            default_value: false
+        };
+        const FIELD_EXCL_ABDL: GuiFormField = {
+            html_id: "atb-exclude-rand-abdl",
+            label: "Prevent Random ABDL Items (Recommanded)",
+            description: "Exclude ABDL Items for Task/Events that equip Random Items. (Recommanded to avoid getting Diapers equipped instead of Chastity Belt, which can happen too often.)",
+            type: "checkbox",
+            default_value: this.generalSettings.excludeRandomABDL,
+            onChange: (value: boolean) => {
+                this.generalSettings.excludeRandomABDL = value;
+                this.shouldSaveSetting = true;
+            }
+        };
+
+        const featureTuple = GuiHelper.createFeatureToggleCard(FIELD_TITLE, true);
+        const mainCard = featureTuple.card;
+        const mainContent = featureTuple.contentArea;
+
+        const exclAbdl = GuiHelper.createFormField(FIELD_EXCL_ABDL);
+
+        const row = GuiHelper.createTwoElemRow(exclAbdl, undefined);
+        mainContent.appendChild(row);
+
+        return mainCard;
+    }
+
     private buildGuiCard() {
         const FIELD_TITLE: GuiFormField = {
-            html_id: "atb-emergency-title",
+            html_id: "atb-gui-title",
             label: "GUI Options",
             type: "display-text",
             default_value: false

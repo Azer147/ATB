@@ -175,7 +175,7 @@ export class GuiMainView {
         title.style.margin = "0";
         title.style.fontSize = "1.2em";
         //title.innerHTML = `Azer Toy Box - <span style="color: #2196F3;">${targetName}</span>`;
-        title.innerHTML = `Azer Toy Box - ${C.Name}`;
+        title.innerHTML = `Azer Toy Box (Alpha Test Version) - ${C.Name}`;
 
         const closeBtn = document.createElement("button");
         closeBtn.className = "atb-close-btn";
