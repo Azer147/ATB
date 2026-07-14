@@ -105,7 +105,7 @@ export class GeneralModule extends ModuleBase {
         // Register commands for ATB
         CommandCombine([{
             Tag: 'atb',
-            Description: ": Toggle Azer Toy Box UI Overlay",
+            Description: ": Toggle Azer Toy Box UI Overlay. You can use optional argument [PlayerName] to use Remote Access on another Player.",
             Action: (args, msg, parsed) => {
                 if (parsed.length > 0) {
                     const C: OtherCharacter | undefined = ChatRoomCharacter.find(c => c.Name.toLowerCase() == parsed[0].toLowerCase()) as OtherCharacter;

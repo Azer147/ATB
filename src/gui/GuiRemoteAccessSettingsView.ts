@@ -8,6 +8,13 @@ export class GuiRemoteAccessSettingsView extends GuiViewBase {
     private shouldSaveSetting: boolean = false;
     private settings!: RemoteAccessSettings;
 
+    private HELP_USE_REMOTE_TEXT = `
+        You can use Remote Access on other people by using the <strong>ATB button on their profile page in the top left corner.</strong> (same page as BCX, LSCG... remote access)<br>
+        <br>
+        You can also use the command "/atb [PlayerName]"<br>
+        <br>
+        (Only available if the other person also have ATB)<br>
+    `;
 
     private HELP_BASE_REMOTE_TEXT = `
         Control how much other people can do using Remote Access.<br>
@@ -34,6 +41,7 @@ export class GuiRemoteAccessSettingsView extends GuiViewBase {
     private STRINGS = {
         PAGE_TITLE: "Remote Access Settings",
 
+        HELP_USE_REMOTE_TITLE: "How To Use Remote Access on others",
         HELP_BASE_REMOTE_TITLE: "Remote Access Overview/Information",
         INFO_DANGEROUS_TITLE: "Dangerous Permissions Information - PLEASE READ WARNING",
 
@@ -165,6 +173,8 @@ export class GuiRemoteAccessSettingsView extends GuiViewBase {
         form.style.flexDirection = "column";
         form.style.gap = "0.9em";
 
+        const usageHelpSection = GuiHelper.createInfoSection("warning", this.STRINGS.HELP_USE_REMOTE_TITLE, this.HELP_USE_REMOTE_TEXT);
+        form.appendChild(usageHelpSection);
         const helpSection = GuiHelper.createInfoSection("info", this.STRINGS.HELP_BASE_REMOTE_TITLE, this.HELP_BASE_REMOTE_TEXT);
         form.appendChild(helpSection);
 
