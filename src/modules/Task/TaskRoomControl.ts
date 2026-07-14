@@ -83,7 +83,7 @@ export class TaskRoomControl extends TaskBase {
     }
 
     protected handleTransgression() {
-        sendLocalMessage(`Room Requirements not respected: ${this.lastTransgressionStr}, you received ${this.data.penaltyPtsOnFailure} penalty points for transgression.`, ChatColor.Red);
+        sendLocalMessage(`Room Requirements not respected: ${this.lastTransgressionStr}, you received ${this.data.penaltyPtsOnFailure} Penalty points for transgression.`, ChatColor.Red);
     }
 
     protected handleTransgressionWarning() {
@@ -94,7 +94,7 @@ export class TaskRoomControl extends TaskBase {
             this.findRandAllowedChatRoom(this.getRoomNameReq() ?? "", this.getRoomTypeReq()).then((selectedRoomName) => {
                 if (selectedRoomName && selectedRoomName.length > 0) {
                     // Allowed Room found: Go through with the warning as normal
-                    sendLocalMessage(`Room Requirements not respected: ${this.lastTransgressionStr}, you have ${timeToComply} to comply or get a penalty!`, ChatColor.Red);
+                    sendLocalMessage(`Room Requirements not respected: ${this.lastTransgressionStr}, you have ${timeToComply} to comply or you will get " + this.data.penaltyPtsOnFailure + " Penalty points!`, ChatColor.Red);
                     return;
                 } else {
                     // There is no other allowed Room, so this is pointless to force the player to change room to end up in the same room again.
@@ -108,7 +108,7 @@ export class TaskRoomControl extends TaskBase {
             return; // findRandAllowedChatRoom is Async, so don't do the transgression warning just yet.
         }
 
-        sendLocalMessage(`Room Requirements not respected: ${this.lastTransgressionStr}, you have ${timeToComply} to comply or get a penalty!`, ChatColor.Red);
+        sendLocalMessage(`Room Requirements not respected: ${this.lastTransgressionStr}, you have ${timeToComply} to comply or you will get " + this.data.penaltyPtsOnFailure + " Penalty points!`, ChatColor.Red);
     }
 
     protected override handleFirstTick(): void {

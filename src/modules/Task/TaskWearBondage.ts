@@ -32,11 +32,11 @@ export class TaskWearBondage extends TaskBase {
     }
     protected handleTransgression() {
         const deviceName = TaskWearBondage.getNamePerBondageType(this.data.itemToWear);
-        sendLocalMessage("You need to wear a " + deviceName + ", you received  " + this.data.penaltyPtsOnFailure + " for transgression.", ChatColor.Red);
+        sendLocalMessage("You need to wear a " + deviceName + ", you received " + this.data.penaltyPtsOnFailure + " Penalty points for transgression.", ChatColor.Red);
     }
     protected handleTransgressionWarning() {
         const deviceName = TaskWearBondage.getNamePerBondageType(this.data.itemToWear);
-        sendLocalMessage("You need to wear a " + deviceName + " or be punished!", ChatColor.Red);
+        sendLocalMessage("You need to wear a " + deviceName + " or you will get " + this.data.penaltyPtsOnFailure + " Penalty points!", ChatColor.Red);
     }
 
     protected isCharUnableToDoTask(): boolean {

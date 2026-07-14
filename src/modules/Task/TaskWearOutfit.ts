@@ -57,7 +57,7 @@ export class TaskWearOutfit extends TaskBase {
         return this.data.description;
     }
     protected handleTransgression() {
-        sendLocalMessage("You need to wear outfit \""+ this.getOutfitName() + "\", you received  " + this.data.penaltyPtsOnFailure + " for transgression.", ChatColor.Red);
+        sendLocalMessage("You need to wear outfit \""+ this.getOutfitName() + "\", you received " + this.data.penaltyPtsOnFailure + " Penalty points for transgression.", ChatColor.Red);
         // Equip outfit
         this.applyOutfit();
     }
@@ -66,7 +66,7 @@ export class TaskWearOutfit extends TaskBase {
             this.applyOutfit();
         }};
 
-        sendLocalMessage("You need to wear outfit \""+ this.getOutfitName() + "\" or be punished!", ChatColor.Red, [buttonApplyOutfit]);
+        sendLocalMessage("You need to wear outfit \""+ this.getOutfitName() + "\" or you will get " + this.data.penaltyPtsOnFailure + " Penalty points!", ChatColor.Red, [buttonApplyOutfit]);
     }
 
     protected isCharUnableToDoTask(): boolean {

@@ -30,7 +30,7 @@ export class TaskNicknameControl extends TaskBase {
     }
     protected handleTransgression() {
         let nickname = "\"" + this.data.nickname + "\"";
-        sendLocalMessage("Your Nickname need to be set to " + nickname + ", you received  " + this.data.penaltyPtsOnFailure + " for transgression.", ChatColor.Red);
+        sendLocalMessage("Your Nickname need to be set to " + nickname + ", you received " + this.data.penaltyPtsOnFailure + " Penalty points for transgression.", ChatColor.Red);
 
         // TODO: Maybe move this pre-handleTransgression
         if (TaskNicknameControl.checkTaskPrevented(Player)) {
@@ -41,7 +41,7 @@ export class TaskNicknameControl extends TaskBase {
     }
     protected handleTransgressionWarning() {
         let nickname = "\"" + this.data.nickname + "\"";
-        sendLocalMessage("Your Nickname need to be set to " + nickname + " or be punished!", ChatColor.Red);
+        sendLocalMessage("Your Nickname need to be set to " + nickname + " or you will get " + this.data.penaltyPtsOnFailure + " Penalty points!", ChatColor.Red);
     }
 
     protected isCharUnableToDoTask(): boolean {

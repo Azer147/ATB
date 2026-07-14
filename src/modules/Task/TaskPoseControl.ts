@@ -50,11 +50,11 @@ export class TaskPoseControl extends TaskBase {
             return;
         }
         let pose = this.getStringTargetPose();
-        sendLocalMessage("Your Pose need to be set to " + pose + ", you received  " + this.data.penaltyPtsOnFailure + " for transgression.", ChatColor.Red);
+        sendLocalMessage("Your Pose need to be set to " + pose + ", you received " + this.data.penaltyPtsOnFailure + " Penalty points for transgression.", ChatColor.Red);
     }
     protected handleTransgressionWarning() {
         let pose = this.getStringTargetPose();
-        sendLocalMessage("Your Pose need to be set to " + pose + " or be punished!", ChatColor.Red);
+        sendLocalMessage("Your Pose need to be set to " + pose + " or you will get " + this.data.penaltyPtsOnFailure + " Penalty points!", ChatColor.Red);
     }
 
     protected isCharUnableToDoTask(): boolean {
