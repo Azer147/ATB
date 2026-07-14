@@ -1,10 +1,11 @@
 import { TaskData } from "@/models/TaskManagerSettings";
 import { TaskBase } from "./TaskBase";
-import { ChatColor, getBCXActiveCurseSlots, getNameOrNickname, isBodyPart, isClothe, isItem, isLscgCursedItemActive, sendActionMessage, sendLocalMessage, shouldTriggerFromAveragePerHour, stripNakedCharacterAdv } from "@/utility/utility";
+import { ChatButton, ChatColor, getBCXActiveCurseSlots, getNameOrNickname, isBodyPart, isClothe, isItem, isLscgCursedItemActive, sendActionMessage, sendLocalMessage, shouldTriggerFromAveragePerHour, stripNakedCharacterAdv } from "@/utility/utility";
 import { randomizeExtendedItem } from "@/utility/ItemUtility";
 import { allOutfitList, extractOutfitDataFromId, getRawOutfitFromId, OutfitId, OutfitTag } from "@/models/OutfitSettings";
 import { smartReplaceItemColor } from "@/utility/ColorUtility";
 import StorageManager from "@/utility/StorageManager";
+import { GuiMainView } from "@/gui/GuiMainView";
 
 
 export class TaskWearOutfit extends TaskBase {
@@ -56,12 +57,16 @@ export class TaskWearOutfit extends TaskBase {
         return this.data.description;
     }
     protected handleTransgression() {
-        sendLocalMessage("You need to wear " + this.getOutfitName() + ", you received  " + this.data.penaltyPtsOnFailure + " for transgression.", ChatColor.Red);
+        sendLocalMessage("You need to wear outfit \""+ this.getOutfitName() + "\", you received  " + this.data.penaltyPtsOnFailure + " for transgression.", ChatColor.Red);
         // Equip outfit
         this.applyOutfit();
     }
     protected handleTransgressionWarning() {
-        sendLocalMessage("You need to wear "+ this.getOutfitName() + " or be punished!", ChatColor.Red);
+        const buttonApplyOutfit: ChatButton = {htmlId: "atb-chatbtn-equip-outfit", label: "Equip Outfit", onClick: () => {
+            this.applyOutfit();
+        }};
+
+        sendLocalMessage("You need to wear outfit \""+ this.getOutfitName() + "\" or be punished!", ChatColor.Red, [buttonApplyOutfit]);
     }
 
     protected isCharUnableToDoTask(): boolean {

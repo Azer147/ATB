@@ -26,8 +26,14 @@ export function sendActionMessage(message: string): void {
 	});
 }
 
+export interface ChatButton {
+	htmlId: string;
+	label: string;
+	onClick: () => void;
+	sticky?: boolean; // Don't hide the button after its clicked, allowing to be used several times
+}
 
-export function sendLocalMessage(message: string, color: ChatColor | undefined = undefined): void {
+export function sendLocalMessage(message: string, color: ChatColor | undefined = undefined, buttons: ChatButton[] = []): void {
 	// DEBUG: Also send public action (to remove later)
 	//sendActionMessage(getNameOrNickname(Player) + " => " + message);
 
@@ -35,7 +41,41 @@ export function sendLocalMessage(message: string, color: ChatColor | undefined =
 	if (color != undefined) {
 		formattedMessage = `<span style="color: ${color};">${message}</span>`;
 	}
-	ChatRoomSendLocal(formattedMessage);
+
+	const btnDiv = document.createElement("div");
+	btnDiv.style.display = "flex";
+	btnDiv.style.gap = "0.5em";
+	buttons.forEach(button => {
+		const btn = document.createElement("button");
+		btn.className = button.htmlId;
+		btn.innerText = button.label;
+		btn.style.fontSize = "0.9em";
+		btn.style.padding = "0.2em";
+		btn.style.borderRadius = "0.3em";
+
+		btnDiv.appendChild(btn);
+	});
+
+	ChatRoomSendLocal(formattedMessage + btnDiv.outerHTML);
+
+	// Handle button click
+	buttons.forEach(button => {
+		const btnList = document.querySelectorAll(`.${button.htmlId}`);
+		if (btnList && btnList.length > 0) {
+			// Only handle the last one, in case there are older button with the same id
+			const btn = btnList[btnList.length - 1];
+			if (btn) {
+				btn.addEventListener("click", () => {
+					// Remove the button once clicked
+					if (button.sticky !== true) {
+						btn.remove();
+					}
+
+					button.onClick();
+				});
+			}
+		}
+	});
 }
 
 export function CloneAndRandomizeList<T>(originalList: T[]): T[] {
