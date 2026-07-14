@@ -180,6 +180,10 @@ export function addRandomRestrain(C: Character, nbToAdd: number, push: boolean, 
             if (!ignoreRequirement && InventoryGroupIsBlocked(C, selectedSlot as AssetGroupItemName)) {
                 continue;
             }
+            // This check/ignore if a worn items is blocking this option, to prevent a state where you can't remove items (blocked)
+            if (checkImpossibleOption(C, selectedSlot, selectedItem.Block)) {
+                continue;
+            }
 
             // Equip an item from itemList
             addedItem = CharacterAppearanceSetItem(C, selectedSlot, selectedItem, undefined, undefined);
@@ -379,6 +383,22 @@ export function checkPartialItemPrerequisites(C: Character, Prerequisite: AssetP
     }
 }
 
+// This check/ignore if a worn items is blocking this option, to prevent a state where you can't remove items (blocked)
+// Details: So, InventoryGroupIsBlocked will check if any items blocks the selectedSlot.
+//      The issue with InventoryGroupIsBlocked is, we still want to be able to equip an item on a blocked slot/group when ignoreRequirement=true.
+//      Example: If Player Wear a Closed Chastity Belt, we still want to be able to add vibrator/plug/peircing, which would be blocked by InventoryGroupIsBlocked.
+//      And now that's why this check is needed, to prevent an impossible to remove state.
+//      The trick is we only check if 2 items are blocking each other, this is enough to prevent an impossible state while allowing everything else.
+//      Thanks for reading.
+export function checkImpossibleOption(C: Character, itemGroup: AssetGroupItemName, block: readonly AssetGroupItemName[] | undefined) {
+    return C.Appearance.some((wornItem) => {
+            if (wornItem.Asset.Block?.includes(itemGroup) && block?.includes(wornItem.Asset.Group.Name)) {
+                //console.warn("ATB: DEBUG: Item blocked by another item: itemGroup=" + itemGroup + " Blocked by=" + wornItem.Asset.Name);
+                return true;
+            }
+            return false;
+        });
+}
 
 /*
 ***** Functions to change item's properties (i.e. other options not indentified in data's options) *****
@@ -430,6 +450,14 @@ export function randomizeExtTypedItem(C: Character, item: Item, effects: EffectN
         });
     }
 
+    // This check/filter if a worn item is blocking this option, to prevent a state where you can't remove items (blocked)
+    typedAvailableOptions = typedAvailableOptions.filter(o => {
+        if (checkImpossibleOption(C, item.Asset.Group.Name as AssetGroupItemName, o.Property.Block)) {
+            return false;
+        }
+        return true;
+    });
+
     if (typedAvailableOptions.length === 0) {
         return false;
     }
@@ -470,6 +498,15 @@ export function randomizeExtVibratorItem(C: Character, item: Item, effects: Effe
             }
         });
     }
+
+    // This check/filter if a worn item is blocking this option, to prevent a state where you can't remove items (blocked)
+    vibratorAvailableOptions = vibratorAvailableOptions.filter(o => {
+        if (checkImpossibleOption(C, item.Asset.Group.Name as AssetGroupItemName, o.Property.Block)) {
+            return false;
+        }
+        return true;
+    });
+
     if (vibratorAvailableOptions.length === 0) {
         return false;
     }
@@ -564,6 +601,15 @@ export function randomizeModuleOption(C: Character, item: Item, modularData: Mod
             }
         });
     }
+
+    // This check/filter if a worn item is blocking this option, to prevent a state where you can't remove items (blocked)
+    moduleAvailableOptions = moduleAvailableOptions.filter(o => {
+        if (checkImpossibleOption(C, item.Asset.Group.Name as AssetGroupItemName, o.Property.Block)) {
+            return false;
+        }
+        return true;
+    });
+
     if (moduleAvailableOptions.length === 0) {
         return false;
     }

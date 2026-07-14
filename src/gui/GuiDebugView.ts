@@ -18,6 +18,8 @@ export class GuiDebugView extends GuiViewBase {
         RANDOM_PUNISH: "Trigger Random Punishement",
         ADD_RANDOM_ITEM: "Equip Random Item",
         TEST_RANDOM_ITEM: "Equip 10 Random Item",
+        TEST_RANDOM_ITEM_BUG: "Equip 3 Random Gags (debug)",
+        TEST_RANDOM_ITEM_BUG2: "Equip 1 Random Gags (debug)",
         TRIGGER_RANDOM_EVENT: "Trigger Random Event",
         PASSWORD_LOCK_EVENT: "Trigger Password Lock Event",
     };
@@ -133,11 +135,33 @@ export class GuiDebugView extends GuiViewBase {
         testRandomBtn.className = "atb-main-btn";
         testRandomBtn.innerText = this.STRINGS.TEST_RANDOM_ITEM;
         testRandomBtn.onclick = () => {
-            addRandomRestrain(Player, 10, true);
+            addRandomRestrain(Player, 10, true, undefined, true);
         };
         //form.appendChild(testRandomBtn);
         const randomItemRow = GuiHelper.createTwoElemRow(addRandomBtn, testRandomBtn);
         form.appendChild(randomItemRow);
+
+        /*
+        // Random Item Debug 1
+        const testRandomBugBtn = document.createElement("button");
+        testRandomBugBtn.className = "atb-main-btn";
+        testRandomBugBtn.innerText = this.STRINGS.TEST_RANDOM_ITEM_BUG;
+        testRandomBugBtn.onclick = () => {
+            addRandomRestrain(Player, 3, true, ["ItemMouth", "ItemMouth2", "ItemMouth3"], true, [], ["Leather"]);
+        };
+        //form.appendChild(testRandomBugBtn);
+
+        // Random Item Debug 2
+        const testRandomBug2Btn = document.createElement("button");
+        testRandomBug2Btn.className = "atb-main-btn";
+        testRandomBug2Btn.innerText = this.STRINGS.TEST_RANDOM_ITEM_BUG2;
+        testRandomBug2Btn.onclick = () => {
+            addRandomRestrain(Player, 1, true, ["ItemMouth", "ItemMouth2", "ItemMouth3"], true, [], ["Leather"]);
+        };
+        //form.appendChild(testRandomBug2Btn);
+        const randomItemRow2 = GuiHelper.createTwoElemRow(testRandomBugBtn, testRandomBug2Btn);
+        form.appendChild(randomItemRow2);
+        */
 
         // Random Event debug
         GuiHelper.createContentTitle(form, "Random Event Test");
